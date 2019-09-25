@@ -1,3 +1,5 @@
+#!/bin/bash
+
 for i in rep*
 do
 	cd $i

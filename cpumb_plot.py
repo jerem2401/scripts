@@ -1,4 +1,4 @@
-#!/home/usersJH/jeremy/Downloads/yes/bin/python
+#!/usr/bin/env python
 
 import os
 import re
