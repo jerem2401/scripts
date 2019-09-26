@@ -13,9 +13,10 @@ def main():
     #read COLVAR.txt
     df=plumed_pandas.read_as_pandas(sys.argv[1])
 
-    #extract time step of frame closest to the target_value
-    value=df.iloc[(df['nCV']-float(sys.argv[2])).abs().idxmin()]['time']
-    return value
+    #extract time of frame closest to the target_value and cnt of gksi at this frame
+    tvalue=df.iloc[(df['nCV']-float(sys.argv[2])).abs().idxmin()]['time']
+    gksi=df.iloc[(df['nCV']-float(sys.argv[2])).abs().idxmin()]['restraint2.RMSDMID_cntr']
+    return (tvalue,gksi)
 
 # If called from the command line... 
 if __name__ == "__main__":
