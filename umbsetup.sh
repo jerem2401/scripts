@@ -14,7 +14,7 @@ alpha=$(echo "$dir" | grep -oP '(?<=_a).*(?=_deq)')
 deq=$(echo "$dir" | grep -oP '(?<=_deq)([0-9]|\.)*')
 
 kappa=$(echo "$dir" | grep -oP '(?<=_k).*(?=_gk)')
-gkappa=$(echo "$dir" | grep -oP '(?=_gk).*(?=_a)')
+gkappa=$(echo "$dir" | grep -oP '(?<=_gk).*(?=_a)')
 
 #N60_t1_k5000_a0.5_deq0.05
 #N60_t1_k5000_gk10000_a0.5_deq0.05
@@ -24,7 +24,7 @@ gkappa=$(echo "$dir" | grep -oP '(?=_gk).*(?=_a)')
 temp_mdp='../temp/temp.mdp'
 top='../temp/c7eq.top'
 refpdb1='../temp/c7eqf.pdb'
-refpdb2='.../temp/c7axf.pdb'
+refpdb2='../temp/c7axf.pdb'
 plumed_tmp='../temp/plumed_tmp.dat'
 
 while [ $# -gt 0 ]; do
@@ -132,7 +132,7 @@ do
         gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" <<EOF
 	$group
 EOF
-	gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${value}.tpr" -maxwarn 1
+	gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1
 	cp "$refpdb1" "./E_${ksi}"
         cp "$refpdb2" "./E_${ksi}"
 	cp "$refmid" "./E_${ksi}"
