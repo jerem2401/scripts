@@ -30,6 +30,7 @@ while [ $# -gt 0 ]; do
 	    tmd_plum_out="$1"
             ;;
         -h)
+	    echo "easy peasy args detection with following dir format: N*nbOfWin*_t*ttot*_k*kappa*_a*alpha*_deq*deq*"
             echo "-f tmd.txt -tpr tmd.tpr -traj tmd.traj -mdp temp.mdp -top mol.top -ref1 refpdb1.pdb -ref2 refpdb2.pdb -pltmp plumed_tmp.dat"
 	    exit
             ;;
