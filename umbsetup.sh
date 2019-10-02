@@ -2,7 +2,7 @@
 
 dir=$(pwd)
 
-nbOfWin=$(echo "$dir" | grep -oP '(?<=/N).*(?=_t)')
+nbOfWin=$(echo "$dir" | grep -oP '(?<=_N).*(?=_t)')
 winmax=1
 winmin=-1
 
@@ -136,7 +136,7 @@ EOF
 	cp "$refpdb1" "./E_${ksi}"
         cp "$refpdb2" "./E_${ksi}"
 	cp "$refmid" "./E_${ksi}"
-	sed "s/_POSI_/${ksi}/g;s/_gPOSI_/${gksi}/g;s/_DEQ_/${deq}/g;s/_ALPHA_/${alpha}/g;s/_KAPPA_/${kappa}/g;s/_gKAPPA_/${gkap}/g;" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
+	sed "s/_POSI_/${ksi}/g;s/_gPOSI_/${gksi}/g;s/_DEQ_/${deq}/g;s/_ALPHA_/${alpha}/g;s/_KAPPA_/${kappa}/g;s/_gKAPPA_/${gkappa}/g;" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
 	echo 'done'
 done
 
