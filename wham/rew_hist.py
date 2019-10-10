@@ -15,7 +15,7 @@ def main():
     df=plumed_pandas.read_as_pandas(args.f)
     df = df[['nCV','nCV_restraint.bias']]
     
-    hist2, bin_edges = np.histogram(df['nCV'], bins=200, weights=[np.exp(i/2.49434) for i in df['nCV_restraint.bias']])
+    hist2, bin_edges = np.histogram(df['nCV'], bins=[i for i in np.around(np.arange(-0.995,1.0,0.010), decimals=3)], weights=[np.exp(i/2.49434) for i in df['nCV_restraint.bias']])
     
     d = {'z': bin_edges[0:-1],'hist': hist2}
     
