@@ -2,7 +2,7 @@
 
 dir=$(pwd)
 
-nbOfWin=$(echo "$dir" | grep -oP '(?<=/N).*(?=_t)')
+nbOfWin=$(echo "$dir" | grep -oP '(?<=_N).*(?=_t)')
 winmax=1
 winmin=-1
 
@@ -13,15 +13,19 @@ alpha=$(echo "$dir" | grep -oP '(?<=_a).*(?=_deq)')
 
 deq=$(echo "$dir" | grep -oP '(?<=_deq)([0-9]|\.)*')
 
-kappa=$(echo "$dir" | grep -oP '(?<=_k).*(?=_a)')
+kappa=$(echo "$dir" | grep -oP '(?<=_k).*(?=_gk)')
+gkappa=$(echo "$dir" | grep -oP '(?<=_gk).*(?=_a)')
 
-tmd_tpr='./md.tpr'
-tmd_traj='./traj_comp.xtc'
-temp_mdp='./temp.mdp'
-top='./c7eq.top'
-refpdb1='./genc7eq_2.pdb'
-refpdb2='./genc7ax_3.pdb'
-plumed_tmp='./plumed_temp.dat'
+#N60_t1_k5000_a0.5_deq0.05
+#N60_t1_k5000_gk10000_a0.5_deq0.05
+
+#tmd_tpr='md.tpr'
+#tmd_traj='traj_comp.xtc'
+temp_mdp='../temp/temp.mdp'
+top='../temp/c7eq.top'
+refpdb1='../temp/c7eqf.pdb'
+refpdb2='../temp/c7axf.pdb'
+plumed_tmp='../temp/plumed_tmp.dat'
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -32,7 +36,6 @@ while [ $# -gt 0 ]; do
         -h)
 	    echo "easy peasy args detection with following dir format: N*nbOfWin*_t*ttot*_k*kappa*_a*alpha*_deq*deq*"
             echo "-f tmd.txt -tpr tmd.tpr -traj tmd.traj -mdp temp.mdp -top mol.top -ref1 refpdb1.pdb -ref2 refpdb2.pdb -pltmp plumed_tmp.dat"
-	    exit
             ;;
         -tpr)
             shift
@@ -58,6 +61,10 @@ while [ $# -gt 0 ]; do
             shift
             refpdb2="$1"
             ;;
+	-refmid)
+	    shift
+	    refmid="$1"
+	    ;;
 	-pltmp)
             shift
             plumed_tmp="$1"
@@ -116,17 +123,20 @@ echo "arg1:${tmd_plum_out} nbOfWin:${nbOfWin} wmax:${winmax} wmin:${winmin} dist
 echo -n 'on which group do you want to extract frames ?'
 read group
 
-for epsi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax")
+for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax")
 do
-	mkdir "E_${epsi}"
-	value=$(start4umb.py $tmd_plum_out $epsi)
-        gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -dump "$value" -o "./E_${epsi}/conf_${value}.gro" <<EOF
+	mkdir "E_${ksi}"
+	values=$(start4umb.py $tmd_plum_out $ksi)
+	value=$(echo "$values" | grep -oP '(?<=\().*(?=,)')
+	gksi=$(echo "$values" | grep -oP '(?<=, ).*(?=\))')
+        gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" <<EOF
 	$group
 EOF
-	gmx grompp -f md.mdp -c "./E_${epsi}/conf_${value}.gro" -p "$top" -o "./E_${epsi}/conf_${value}.tpr" -maxwarn 1
-	cp "$refpdb1" "./E_${epsi}"
-        cp "$refpdb2" "./E_${epsi}"
-	sed "s/_POSI_/${epsi}/g;s/_DEQ_/${deq}/g;s/_ALPHA_/${alpha}/g;s/_KAPPA_/${kappa}/g;" "$plumed_tmp" > "./E_${epsi}/plumed_${epsi}.dat"
+	gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1
+	cp "$refpdb1" "./E_${ksi}"
+        cp "$refpdb2" "./E_${ksi}"
+	cp "$refmid" "./E_${ksi}"
+	sed "s/_POSI_/${ksi}/g;s/_gPOSI_/${gksi}/g;s/_DEQ_/${deq}/g;s/_ALPHA_/${alpha}/g;s/_KAPPA_/${kappa}/g;s/_gKAPPA_/${gkappa}/g;" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
 	echo 'done'
 done
 
