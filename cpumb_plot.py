@@ -128,13 +128,8 @@ def main():
 
             colvar_list=os.popen('ls E*/colvar* | sort -t _ -k 2 -n').read().split()
 
-            #list of ksi values from which we've restrained the coordinates, take this values from umbsetup.sh ?
-            #CVval=[elem.split('_')[-1].strip("/") for elem in glob.glob(path + "**/", recursive=True) if "E_" in elem]
-            
+            #list of ksi values
             CVval=[re.search('(?<=E_).*(?=/)',i).group() for i in colvar_list]
-
-            #sorting by inscreasing order for "levels" in plotting and for sorting colvar files in colvar_list
-            #CVval2=sorted([float(i) for i in CVval])
 
             #following paragraph not needed anymore since now os.popen + sort already list by increasing value of ksi
             #get dictionary of CVval values with their indexes (last line inverse keys and values)
@@ -176,16 +171,13 @@ def main():
                         gonextl2=False
                         for line in plume:
                             if gonextl1:
-                                #print(line)
                                 param = re.search(r"AT.*KAPPA[^ ]*", line)
                                 gonextl1=False
                             if gonextl2:
-                                #print(line)
                                 param2 = re.search(r"AT.*KAPPA[^ ]*", line)
                                 gonextl2=False
                             if "# nCV restraint" in line:
                                 gonextl1=True
-                                #print(line)
                             if "# guideCV" in line:
                                 gonextl2=True
                     plume.close()
