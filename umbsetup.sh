@@ -16,9 +16,6 @@ deq=$(echo "$dir" | grep -oP '(?<=_deq)([0-9]|\.)*')
 kappa=$(echo "$dir" | grep -oP '(?<=_k).*(?=_gk)')
 gkappa=$(echo "$dir" | grep -oP '(?<=_gk).*(?=_a)')
 
-#N60_t1_k5000_a0.5_deq0.05
-#N60_t1_k5000_gk10000_a0.5_deq0.05
-
 #tmd_tpr='md.tpr'
 #tmd_traj='traj_comp.xtc'
 temp_mdp='../temp/temp.mdp'
@@ -34,8 +31,10 @@ while [ $# -gt 0 ]; do
 	    tmd_plum_out="$1"
             ;;
         -h)
-	    echo "easy peasy args detection with following dir format: N*nbOfWin*_t*ttot*_k*kappa*_a*alpha*_deq*deq*"
+	    echo "easy peasy args detection with following dir format: N*nbOfWin*_t*ttot*_k*kappa*_gk*gkappa*_a*alpha*_deq*deq*"
             echo "-f tmd.txt -tpr tmd.tpr -traj tmd.traj -mdp temp.mdp -top mol.top -ref1 refpdb1.pdb -ref2 refpdb2.pdb -pltmp plumed_tmp.dat"
+	    echo "other options: -w=nbOfWin, -wmax=winmax, -wmin=winmin, -refmid=ref pdb for gCV"
+	    exit
             ;;
         -tpr)
             shift
@@ -123,21 +122,24 @@ echo "arg1:${tmd_plum_out} nbOfWin:${nbOfWin} wmax:${winmax} wmin:${winmin} dist
 echo -n 'on which group do you want to extract frames ?'
 read group
 
-for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax")
-do
-	mkdir "E_${ksi}"
+for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax"); do
+   if mkdir "E_${ksi}"; then
 	values=$(start4umb.py $tmd_plum_out $ksi)
 	value=$(echo "$values" | grep -oP '(?<=\().*(?=,)')
 	gksi=$(echo "$values" | grep -oP '(?<=, ).*(?=\))')
         gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" <<EOF
 	$group
 EOF
-	gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1
+	gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1	
 	cp "$refpdb1" "./E_${ksi}"
-        cp "$refpdb2" "./E_${ksi}"
+	cp "$refpdb2" "./E_${ksi}"
 	cp "$refmid" "./E_${ksi}"
 	sed "s/_POSI_/${ksi}/g;s/_gPOSI_/${gksi}/g;s/_DEQ_/${deq}/g;s/_ALPHA_/${alpha}/g;s/_KAPPA_/${kappa}/g;s/_gKAPPA_/${gkappa}/g;" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
+	echo -e "\nused tmd directory: ${tmd_plum_out}" >> mdout.mdp
 	echo 'done'
+   else
+	echo "window already exists"
+   fi
 done
 
 
