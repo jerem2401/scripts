@@ -24,15 +24,14 @@ def main():
         
         hdf=pd.DataFrame(d)
 
-        pos=re.search('(-|[0-9]|\.)+(?=.txt)', args.f).group()    
-
+        pos=re.search('(-|[0-9]|\.)+(?=_)', args.f).group()    
+        
+        # /!\ saved in working directory
         np.savetxt(r'./histo_'+str(pos)+'_.dat', hdf.values, header="col1=z col2=hist\n#1 #2 "+str(pos)+"\n#1 #2 5500", fmt='%.6f')
 
     if args.plot:
 
-        import plumed_pandas
         import matplotlib.pyplot as plt
-        import numpy as np
         import os       
  
         histo_files = os.popen('ls histo* | sort -t _ -k 2 -n').read().split()
