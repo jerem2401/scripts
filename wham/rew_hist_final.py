@@ -9,8 +9,9 @@ import re
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', help='give colvar_file, for building weithed histo', action='store', dest='f')        
+    parser.add_argument('-f', help='give colvar_file, for building weithed histo', action='store', dest='f', required=True)        
     parser.add_argument('--plot', help='plot histograms', action='store_true', dest='plot')
+    parser.add_argument('-k', help='force constant used for each windows', action='store', dest='k', required=True) 
     args = parser.parse_args()
 
     if not args.plot:
@@ -27,7 +28,7 @@ def main():
         pos=re.search('(-|[0-9]|\.)+(?=_)', args.f).group()    
         
         # /!\ saved in working directory
-        np.savetxt(r'./histo_'+str(pos)+'_.dat', hdf.values, header="col1=z col2=hist\n#1 #2 "+str(pos)+"\n#1 #2 5500", fmt='%.6f')
+        np.savetxt(r'./histo_'+str(pos)+'_.dat', hdf.values, header="col1=z col2=hist\n#1 #2 "+str(pos)+"\n#1 #2 "+str(args.k), fmt='%.6f')
 
     if args.plot:
 
