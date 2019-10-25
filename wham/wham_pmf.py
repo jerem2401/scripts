@@ -95,7 +95,7 @@ fp.close()
 
 #plot PMF
 
-matplotlib.rcParams.update({'font.size': 15})
+matplotlib.rcParams.update({'font.size': 25})
 
 x, y = np.loadtxt('test_wham_pmf.out', unpack=True, delimiter='    ')
 

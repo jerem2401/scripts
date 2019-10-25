@@ -34,6 +34,9 @@ def main():
 
         import matplotlib.pyplot as plt
         import os       
+        import matplotlib
+        matplotlib.rcParams.update({'font.size': 23})
+
  
         histo_files = os.popen('ls histo* | sort -t _ -k 2 -n').read().split()
         
