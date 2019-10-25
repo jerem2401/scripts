@@ -13,9 +13,14 @@ def main():
     #read COLVAR.txt
     df=plumed_pandas.read_as_pandas(sys.argv[1])
 
-    #extract time of frame closest to the target_value and cnt of gksi at this frame
-    tvalue=df.iloc[(df['restraint.nCV_cntr']-float(sys.argv[2])).abs().idxmin()]['time']
-    gksi=df.iloc[(df['restraint.nCV_cntr']-float(sys.argv[2])).abs().idxmin()]['restraint2.RMSDMID_cntr']
+    #extract time of frame closest to the target_value and cnt of gksi at this frame 
+    if sys.argv[2] == "1.00" or sys.argv[2] == "-1.00":
+        tvalue=df.iloc[(df['nCV']-float(sys.argv[2])).abs().idxmin()]['time']
+        gksi=df.iloc[(df['nCV']-float(sys.argv[2])).abs().idxmin()]['restraint2.RMSDMID_cntr']
+    else:
+        tvalue=df.iloc[(df['restraint.nCV_cntr']-float(sys.argv[2])).abs().idxmin()]['time']
+        gksi=df.iloc[(df['restraint.nCV_cntr']-float(sys.argv[2])).abs().idxmin()]['restraint2.RMSDMID_cntr']
+
     return (tvalue,gksi)
 
 # If called from the command line... 
