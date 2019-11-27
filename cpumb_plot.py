@@ -17,6 +17,7 @@ def main():
     parser.add_argument('-umb', help='specify that umb plot mode should be turn on', action='store_true', dest='umb')
     parser.add_argument('--a', help='provide alpha if not in directory_name under certain format', action='store', dest='a', type=float)
     parser.add_argument('-o', help='give path for plot output', action='store', dest='o')
+    parser.add_argument('-s', help='number of frames to skip for plotting', action='store', dest='s', default=2, type=int)
     args = parser.parse_args()
 
 
@@ -160,10 +161,10 @@ def main():
                 plt.figure(figsize=(12,5*len(k))) 
                 for pltn, i in zip(range(1, len(k)*2+1, 2), k):
                     df=plumed_pandas.read_as_pandas(i)
-                    RMSDeq = df['RMSDEQ'][::2]
-                    RMSDax = df['RMSDAX'][::2]
-                    phi = df['phi'][::2]
-                    psi = df['psi'][::2]
+                    RMSDeq = df['RMSDEQ'][::args.s]
+                    RMSDax = df['RMSDAX'][::args.s]
+                    phi = df['phi'][::args.s]
+                    psi = df['psi'][::args.s]
 
                     #get param of restraints from the plumed input files, todo: build a dic {colvar_file : CVval} instead of the wierd trick in the following line (should change also in l.87-93)
                     with open(re.search(r".*E_([0-9]|-|\.)*", i).group()+"/plumed_"+CVval[k.index(i)+nbl*20]+".dat", "r") as plume:
