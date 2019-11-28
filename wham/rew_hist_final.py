@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd 
 import argparse
 import re
+import sys
 
 def main():
 
@@ -14,21 +15,27 @@ def main():
     parser.add_argument('-k', help='force constant used for each windows', action='store', dest='k', required=True) 
     args = parser.parse_args()
 
+
     if not args.plot:
-
-        df=plumed_pandas.read_as_pandas(args.f)
-        df = df[['nCV','guide_restraint.bias']]
-        
-        hist2, bin_edges = np.histogram(df['nCV'], bins=[i for i in np.around(np.arange(-1.25,1.25,0.01), decimals=3)], weights=[np.exp(i/2.49434) for i in df['guide_restraint.bias']],density=True)
-        
-        d = {'z': bin_edges[0:-1],'hist': hist2}
-        
-        hdf=pd.DataFrame(d)
-
+        import os
         pos=re.search('(-|[0-9]|\.)+(?=_)', args.f).group()    
         
-        # /!\ saved in working directory
-        np.savetxt(r'./histo_'+str(pos)+'_.dat', hdf.values, header="col1=z col2=hist\n#1 #2 "+str(pos)+"\n#1 #2 "+str(args.k), fmt='%.6f')
+        if os.path.exists('./histo_'+str(pos)+'_.dat'):
+            print('./histo_'+str(pos)+'_.dat exists !')
+            sys.exit()
+        else:
+            df=plumed_pandas.read_as_pandas(args.f)
+            df = df[['nCV','guide_restraint.bias']]
+            
+            hist2, bin_edges = np.histogram(df['nCV'], bins=[i for i in np.around(np.arange(-1.25,1.25,0.01), decimals=3)], weights=[np.exp(i/2.49434) for i in df['guide_restraint.bias']],density=True)
+            
+            d = {'z': bin_edges[0:-1],'hist': hist2}
+            
+            hdf=pd.DataFrame(d)
+            
+            # /!\ saved in working directory
+            print('./histo_'+str(pos)+'_.dat is done')
+            np.savetxt(r'./histo_'+str(pos)+'_.dat', hdf.values, header="col1=z col2=hist\n#1 #2 "+str(pos)+"\n#1 #2 "+str(args.k), fmt='%.6f')
 
     if args.plot:
 
