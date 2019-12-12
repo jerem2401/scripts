@@ -162,18 +162,18 @@ while [ $# -gt 0 ]; do
 	    shift
 	    tpr=$1
 	    echo $tpr=$1
-			    ;;
+	    ;;
 	-N|--nodes|-nnodes)
 	    shift
 	    nnodes=$1
 	    echo nnodes=$nnodes
-      	    if [[ $2 =~ ^[0:9]* ]]; then
-	      	shift
-		maxnodes=$1
-		echo maxnodes=$1
-	    else
-		echo "No range of nodes given. Using $nnodes."
-	    fi
+      	    #if [[ $2 =~ ^[0:9]* ]]; then
+	    #  	shift
+	    #   maxnodes=$1
+	    #   echo maxnodes=$1
+	    #else
+	    #	echo "No range of nodes given. Using $nnodes."
+	    #fi
 	    ;;
 	-ppn)
 	        shift
@@ -279,7 +279,11 @@ while [ $# -gt 0 ]; do
 	-version)
 	    shift
             version=$1
-            gmxrc="/data/shared/opt/gromacs/$version/bin/GMXRC"
+	    if [ "$version" = "2019.4" ]; then
+		gmxrc="/data/shared/opt/gromacs/$version/gromacs-2019.4/bin/GMXRC"
+	    else
+		gmxrc="/data/shared/opt/gromacs/$version/bin/GMXRC"
+	    fi
             ;;
         *)
             echo -e "\n$0: Error, unknown argument: $1"
@@ -378,6 +382,12 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH -t $walltime
 #SBATCH --job-name=$jobname$key
 #SBATCH --mail-user=$email
+#SBATCH -N $nnodes
+EOF
+	fi
+	
+cat <<EOF
+
 $batchInitLine
 $depline
 
