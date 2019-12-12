@@ -2,7 +2,7 @@
 
 dir=$(pwd)
 
-nbOfWin=$(echo "$dir" | grep -oP '(?<=_N).*(?=_t)')
+nbOfWin=$(echo "$dir" | grep -oP '(?<=_N).*(?=_t.*_k)')
 winmax=1
 winmin=-1
 
@@ -124,7 +124,7 @@ read group
 
 for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax"); do
    if mkdir "E_${ksi}"; then
-	values=$(start4umb.py $tmd_plum_out $ksi)
+	values=$(start4umb.py -f $tmd_plum_out -v $ksi)
 	value=$(echo "$values" | grep -oP '(?<=\().*(?=,)')
 	gksi=$(echo "$values" | grep -oP '(?<=, ).*(?=\))')
         gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" <<EOF

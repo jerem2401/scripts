@@ -102,7 +102,7 @@ def main():
         if args.o == None:
             plt.savefig(cwds[-1]+".jpeg")
         else :
-            plt.savefig(args.o)
+            plt.savefig(args.o+'/plot.jpeg')
         plt.close()
 
     else:
