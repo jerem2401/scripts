@@ -59,20 +59,18 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-#TO DO : TAKE CARE OF UPDATING JOBCHAIN FOR SLURM AND PLUMED
-
 if [ $nchain -gt 1 ]; then
     jobscript="jobchain.sh -n $nchain"
     bChain=1
 else
-    jobscript="jobscript_slurm_v2.sh"
+    jobscript=/usr/users/jlapier/gitrepo/scripts/jobscript_slurm_gwdg.sh
     bChain=0
 fi
 
 # find out queueing systems
 Qsystem=unset
 if hostname | grep -q gwdu; then
-    Qsystem=LSF
+    Qsystem=slurm                                      #used to be LSF;  Gari Change 
     echo "This is at the GWDG"
 elif hostname | egrep -q 'jj28l..'; then
     echo This is JUROPA
