@@ -48,7 +48,7 @@ multidirs=""
 bPin=0
 nt=""
 nameext=""
-ptile=unset
+ptile=""
 np=""
 ncores=""
 bEmpty=0
@@ -155,14 +155,14 @@ while [ $# -gt 0 ]; do
 	    shift
 	    nnodes=$1
 	    echo nnodes=$nnodes
-	    echo $2
-      	    if [[ $2 == ^[0:9]* ]]; then
-	      	shift
-		maxnodes=$1
-		echo maxnodes=$1
-	    else
-		echo "No range of nodes given. Using $nnodes."
-	    fi
+	    #echo $2
+      	    #if [[ $2 == ^[0:9]* ]]; then
+	    #  	shift
+            #   maxnodes=$1
+            #   echo maxnodes=$1
+	    #else
+            #   echo "No range of nodes given. Using $nnodes."
+	    #fi
 	    ;;
 	-ppn)
 	    shift
@@ -355,8 +355,8 @@ ldPath=''
 
 case $machine in
     broadwell|sandybridge)                                                
-        [ $ptile = unset ] && ptile=$ppn
-        spanline="#SBATCH --tasks-per-node=[$ptile]"
+        #[ $ptile = unset ] && ptile=$ppn
+        #spanline="#SBATCH --tasks-per-node=[$ptile]"
         if [ $bMPI = 1 ]; then
             mpirun="mpirun  -np $np "
             ldPath="$ldPath:"
@@ -404,6 +404,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
         kepler)
             # Use Kepler GTX 1070: nvgen=3D2                                                                                                                                                        
             nGPUsPerNode=1
+            logicalCoresPerPhysical=2
             {
                 echo '#SBATCH --gres=gpu:gtx1070:1'                                                                                
 		echo '#SBATCH --exclude=dge[015-045]'
@@ -538,7 +539,7 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH -p $queue$qExtension
 #SBATCH -o $dir/myjob${key}.out
 #SBATCH -e $dir/myjob${key}.err
-#SBATCH -n $np
+#SBATCH -c $(echo $logicalCoresPerPhysical*$ppn | bc)
 #SBATCH -t $walltime
 #SBATCH --job-name=$jobname$key
 #SBATCH --mail-user=$email
@@ -577,9 +578,9 @@ fi
 
 if [ $bMPI = 0 ]; then
     if [[ ( "$ntFlag" = "" ) && ( "$Qsystem" = slurm ) ]]; then
-        ntFlag="-nt \$[SLURM_NTASKS]"
+        ntFlag="-nt \$[SLURM_CPUS_PER_TASK]"
         {
-            echo "echo SLURM_NTASKS = \$SLURM_NTASKS"
+            echo "echo SLURM_CPUS_PER_TASK = \$SLURM_CPUS_PER_TASK"
         } >> $jobfile
     fi
 fi
