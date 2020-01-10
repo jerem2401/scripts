@@ -61,6 +61,8 @@ sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
 trap "rm -rf $sbatch_tempfile" EXIT
 
+loc=0
+copyt=0
 
 case `hostname` in
     gwdu102|gwdu103)
@@ -86,7 +88,8 @@ case $machine in
     sandybridge|broadwell)
         Qsystem=slurm
         walltime='2-00:00'
-        maxh='-maxh 48'
+	intime=48
+        maxh=48
 	deplineTempl='#SBATCH --depend=afterok:JOBID'
 	Qkey='#SBATCH'
         ;;
@@ -125,11 +128,19 @@ while [ $# -gt 0 ]; do
 	    exe=$1
 	    md=0
 	    ;;
+	-loc)
+	    loc=1
+	    echo loc = $loc
+	    copyt=1 ;;
+	-copyt)
+	    shift
+	    copyt=$1 ;;
 	--time|-t)
 	    shift
-	    d=$(= "int(($1)/24)")
-	    h=$(= "int(($1)%24)")
-	    m1=$(= "(($1)%24)-$h")
+	    intime=$1
+	    d=$(= "int(($intime)/24)")
+	    h=$(= "int(($intime)%24)")
+	    m1=$(= "(($intime)%24)-$h")
 	    m2=$(= "int($m1*60)")
 	    if [ $Qsystem = slurm ]; then
 		#slurm want D-HH:MM
@@ -137,9 +148,6 @@ while [ $# -gt 0 ]; do
 	    else
 		echo "Unknown Qsystem = $Qsystem"; exit 1
 	    fi
-	    maxh="-maxh $1"
-	    echo walltime=$walltime
-	    echo maxh="$maxh"
 	    ;;
 	--jobname|-J|-j)
 	    shift
@@ -286,6 +294,18 @@ while [ $# -gt 0 ]; do
 done
 
 echo verb="$verb"
+
+
+if [ "$loc" -eq 1 ]; then
+    maxh=$(echo "$intime-$copyt" | bc)
+    if [ "$(echo "$maxh <= 0" | bc)" -eq 1 ]; then
+        echo "you won't have enough time to copy files from the local disk, change the -copyt or increase -t option !!!"
+        exit -1
+    fi
+fi
+echo walltime=$walltime
+echo maxh="$maxh"
+
 
 # pick tpr file                                                                                                                                                                                    
 if [ "$multidirs" = "" ]; then
@@ -557,13 +577,24 @@ echo Host \$SLURM_JOB_NODELIST
 echo Jobname \$SLURM_JOB_NAME
 echo Subcwd \$SLURM_SUBMIT_DIR
 
-cd $dir
+EOF
+    } > $jobfile
+
+if [ $loc = 1 ]; then
+    {
+        echo -e "mkdir /local/${USER}_\$SLURM_JOB_ID\ncd /local/${USER}_\$SLURM_JOB_ID"
+    } >> $jobfile
+fi
+
+    {
+	cat <<EOF
 $gmxrcLine
 $line
 $initLD
 $scratchbeg
+
 EOF
-    } > $jobfile
+    } >> $jobfile
 
         # exclude certain nodes (e.g. if they are known to cause trouble)
     #for i in $excludeNodes; do
@@ -591,7 +622,7 @@ fi
     if [ "$mdrun_line" != "" ]; then
         
         echo "Found complete mdrun command line (option -mdrun_line), do not write mdrun line automatically" >&2
-        echo "$mdrun_line &> md$key.lis"
+        echo "$mdrun_line &> md${key}.lis"
         
     else
         
@@ -606,8 +637,12 @@ fi
                 fi
                 
                 mdrunCall="$mpirun$mdrun"
-                mdrunArgs="$cpiArg -stepout $stepout $verb -s $tpr $maxh $dd $npme $deffnm $opt $edi $pinArgs"
-                echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& md$key.lis"
+                mdrunArgs="$cpiArg -stepout $stepout $verb -s "${dir}/${tpr}" -maxh $maxh $dd $npme $deffnm $opt $edi $pinArgs"
+		if [ "$loc" = 0 ]; then
+                    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& md${key}.lis"
+		else
+		    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& /local/${USER}_\$SLURM_JOB_ID/md${key}.lis"
+		fi
             else
                 echo "$mpirun" "$exe"
             fi
@@ -638,7 +673,7 @@ fi
                 
                 mdrunCall="$mpirun$mdrun"
                 mdrunArgs="$cpiArg -stepout $stepout $verb -s $tpr $maxh $dd $npme $deffnm $opt $edi $pinArgs $gpuID_flag"
-                echo -e "$mdrunCall $ntFlag $mdrunArgs >& md$key.lis &\n"
+                echo -e "$mdrunCall $ntFlag $mdrunArgs >& md${key}.lis &\n"
                 let idir++
             done
             echo 'wait'
@@ -648,6 +683,13 @@ fi
     fi
 } >> $dir/$jobfile
 
+if [ $loc = 1 ]; then
+    {
+        echo -e "echo \"copying files from /local/jlapier_\${SLURM_JOB_ID} to \${SLURM_SUBMIT_DIR} at \$(date)\""
+	echo -e "cp /local/\${USER}_\${SLURM_JOB_ID}/* \${SLURM_SUBMIT_DIR}"
+	echo -e "echo \"Ending job at \$(date)\""
+    } >> $jobfile
+fi
 
 
 if [ $bGo = 1 ];then
