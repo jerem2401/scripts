@@ -15,10 +15,10 @@ def main():
     parser.add_argument('--plot', help='plot histograms together: all, or separately: sep', action='store', dest='plot')
     parser.add_argument('-k', help='force constant used for each windows', action='store', dest='k', required=True) 
     parser.add_argument('-s', help='binning step, deflt=0.01 for ext -1.25 and 1.25', action='store', dest='s', default=0.01, type=float)
-    parser.add_argument('-min', help='min boundary for hist, deflt=-1.25', action='store', dest='min', default=-1.25, type=float)
-    parser.add_argument('-max', help='max boundary for hist, deflt=1.25', action='store', dest='max', default=1.25, type=float)
+    parser.add_argument('-min', help='min boundary for hist, deflt= %(default)s', action='store', dest='min', default=-1.25, type=float)
+    parser.add_argument('-max', help='max boundary for hist, deflt= %(default)s', action='store', dest='max', default=1.25, type=float)
     parser.add_argument('-rew', help='if present, allows to reweight histo by the value of the guide_restraint.bias', action='store_true', dest='rew')
-    parser.add_argument('-col', help='from which column of the colvar file do you want to do an histogram, deflt=nCV', default='nCV', action='store', dest='col', type=str)
+    parser.add_argument('-col', help='from which column of the colvar file do you want to do an histogram, deflt= %(default)s', default='nCV', action='store', dest='col', type=str)
     parser.add_argument('--o', help='name of hist file', action='store', dest='o', type=str)
     args = parser.parse_args()
 
@@ -30,7 +30,7 @@ def main():
         if os.path.exists('./histo_'+str(pos)+'_.dat'):
             print('./histo_'+str(pos)+'_.dat exists !')
             sys.exit()
-        elif os.path.exists(args.o):
+        elif args.o != None and os.path.exists(args.o):
             print(args.o+' exists !')
             sys.exit()
         else:
@@ -93,7 +93,6 @@ def main():
             Eg = h.split('_')[2]
 
             ax.plot(z, thishist)
-            print(np.full((2,), float(Eg)), np.asarray([min(thishist), max(thishist)]), sep='\n')
             ax.plot(np.full((2,), float(Eg)), np.asarray([min(thishist), max(thishist)]))
             
             plt.title(h.strip('.txt'))
