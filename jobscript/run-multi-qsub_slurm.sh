@@ -63,7 +63,7 @@ if [ $nchain -gt 1 ]; then
     jobscript="jobchain.sh -n $nchain"
     bChain=1
 else
-    jobscript=/usr/users/jlapier/gitrepo/scripts/jobscript_slurm_gwdg.sh
+    jobscript=/usr/users/jlapier/gitrepo/scripts/jobscript/jobscript_slurm_gwdg.sh
     bChain=0
 fi
 
