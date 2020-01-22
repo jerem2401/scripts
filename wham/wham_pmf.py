@@ -5,10 +5,17 @@ import os, sys, re, math
 from do_wham import do_wham
 import matplotlib.pyplot as plt
 import matplotlib
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-f', help='give histo files for wham', action='store', nargs='*', dest='f')
+args = parser.parse_args()
+
 
 RT = 2.49434
 
-histo_files = os.popen('ls histo* | sort -t _ -k 2 -n').read().split()
+#histo_files = os.popen('ls histo* | sort -t _ -k 2 -n').read().split()
+histo_files = args.f
 N = len(histo_files)
 
 hist  = []
