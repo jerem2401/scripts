@@ -7,114 +7,129 @@ import matplotlib.pyplot as plt
 import matplotlib
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-f', help='give histo files for wham', action='store', nargs='*', dest='f')
-args = parser.parse_args()
+
+def whamloop(histo_files):
+    '''looping over list of hist files, parsing the files, calling do_wham for wham analysis, returning txt files as output'''
+
+    RT = 2.49434
+
+    #histo_files = os.popen('ls histo* | sort -t _ -k 2 -n').read().split()
+    #print(args.f)
+    #print(type(args.f))
+    #histo_files = args.f
+    N = len(histo_files)
+
+    hist  = []
+    pos   = np.zeros(N)
+    kappa = np.zeros(N)
+
+    n = 0
+    for h in histo_files:
+
+        print('Reading %s' % h)
+        fp = open(h, 'r')
+
+        l      = fp.readline()
+        l      = fp.readline()
+        pos1   = float(l.split()[3])
+        l      = fp.readline()    
+        kappa1 = float(l.split()[3])
+        fp.close()
+
+        z, thishist = np.loadtxt(h, unpack=True)
+        hist.append( thishist )
+        
+        print ('\tpos = %10g  kappa = %10g   %d bins' % (pos1, kappa1, len(z)))
+
+        pos  [n] = pos1
+        kappa[n] = kappa1
+        n       += 1
+
+        
+
+    zused, rho, Z = do_wham(z, hist, pos, kappa, RT = 2.49434, tol = 1e-6, bCycl = False)
+
+    #The main WHAM loop in do_wham for explainatory purpose
+    #    N = 1
+    #    while (maxchangeZ > tol):
+    #
+    #        bCheckChange = ((N % 100) == 0)
+    #        if (bCheckChange):
+    #            Zold = np.log(expZ)
+    #
+    #        # Compute profile
+    #        # E.g.: Roux, Comp Phys Comm, 91, 275-282 (1995), eq. 8
+    #        numer.fill(0)
+    #        denom.fill(0)
+    #        for i in range(nHist):
+    #            numer += histos_used[i]
+    #            denom += nPoints_times_exp_minus_U_over_RT[i] * expZ[i]
+    #
+    #        rho = numer / denom
+    #
+    #        # Update Z
+    #        for i in range(nHist):
+    #            expZ[i] = 1.0 / (np.sum(exp_minus_U_over_RT[i] * rho))
+    #            
+    #        # Get change in Z
+    #        if (bCheckChange):
+    #            Znew       = np.log(expZ)
+    #            maxchangeZ = (np.fabs(np.log(expZ) - Zold)).max()
+    #            print('WHAM iteration %5d, maxchange of Z\'s: %g' % (N, maxchangeZ))
+    #            
+    #        N += 1
+    #    
+    #    return zused, rho, np.log(expZ)
 
 
-RT = 2.49434
+    pmf = np.zeros_like(rho)
+    for i in range(len(rho)):
+        if (rho[i] > 0):
+            pmf[i] = -RT * np.log(rho[i])
+        else:
+            pmf[i] = 0
 
-#histo_files = os.popen('ls histo* | sort -t _ -k 2 -n').read().split()
-histo_files = args.f
-N = len(histo_files)
-
-hist  = []
-pos   = np.zeros(N)
-kappa = np.zeros(N)
-
-
-n = 0
-for h in histo_files:
-
-    print('Reading %s' % h)
-    fp = open(h, 'r')
-
-    l      = fp.readline()
-    l      = fp.readline()
-    pos1   = float(l.split()[3])
-    l      = fp.readline()    
-    kappa1 = float(l.split()[3])
+    fp = open('test_wham_pmf.out', 'w')
+    for i in range(len(zused)):
+        print(str(zused[i])+'    '+str(pmf[i]), file=fp)
+        #print("{:.3f}    {:.3f}".format(zused[i],pmf[i]), file=fp) #To do: adding format to remove digits
     fp.close()
 
-    z, thishist = np.loadtxt(h, unpack=True)
-    hist.append( thishist )
-    
-    print ('\tpos = %10g  kappa = %10g   %d bins' % (pos1, kappa1, len(z)))
+    fp = open('test_wham_z.out', 'w')
+    for i in range(N):
+        print(str(pos[i])+'    '+str(Z[i]), file=fp)
+    fp.close()
 
-    pos  [n] = pos1
-    kappa[n] = kappa1
-    n       += 1
+def plotpmf(pmff):
+    '''plot PMF from the test_wham_pmf.out output of the whamloop function'''
 
-    
+    matplotlib.rcParams.update({'font.size': 25})
 
-zused, rho, Z = do_wham(z, hist, pos, kappa, RT = 2.49434, tol = 1e-6, bCycl = False)
+    x, y = np.loadtxt(pmff, unpack=True, delimiter='    ')
 
-#The main WHAM loop
-#    N = 1
-#    while (maxchangeZ > tol):
-#
-#        bCheckChange = ((N % 100) == 0)
-#        if (bCheckChange):
-#            Zold = np.log(expZ)
-#
-#        # Compute profile
-#        # E.g.: Roux, Comp Phys Comm, 91, 275-282 (1995), eq. 8
-#        numer.fill(0)
-#        denom.fill(0)
-#        for i in range(nHist):
-#            numer += histos_used[i]
-#            denom += nPoints_times_exp_minus_U_over_RT[i] * expZ[i]
-#
-#        rho = numer / denom
-#
-#        # Update Z
-#        for i in range(nHist):
-#            expZ[i] = 1.0 / (np.sum(exp_minus_U_over_RT[i] * rho))
-#            
-#        # Get change in Z
-#        if (bCheckChange):
-#            Znew       = np.log(expZ)
-#            maxchangeZ = (np.fabs(np.log(expZ) - Zold)).max()
-#            print('WHAM iteration %5d, maxchange of Z\'s: %g' % (N, maxchangeZ))
-#            
-#        N += 1
-#    
-#    return zused, rho, np.log(expZ)
+    fig = plt.figure(figsize=(12, 8))
+    ax1 = fig.add_subplot(1, 1, 1)
 
+    ax1.plot(x, y, '-')
+    ax1.set_xlabel(r'$\xi_{new}$')
+    ax1.set_ylabel('Free energy (kJ/mol)')
 
-pmf = np.zeros_like(rho)
-for i in range(len(rho)):
-    if (rho[i] > 0):
-        pmf[i] = -RT * np.log(rho[i])
-    else:
-        pmf[i] = 0
+    id=0
+    while os.path.exists("pmf.%s.jpeg" % id):
+        id+=1
+    plt.savefig("pmf."+str(id)+".jpeg")
+    plt.close()
 
-fp = open('test_wham_pmf.out', 'w')
-for i in range(len(zused)):
-    print(str(zused[i])+'    '+str(pmf[i]), file=fp)
-    #print("{:.3f}    {:.3f}".format(zused[i],pmf[i]), file=fp) #To do: adding format to remove digits
-fp.close()
+def main(raw_args=None):
+    '''defining what to do when script called from the command line or main() called from another script'''
 
-fp = open('test_wham_z.out', 'w')
-for i in range(N):
-    print(str(pos[i])+'    '+str(Z[i]), file=fp)
-fp.close()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', help='give histo files for wham', action='store', nargs='*', dest='f')
+    args = parser.parse_args(raw_args)
 
-#plot PMF
+    whamloop(args.f)
+    plotpmf('test_wham_pmf.out')
 
-matplotlib.rcParams.update({'font.size': 25})
-
-x, y = np.loadtxt('test_wham_pmf.out', unpack=True, delimiter='    ')
-
-fig = plt.figure(figsize=(12, 8))
-ax1 = fig.add_subplot(1, 1, 1)
-
-ax1.plot(x, y, '-')
-ax1.set_xlabel(r'$\xi_{new}$')
-ax1.set_ylabel('Free energy (kJ/mol)')
-
-id=0
-while os.path.exists("pmf.%s.jpeg" % id):
-    id+=1
-plt.savefig("pmf."+str(id)+".jpeg")
-plt.close()
+if __name__ == "__main__":
+    '''if called from the command line do both functions, using argparse'''
+    main()
