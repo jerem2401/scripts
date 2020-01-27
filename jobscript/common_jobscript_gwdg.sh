@@ -115,7 +115,13 @@ while [ $# -gt 0 ]; do
 	-empty) bEmpty=1;;
 	-go) bGo=1;;
 	-p) shift
-            queue=$1 ;;
+            queue=$1
+	    if [ $queue == 'medium' ]; then
+		med='#SBATCH -A all'
+	    else
+		med=''
+	    fi
+	    ;;
 	-nocpi) 
 	    bCpi=0 ;;
 	-noverb)
@@ -295,8 +301,10 @@ done
 
 echo verb="$verb"
 
+[ $bCpi = 1 ] && cpiArg="-cpi" || cpiArg=""
 
 if [ "$loc" -eq 1 ]; then
+    [ $bCpi = 1 ] && cpiArg="-cpi ${dir}/state.cpt" || cpiArg=""
     maxh=$(echo "$intime-$copyt" | bc)
     if [ "$(echo "$maxh <= 0" | bc)" -eq 1 ]; then
         echo "you won't have enough time to copy files from the local disk, change the -copyt or increase -t option !!!"
@@ -410,9 +418,6 @@ esac
 
 initLD='export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:'"$ldPath"
 
-[ $bCpi = 1 ] && cpiArg="-cpi" || cpiArg=""
-
-
 nGPUsPerNode=0
 logicalCoresPerPhysical=1
 if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
@@ -510,8 +515,8 @@ else
     npNeeded=$[nt*ndir/logicalCoresPerPhysical]
     echo "Multiple mdrun per node: ndir = $ndir, need $npNeeded phys. cores"
 
-    # Note: np       = number of physical cores available/requested by command line                                                                                                                
-    #       npNeeded = number of physical cores needed                                                                                                                                             
+    # Note: np       = number of physical cores available/requested by command line
+    #       npNeeded = number of physical cores needed
 
     if [ $npNeeded -gt $np ]; then
         echo -e "\nError, your job will need $npNeeded physical cores per node (nt=$nt, dir=$ndir), but you requested only $np physical cores."; exit 1
@@ -565,6 +570,7 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH --mail-user=$email
 $batchInitLine
 $depline
+$med
 
 EOF
 
@@ -577,6 +583,7 @@ echo Host \$SLURM_JOB_NODELIST
 echo Jobname \$SLURM_JOB_NAME
 echo Subcwd \$SLURM_SUBMIT_DIR
 
+cd $dir
 EOF
     } > $jobfile
 
@@ -639,9 +646,9 @@ fi
                 mdrunCall="$mpirun$mdrun"
                 mdrunArgs="$cpiArg -stepout $stepout $verb -s "${dir}/${tpr}" -maxh $maxh $dd $npme $deffnm $opt $edi $pinArgs"
 		if [ "$loc" = 0 ]; then
-                    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& md${key}.lis"
+                    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >> md${key}.lis 2>&1"
 		else
-		    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& /local/${USER}_\$SLURM_JOB_ID/md${key}.lis"
+		    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >> /local/${USER}_\$SLURM_JOB_ID/md${key}.lis 2>&1"
 		fi
             else
                 echo "$mpirun" "$exe"
@@ -685,8 +692,8 @@ fi
 
 if [ $loc = 1 ]; then
     {
-        echo -e "echo \"copying files from /local/jlapier_\${SLURM_JOB_ID} to \${SLURM_SUBMIT_DIR} at \$(date)\""
-	echo -e "cp /local/\${USER}_\${SLURM_JOB_ID}/* \${SLURM_SUBMIT_DIR}"
+        echo -e "echo \"copying files from /local/${USER}_\${SLURM_JOB_ID} to \${SLURM_SUBMIT_DIR} at \$(date)\""
+	echo -e "cp --backup --suffix=.old_key${key} /local/\${USER}_\${SLURM_JOB_ID}/* \${SLURM_SUBMIT_DIR}"
 	echo -e "echo \"Ending job at \$(date)\""
     } >> $jobfile
 fi

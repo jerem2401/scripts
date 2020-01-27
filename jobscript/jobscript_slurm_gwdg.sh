@@ -117,9 +117,9 @@ while [ $# -gt 0 ]; do
 	-p) shift
             queue=$1
 	    if [ $queue == 'medium' ]; then
-		momo='#SBATCH -A all'
+		med='#SBATCH -A all'
 	    else
-		momo=''
+		med=''
 	    fi
 	    ;;
 	-nocpi) 
@@ -584,7 +584,7 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH --mail-user=$email
 $batchInitLine
 $depline
-$momo
+$med
 
 EOF
 
