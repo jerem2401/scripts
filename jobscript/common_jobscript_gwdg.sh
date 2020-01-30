@@ -427,7 +427,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
 
     case "$gpuGeneration" in
         kepler)
-            # Use Kepler GTX 1070: nvgen=3D2                                                                                                                                                        
+            # Use Kepler GTX 1070: nvgen=3D2    
             nGPUsPerNode=1
             logicalCoresPerPhysical=2
             {
@@ -437,22 +437,22 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             } >> $sbatch_tempfile
             ;;
         maxwell)
-            # Use GTX 980                                                                                                                                                                          
+            # Use GTX 980                                                                                                             
             nGPUsPerNode=2
             {
                 echo '#SBATCH --gres=gpu:gtx980:1'
-		echo '#SBATCH --exclude=gpu-hub' # Exclude the our own Pascal nodes                                                                                                                    
+		echo '#SBATCH --exclude=gpu-hub' # Exclude the our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
 	maxwell4)
-            # Use nodes with 4 GTX 980                                                                                                                                                             
+            # Use nodes with 4 GTX 980
             nGPUsPerNode=4
             {
                 echo '#SBATCH --gres=gpu:gtx980:1'
             } >> $sbatch_tempfile
             ;;
         tesla)
-            # Use the expensive Tesla (allows double prec.)                                                                                                                                        
+            # Use the expensive Tesla (allows double prec.)
             nGPUsPerNode=2
             {
 		#NOT IMPLEMENTED YET
@@ -461,15 +461,15 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             } >> $sbatch_tempfile
             ;;
         gtx1080)
-            # Use GTX 1080                                                                                                                                                                         
+            # Use GTX 1080                                                                                                      
             nGPUsPerNode=2
             {
                 echo '#SBATCH --gres=gpu:gtx1080:1'
-		echo '#SBATCH --exclude=gpu-hub' # Exclude our own Pascal nodes                                                                                                                   
+		echo '#SBATCH --exclude=gpu-hub' # Exclude our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
         pascal40)
-            # Use GTX 1080                                                                                                                                                                         
+            # Use GTX 1080                                                                                              
             nGPUsPerNode=4
             logicalCoresPerPhysical=2
             {
@@ -488,18 +488,18 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
     fi
 
     if [ $gpuGeneration = pascal40 ]; then
-        # Jochen, Jun 16, 2017                                                                                                                                                                     
-        # Echo work-around while ptile option on Pascal40 nodes behaves strange                                                                                                                    
+        # Jochen, Jun 16, 2017
+        # Echo work-around while ptile option on Pascal40 nodes behaves strange
         spanline="#SBATCH -N 1"
     fi
 
     if [ "$gpu_shares" = "" ]; then
-        # if GPU shares not given, use the same as number of physical CPU cores requested.                                                                                                        
+        # if GPU shares not given, use the same as number of physical CPU cores requested.
         gpu_shares=$[ncores]
     fi
     echo "GPU gener = $gpuGeneration, ncores = $ncores, gpu_shares = $gpu_shares"
     # echo "#SBATCH --licenses=[ngpus_shared=10]" >> $sbatch_tempfile
-    # ppn=""                                                                                                                                                                                       
+    # ppn=""
 fi
 
 
@@ -508,7 +508,7 @@ if [ "$multidirs" = "" ] ;then
     jobfile=job${key}.sh
 else
     jobfile=job.${jobname}${key}.sh
-    # Check if the node is really full                                                                                                                                                             
+    # Check if the node is really full
     [ "$nnodes" -gt 1 ] && { echo -e "\nnnodes = $nnodes: Multidirs does not make sense." >&2; exit 1; }
     [ "$nt"      = "" ] && { echo -e "\nWith multidirs you must specify nt." >&2; exit 1; }
     ndir=$(echo $multidirs | wc -w | awk '{print $1}')
