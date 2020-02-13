@@ -43,7 +43,8 @@ def main():
             else:
                 df = df[['nCV','guide_restraint.bias']]
                 hist2, bin_edges = np.histogram(df['nCV'], bins=[i for i in np.around(np.arange(args.min,args.max,args.s), decimals=3)], weights=[np.exp(i/2.49434) for i in df['guide_restraint.bias']],density=True)
-            
+                hist2 = hist2 / hist2.sum()
+ 
             d = {'z': bin_edges[0:-1],'hist': hist2}
             
             hdf=pd.DataFrame(d)
