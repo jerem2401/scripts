@@ -9,7 +9,7 @@ while read line; do
 	echo "colvar${f}.txt";
 	Elist+=( "E_${E}" )
 	vlist+=( "${v}" )
-	flist+=( "colvar${f}.txt" )
+	flist+=( "colvar${f}" )
 done < ../histo_RMSDMID/hist_curing.txt
 
 echo "var attribution done"
@@ -34,7 +34,7 @@ do
 			v="${vlist[${ib}]}"
 			E="${Elist[${ib}]}"
 			echo "will execute awk on ${file} with v= ${v} and dir = ${E}" &
-			awk -v v=$v 'NR<=5{print}; (NR>5) && ($6 < v) {print}' "../../../${E}/${file}" > "./${file}" &
+			awk -v v=$v 'NR<=5{print}; (NR>5) && ($6 < v) {print}' "../../${E}/${file}" > "./${file}" &
 			PID="$!"
 			ib=$(echo "$((${ib}+1))")
 			#PID_LIST+="$PID "
