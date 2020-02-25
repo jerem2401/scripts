@@ -65,19 +65,24 @@ def main():
         matplotlib.rcParams.update({'font.size': 23})
 
  
-        histo_files = os.popen('ls histo* | sort -t _ -k 2 -n').read().split()
+        histo_files = os.popen('ls histo*.txt | sort -t _ -k 2 -n').read().split()
+        h1 = histo_files[:len(histo_files)//2]
+        h2 = histo_files[len(histo_files)//2:]
         
-        fig=plt.figure(figsize=(15,8))
-        ax = fig.add_subplot(1, 1, 1)
+        for i in [h1,h2]:
         
-        for h in histo_files:
-        
-            z, thishist = np.loadtxt(h, unpack=True)
-            #ax.bar(z, thishist, width = z[0]-z[1])
-            ax.plot(z, thishist)
+            fig=plt.figure(figsize=(15,8))
+            ax = fig.add_subplot(1, 1, 1)
+            
+            for j in i:
+            
+                z, thishist = np.loadtxt(j, unpack=True)
+                #ax.bar(z, thishist, width = z[0]-z[1])
+                ax.plot(z, thishist)
 
-        plt.xlim(min(z), max(z))
-        plt.savefig('hist.jpeg')
+            plt.xlim(min(z), max(z))
+            plt.savefig('hist_'+str([h1,h2].index(i))+'.jpeg')
+            plt.close()
 
     if args.plot == 'sep':
   
@@ -92,6 +97,7 @@ def main():
 
             z, thishist = np.loadtxt(h, unpack=True)
             Eg = h.split('_')[2]
+            Eg = Eg.strip('.txt')
 
             ax.plot(z, thishist)
             ax.plot(np.full((2,), float(Eg)), np.asarray([min(thishist), max(thishist)]))
