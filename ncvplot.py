@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
 
 
-    if args.f != None:
+    if args.umb == False:
 
         files=args.f
 
@@ -29,14 +29,13 @@ def main():
         cwds = cwd.split('/')
         
         if args.a != None:
-            alpha=float(args.a)
+            a=args.a
         else:
-            alpha = re.search(r"(?<=_a).*(?=_deq)", cwds[-1]).group()
+            a = float(re.search(r"(?<=_a).*(?=_deq)", cwds[-1]).group())
             print("careful alpha guessed from working directory name:"+str(alpha))
 	        
 
         #function
-        a=float(alpha)
         deq=0.05
         
         x = np.arange(0.001, 0.180, 0.005)
@@ -65,15 +64,10 @@ def main():
 
         for pltn, i in zip(range(1, len(files)*2+1, 2), files):
             df=plumed_pandas.read_as_pandas(i)
-            RMSDeq = df['RMSDEQ']
-            idd=[elem for elem in range(0, len(RMSDeq),1)]
-            RMSDeq = [RMSDeq[i] for i in idd]
-            RMSDax = df['RMSDAX']
-            RMSDax = [RMSDax[i] for i in idd]
-            phi = df['phi']
-            phi = [phi[i] for i in idd]
-            psi = df['psi']
-            psi = [psi[i] for i in idd]
+            RMSDeq = df['RMSDEQ'][::args.s]
+            RMSDax = df['RMSDAX'][::args.s]
+            phi = df['phi'][::args.s]
+            psi = df['psi'][::args.s]
             
             plt.subplot(len(files), 2, pltn)
             levels=[-2,-1,-0.5,-0.25,-0.1,-0.05,0,0.05,0.1,0.25,0.5,1,2]
@@ -118,15 +112,8 @@ def main():
             Then if you have a number of windows >> 75, you should think of rearranging this script"
             '''
             )
-            #path of umb working dir with all subdir called "E_*" for each um windows with diff ksi values
-            #path=str(sys.argv[1])
 
-            #list of all colvar file outputs from plumed, format: "colvar.*"
-            #colvar_list=[os.path.join(f, x)
-            #        for f in glob.glob(path + "*/", recursive=True) for all directories in path
-            #        for x in os.listdir(f) for all the elements in directories
-            #        if re.search(r"colvar_([0-9]|-|\.)", x) !=None]
-
+            #list of colvar files
             colvar_list=os.popen('ls E*/colvar* | sort -t _ -k 2 -n').read().split()
 
             #list of ksi values
