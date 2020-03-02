@@ -65,7 +65,7 @@ excludeNodes=''
 bEnsureFullNode=0  # if you run 8 2-core jobs (with pinning, make sure the node is filled by your jobs): #BSUB -R np16                                                                            
 batchInitLine=''
 gmxrcLine=''
-logicalCoresPerPhysical=1
+logicalCoresPerPhysical=2
 
 sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
@@ -272,9 +272,6 @@ while [ $# -gt 0 ]; do
         -exclude-nodes)
             shift
             excludeNodes="$(echo "$1" | sed 's/@/ /g')" ;;
-	-plumed)
-	    shift
-	    plumed=$1 ;;
 	-version)
 	    shift
             version=$1
@@ -363,7 +360,7 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH -p $queue$qExtension
 #SBATCH -o $dir/myjob${key}.out
 #SBATCH -e $dir/myjob${key}.err
-#SBATCH -n $np
+#SBATCH -c $(echo $logicalCoresPerPhysical*$ppn | bc)
 #SBATCH -t $walltime
 #SBATCH --job-name=$jobname$key
 #SBATCH --mail-user=$email
@@ -406,9 +403,9 @@ fi
 
 if [ $bMPI = 0 ]; then
     if [[ ( "$ntFlag" = "" ) && ( "$Qsystem" = slurm ) ]]; then
-        ntFlag="-nt \$[SLURM_NTASKS*$logicalCoresPerPhysical]"
+        ntFlag="-nt \$[SLURM_CPUS_PER_TASK]"
         {
-            echo "echo SLURM_NTASKS = \$SLURM_NTASKS"
+            echo "echo SLURM_CPUS_PER_TASK = \$SLURM_CPUS_PER_TASK"
         } >> $jobfile
     fi
 fi
