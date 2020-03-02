@@ -21,11 +21,13 @@ def main():
     if args.v == 1.00 or args.v == -1.00:
         tvalue=df.iloc[(df['nCV']-float(args.v)).abs().idxmin()]['time']
         gksi=df.iloc[(df['nCV']-float(args.v)).abs().idxmin()]['restraint2.RMSDMID_cntr']
+        gkap=df.iloc[(df['nCV']-float(args.v)).abs().idxmin()]['restraint2.RMSDMID_kappa']
     else:
         tvalue=df.iloc[(df['restraint.nCV_cntr']-float(args.v)).abs().idxmin()]['time']
         gksi=df.iloc[(df['restraint.nCV_cntr']-float(args.v)).abs().idxmin()]['restraint2.RMSDMID_cntr']
+        gkap=df.iloc[(df['restraint.nCV_cntr']-float(args.v)).abs().idxmin()]['restraint2.RMSDMID_kappa']
 
-    return (tvalue,gksi)
+    return (tvalue,gksi,gkap)
 
 # If called from the command line... 
 if __name__ == "__main__":
