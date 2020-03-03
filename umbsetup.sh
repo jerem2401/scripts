@@ -125,8 +125,12 @@ read group
 for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax"); do
    if mkdir "E_${ksi}"; then
 	values=$(start4umb.py -f $tmd_plum_out -v $ksi)
-	value=$(echo "$values" | grep -oP '(?<=\().*(?=,)')
-	gksi=$(echo "$values" | grep -oP '(?<=, ).*(?=\))')
+	#value=$(echo "$values" | grep -oP '(?<=\().*(?=,)')
+	#gksi=$(echo "$values" | grep -oP '(?<=, ).*(?=\))')
+	read -ra ADDR <<< $(echo "${values//[\(\)\,]}")
+	value=${ADDR[0]}
+	gksi=${ADDR[1]}
+	gkappa=${ADDR[2]}
         gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" <<EOF
 	$group
 EOF
