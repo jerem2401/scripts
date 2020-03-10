@@ -507,6 +507,7 @@ fi
 
 if [ "$multidirs" = "" ] ;then
     jobfile=job${key}.sh
+    mpitask=1
 else
     jobfile=job.${jobname}${key}.sh
     # Check if the node is really full
@@ -515,7 +516,7 @@ else
     ndir=$(echo $multidirs | wc -w | awk '{print $1}')
     npNeeded=$[nt*ndir/logicalCoresPerPhysical]
     echo "Multiple mdrun per node: ndir = $ndir, need $npNeeded phys. cores"
-
+    mpitask=$ndir
     # Note: np       = number of physical cores available/requested by command line
     #       npNeeded = number of physical cores needed
 
@@ -565,10 +566,11 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH -p $queue$qExtension
 #SBATCH -o $dir/myjob${key}.out
 #SBATCH -e $dir/myjob${key}.err
-#SBATCH -c $(echo $logicalCoresPerPhysical*$ppn | bc)
+#SBATCH -c $(echo "($logicalCoresPerPhysical*$ppn)/$mpitask" | bc)
 #SBATCH -t $walltime
 #SBATCH --job-name=$jobname$key
 #SBATCH --mail-user=$email
+#SBATCH --ntasks=$mpitask
 $batchInitLine
 $depline
 $med
@@ -680,7 +682,7 @@ fi
                 fi
                 
                 mdrunCall="$mpirun$mdrun"
-                mdrunArgs="$cpiArg -stepout $stepout $verb -s $tpr $maxh $dd $npme $deffnm $opt $edi $pinArgs $gpuID_flag"
+                mdrunArgs="$cpiArg -stepout $stepout $verb -s $tpr -maxh $maxh $dd $npme $deffnm $opt $edi $pinArgs $gpuID_flag"
                 echo -e "$mdrunCall $ntFlag $mdrunArgs >& md${key}.lis &\n"
                 let idir++
             done
