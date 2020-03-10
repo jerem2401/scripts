@@ -40,7 +40,7 @@ qExtension=""
 depline=""
 gpu_shares=""
 gpu_id=""
-Qsystem="none"
+Qsystem="nonset"
 stepout=5000
 feature=ice1
 dir=`pwd`
@@ -56,6 +56,7 @@ bLatest=0
 excludeNodes=''
 bEnsureFullNode=0  # if you run 8 2-core jobs (with pinning, make sure the node is filled by your jobs): #BSUB -R np16                                                                            
 batchInitLine=''
+med=''
 
 sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
