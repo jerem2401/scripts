@@ -18,7 +18,7 @@ for i in $(seq 0 "$slice" "$len")
 do
 	for file in "${dirl[@]:${i}:${slice}}"
 	do
-		name=$(echo ${file} | grep -oP '(?<=colvar).*(?=_)')
+		name=$(echo ${file} | grep -oP '(?<=colvar).*(?=.txt)')
 		echo "will execute rew on ${file} with command: ${cmd} and output as histo_${name}.txt"
 		$(rew_hist_final.py -f $file -k 20000 -min 0 -max 0.18 -s 0.001 -col RMSDMID --o histo_$name.txt) &
 		PID="$!"
