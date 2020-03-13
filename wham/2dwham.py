@@ -2,6 +2,7 @@
 
 #for i in ../../E_*/colv*; do var2=$(basename "$i"); awk '(NR>5) {print $1,$7,$6}' $i > ./$var2; done
 #for i in ./colv*; do cnt=$(echo "$i" | grep -oP '(?<=colvar).*(?=_)'); cnt2=$(echo "$i" | grep -oP '(?<=_).*(?=.txt)'); echo "$i   $cnt   $cnt2   5000   10000" >> metd.txt; done
+#for i in ./colv*; do cnt=$(echo "$i" | grep -oP '(?<=colvar).*(?=_)'); cnt2=$(echo "$i" | grep -oP '(?<=_).*(?=.txt)'); read cntkappa cnt2kappa <<< $(grep -oP '(?<=KAPPA=).*(?= )' ../../../E_$cnt/plumed_* ); echo "$i   $cnt   $cnt2   $cntkappa   $cnt2kappa" >> metd.txt; done
 #column -t metd.txt > temp.txt
 #sed '/inf/d' 2dpmf.txt > 2dpmf_clean.txt
 

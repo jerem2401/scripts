@@ -1,13 +1,15 @@
 #!/bin/bash
 echo $(date)
-echo '!!!!!!!!!!!!!!!!!!! CAREFUL: k=8000 and rew=True, think about argument parsing to make this script versatile !!!!!!!!!!!!!!!!'
+
 dir=$1
+slice=$2
+cmd=$3
+
 for i in $dir
 do
 	dirl+=( "$i" )
 done
 
-slice=$2
 len=$(echo "${#dirl[@]}")
 echo "total files: $len"
 echo "slice chosen : $slice"
@@ -16,8 +18,9 @@ for i in $(seq 0 "$slice" "$len")
 do
 	for file in "${dirl[@]:${i}:${slice}}"
 	do
-		echo "will execute rew on ${file} with k =8000 and rew=True" &
-		$(rew_hist_final.py -f $file -k 8000 -rew) &
+		name=$(echo ${file} | grep -oP '(?<=colvar).*(?=_)')
+		echo "will execute rew on ${file} with command: ${cmd} and output as histo_${name}.txt"
+		$(rew_hist_final.py -f $file -k 20000 -min 0 -max 0.18 -s 0.001 -col RMSDMID --o histo_$name.txt) &
 		PID="$!"
 		#PID_LIST+="$PID "
 	done
