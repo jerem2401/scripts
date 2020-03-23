@@ -23,7 +23,7 @@ def main():
     args = parser.parse_args()
 
     print('careful: put the -rew option added in the last maj for reweighting !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-
+    print(args.f, args.o)
     if args.plot == None:
         pos=re.search('(-|[0-9]|\.)+(?=_)', args.f).group()    
         
