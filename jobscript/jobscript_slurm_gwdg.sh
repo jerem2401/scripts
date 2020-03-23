@@ -40,7 +40,7 @@ qExtension=""
 depline=""
 gpu_shares=""
 gpu_id=""
-Qsystem="none"
+Qsystem="nonset"
 stepout=5000
 feature=ice1
 dir=`pwd`
@@ -259,6 +259,9 @@ while [ $# -gt 0 ]; do
         -email)
             shift
             email="$1" ;;
+	-batch_line)
+	    shift
+	    batchInitLine=$1;;
         -feature)
             shift
             feature=$1 ;;
@@ -302,8 +305,10 @@ done
 
 echo verb="$verb"
 
+[ $bCpi = 1 ] && cpiArg="-cpi" || cpiArg=""
 
 if [ "$loc" -eq 1 ]; then
+    [ $bCpi = 1 ] && cpiArg="-cpi ${dir}/state.cpt" || cpiArg=""
     maxh=$(echo "$intime-$copyt" | bc)
     if [ "$(echo "$maxh <= 0" | bc)" -eq 1 ]; then
         echo "you won't have enough time to copy files from the local disk, change the -copyt or increase -t option !!!"
@@ -385,7 +390,7 @@ fi
 ldPath=""
 initMPI=""
 spanline=""
-batchInitLine=""
+#batchInitLine=""
 if [ "$np" = "" ]; then
     np=$[nnodes*ppn]
 fi
@@ -407,7 +412,7 @@ case $machine in
         ;;
     interlagos)
         [ $ptile = unset ] && ptile=$ppn
-        spanline="#SBATCH --ntasks-per-node=$ptile"
+        spanline="#SBATCH --tasks-per-node=[$ptile]"
         ldPath=""
         if [ $bMPI = 1 ]; then
             mpirun="mpirun.slurm -np $np "
@@ -430,9 +435,6 @@ esac
 
 initLD='export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:'"$ldPath"
 
-[ $bCpi = 1 ] && cpiArg="-cpi" || cpiArg=""
-
-
 nGPUsPerNode=0
 logicalCoresPerPhysical=1
 if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
@@ -442,7 +444,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
 
     case "$gpuGeneration" in
         kepler)
-            # Use Kepler GTX 1070: nvgen=3D2                                                                                                                                                        
+            # Use Kepler GTX 1070: nvgen=3D2    
             nGPUsPerNode=1
             logicalCoresPerPhysical=2
             {
@@ -452,22 +454,22 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             } >> $sbatch_tempfile
             ;;
         maxwell)
-            # Use GTX 980                                                                                                                                                                          
+            # Use GTX 980                                                                                                             
             nGPUsPerNode=2
             {
                 echo '#SBATCH --gres=gpu:gtx980:1'
-		echo '#SBATCH --exclude=gpu-hub' # Exclude the our own Pascal nodes                                                                                                                    
+		echo '#SBATCH --exclude=gpu-hub' # Exclude the our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
 	maxwell4)
-            # Use nodes with 4 GTX 980                                                                                                                                                             
+            # Use nodes with 4 GTX 980
             nGPUsPerNode=4
             {
                 echo '#SBATCH --gres=gpu:gtx980:1'
             } >> $sbatch_tempfile
             ;;
         tesla)
-            # Use the expensive Tesla (allows double prec.)                                                                                                                                        
+            # Use the expensive Tesla (allows double prec.)
             nGPUsPerNode=2
             {
 		#NOT IMPLEMENTED YET
@@ -476,15 +478,15 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             } >> $sbatch_tempfile
             ;;
         gtx1080)
-            # Use GTX 1080                                                                                                                                                                         
+            # Use GTX 1080                                                                                                      
             nGPUsPerNode=2
             {
                 echo '#SBATCH --gres=gpu:gtx1080:1'
-		echo '#SBATCH --exclude=gpu-hub' # Exclude our own Pascal nodes                                                                                                                   
+		echo '#SBATCH --exclude=gpu-hub' # Exclude our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
         pascal40)
-            # Use GTX 1080                                                                                                                                                                         
+            # Use GTX 1080                                                                                              
             nGPUsPerNode=4
             logicalCoresPerPhysical=2
             {
@@ -503,35 +505,36 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
     fi
 
     if [ $gpuGeneration = pascal40 ]; then
-        # Jochen, Jun 16, 2017                                                                                                                                                                     
-        # Echo work-around while ptile option on Pascal40 nodes behaves strange                                                                                                                    
+        # Jochen, Jun 16, 2017
+        # Echo work-around while ptile option on Pascal40 nodes behaves strange
         spanline="#SBATCH -N 1"
     fi
 
     if [ "$gpu_shares" = "" ]; then
-        # if GPU shares not given, use the same as number of physical CPU cores requested.                                                                                                        
+        # if GPU shares not given, use the same as number of physical CPU cores requested.
         gpu_shares=$[ncores]
     fi
     echo "GPU gener = $gpuGeneration, ncores = $ncores, gpu_shares = $gpu_shares"
     # echo "#SBATCH --licenses=[ngpus_shared=10]" >> $sbatch_tempfile
-    # ppn=""                                                                                                                                                                                       
+    # ppn=""
 fi
 
 
 
 if [ "$multidirs" = "" ] ;then
     jobfile=job${key}.sh
+    mpitask=1
 else
     jobfile=job.${jobname}${key}.sh
-    # Check if the node is really full                                                                                                                                                             
+    # Check if the node is really full
     [ "$nnodes" -gt 1 ] && { echo -e "\nnnodes = $nnodes: Multidirs does not make sense." >&2; exit 1; }
     [ "$nt"      = "" ] && { echo -e "\nWith multidirs you must specify nt." >&2; exit 1; }
     ndir=$(echo $multidirs | wc -w | awk '{print $1}')
     npNeeded=$[nt*ndir/logicalCoresPerPhysical]
     echo "Multiple mdrun per node: ndir = $ndir, need $npNeeded phys. cores"
-
-    # Note: np       = number of physical cores available/requested by command line                                                                                                                
-    #       npNeeded = number of physical cores needed                                                                                                                                             
+    mpitask=$ndir
+    # Note: np       = number of physical cores available/requested by command line
+    #       npNeeded = number of physical cores needed
 
     if [ $npNeeded -gt $np ]; then
         echo -e "\nError, your job will need $npNeeded physical cores per node (nt=$nt, dir=$ndir), but you requested only $np physical cores."; exit 1
@@ -579,10 +582,11 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH -p $queue$qExtension
 #SBATCH -o $dir/myjob${key}.out
 #SBATCH -e $dir/myjob${key}.err
-#SBATCH -c $(echo $logicalCoresPerPhysical*$ppn | bc)
+#SBATCH -c $(echo "($logicalCoresPerPhysical*$ppn)/$mpitask" | bc)
 #SBATCH -t $walltime
 #SBATCH --job-name=$jobname$key
 #SBATCH --mail-user=$email
+#SBATCH --ntasks=$mpitask
 $batchInitLine
 $depline
 $med
@@ -663,7 +667,7 @@ fi
 		if [ "$loc" = 0 ]; then
                     echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& md${key}.lis"
 		else
-		    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& /local/${USER}_\$SLURM_JOB_ID/md${key}.lis"
+		    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >> /local/${USER}_\$SLURM_JOB_ID/md${key}.lis 2>&1"
 		fi
             else
                 echo "$mpirun" "$exe"
@@ -702,8 +706,8 @@ fi
                 fi		
 
                 mdrunCall="$mpirun$mdrun"
-                mdrunArgs="$cpiArg -stepout $stepout $verb -s $tpr $maxh $plumed $dd $npme $deffnm $opt $edi $pinArgs $gpuID_flag"
-                echo -e "$mdrunCall $ntFlag $mdrunArgs >& md$key.lis &\n"
+                mdrunArgs="$cpiArg -stepout $stepout $verb -s $tpr -maxh $maxh $plumed $dd $npme $deffnm $opt $edi $pinArgs $gpuID_flag"
+                echo -e "$mdrunCall $ntFlag $mdrunArgs >& md${key}.lis &\n"
                 let idir++
             done
             echo 'wait'
@@ -715,8 +719,8 @@ fi
 
 if [ $loc = 1 ]; then
     {
-        echo -e "echo \"copying files from /local/jlapier_\${SLURM_JOB_ID} to \${SLURM_SUBMIT_DIR} at \$(date)\""
-	echo -e "cp /local/\${USER}_\${SLURM_JOB_ID}/* \${SLURM_SUBMIT_DIR}"
+        echo -e "echo \"copying files from /local/${USER}_\${SLURM_JOB_ID} to \${SLURM_SUBMIT_DIR} at \$(date)\""
+	echo -e "cp --backup --suffix=.old_key${key} /local/\${USER}_\${SLURM_JOB_ID}/* \${SLURM_SUBMIT_DIR}"
 	echo -e "echo \"Ending job at \$(date)\""
     } >> $jobfile
 fi
