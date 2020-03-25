@@ -57,6 +57,7 @@ excludeNodes=''
 bEnsureFullNode=0  # if you run 8 2-core jobs (with pinning, make sure the node is filled by your jobs): #BSUB -R np16                                                                            
 batchInitLine=''
 med=''
+nGPUsAsked=1
 
 sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
@@ -292,6 +293,10 @@ while [ $# -gt 0 ]; do
 		gmxrc="/usr/users/cmb/shared/opt/gromacs/sandy-bridge/$version/bin/GMXRC"
 	    fi
             ;;
+        -ngpu)
+            shift
+            nGPUsAsked=$1
+            ;;
         *)
             echo -e "\n$0: Error, unknown argument: $1"
             exit 192
@@ -432,7 +437,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             nGPUsPerNode=1
             logicalCoresPerPhysical=2
             {
-                echo '#SBATCH --gres=gpu:gtx1070:1'                                                                                
+                echo "#SBATCH --gres=gpu:gtx1070:$nGPUsAsked"                                                                                
 		echo '#SBATCH --exclude=dge[015-045]'
                 queue=gpu-hub                                                                                                                                                          
             } >> $sbatch_tempfile
@@ -441,7 +446,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             # Use GTX 980                                                                                                             
             nGPUsPerNode=2
             {
-                echo '#SBATCH --gres=gpu:gtx980:1'
+                echo "#SBATCH --gres=gpu:gtx980:$nGPUsAsked"
 		echo '#SBATCH --exclude=gpu-hub' # Exclude the our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
@@ -449,7 +454,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             # Use nodes with 4 GTX 980
             nGPUsPerNode=4
             {
-                echo '#SBATCH --gres=gpu:gtx980:1'
+                echo "#SBATCH --gres=gpu:gtx980:$nGPUsAsked"
             } >> $sbatch_tempfile
             ;;
         tesla)
@@ -465,7 +470,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             # Use GTX 1080                                                                                                      
             nGPUsPerNode=2
             {
-                echo '#SBATCH --gres=gpu:gtx1080:1'
+                echo "#SBATCH --gres=gpu:gtx1080:$nGPUsAsked"
 		echo '#SBATCH --exclude=gpu-hub' # Exclude our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
@@ -474,7 +479,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             nGPUsPerNode=4
             logicalCoresPerPhysical=2
             {
-                echo '#SBATCH --gres=gpu:gtx1070:1'
+                echo "#SBATCH --gres=gpu:gtx1070:$nGPUsAsked"
                 queue=gpu-hub
             } >> $sbatch_tempfile
             ;;

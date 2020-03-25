@@ -18,6 +18,10 @@ def main():
     parser.add_argument('--a', help='provide alpha if not in directory_name under certain format', action='store', dest='a', type=float)
     parser.add_argument('-o', help='give path for plot output', action='store', dest='o')
     parser.add_argument('-s', help='number of frames to skip for plotting', action='store', dest='s', default=2, type=int)
+    parser.add_argument('-deqx',  help='rmsd fluctuation of first state', action='store', dest='deqx', default=0.05, type=float)
+    parser.add_argument('-deqy',  help='rmsd fluctuation of second state', action='store', dest='deqy', default=0.05, type=float)
+    parser.add_argument('-rmsdx', help='provide name of rmsdx in colvar file', action='store', dest='rmsdx', type=str)
+    parser.add_argument('-rmsdy', help='provide name of rmsdy in colvar file', action='store', dest='rmsdy', type=str)
     args = parser.parse_args()
 
 
@@ -36,18 +40,10 @@ def main():
 	        
 
         #function
-        deq=0.05
-        
-        x = np.arange(0.001, 0.180, 0.005)
-        y = np.arange(0.001, 0.180, 0.005)
-        X, Y = np.meshgrid(x, y)
-        
         def nCV(X,Y):
-            Z = ((deq/X)**a)-((deq/Y)**a)
+            Z = ((args.deqx/X)**a)-((args.deqy/Y)**a)
             return Z
-        
-        Z=nCV(X,Y)
-
+       
         ###################################Special values################################################
         Xeq=0.001376
         Yeq=0.098296
@@ -64,11 +60,15 @@ def main():
 
         for pltn, i in zip(range(1, len(files)*2+1, 2), files):
             df=plumed_pandas.read_as_pandas(i)
-            RMSDeq = df['RMSDEQ'][::args.s]
-            RMSDax = df['RMSDAX'][::args.s]
+            RMSDeq = df[args.rmsdx][::args.s]
+            RMSDax = df[args.rmsdy][::args.s]
             phi = df['phi'][::args.s]
             psi = df['psi'][::args.s]
             
+            xy = np.arange(0.001, max(float(RMSDeq.max()),float(RMSDax.max())), 0.005)
+            X, Y = np.meshgrid(xy, xy)
+            Z=nCV(X,Y)
+
             plt.subplot(len(files), 2, pltn)
             levels=[-2,-1,-0.5,-0.25,-0.1,-0.05,0,0.05,0.1,0.25,0.5,1,2]
             levels+=[axCVval,eqCVval]
@@ -79,13 +79,9 @@ def main():
             plt.ylabel('RMSDax')
             plt.scatter(RMSDeq, RMSDax, c=list(range(1, len(RMSDax)+1, 1)), cmap=plt.cm.get_cmap('rainbow'), s=10)
             plt.title('RMSDs of trajectory relative to state ax and eq \n & projection of the nCV')
-            plt.xlim(0.001, 0.180)
-            plt.ylim(0.001, 0.180)
             plt.gca().set_aspect('equal', adjustable='box')
 
             plt.subplot(len(files), 2, pltn+1)
-            plt.xlim(-3.2, 3.2)
-            plt.ylim(-3.2, 3.2)
             plt.title('phi & psi dihedral angles')
             plt.xlabel('phi')
             plt.ylabel('psi')
