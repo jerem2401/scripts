@@ -9,9 +9,10 @@ winmin=-1
 ttot=$(echo "$dir" | grep -oP '(?<=_t).*(?=_k)')
 tstep=$(echo "scale=0; $ttot/0.000002" | bc -l) #assuming that the time step is 0.002ps, add timestep as arguments ?
 
-alpha=$(echo "$dir" | grep -oP '(?<=_a).*(?=_deq)')
+alpha=$(echo "$dir" | grep -oP '(?<=_a).*(?=_deqx)')
 
-deq=$(echo "$dir" | grep -oP '(?<=_deq)([0-9]|\.)*')
+deqx=$(echo "$dir" | grep -oP '(?<=_deqx).*(?=_deqy)')
+deqy=$(echo "$dir" | grep -oP '(?<=_deqy)([0-9]|\.)*')
 
 kappa=$(echo "$dir" | grep -oP '(?<=_k).*(?=_gk)')
 gkappa=$(echo "$dir" | grep -oP '(?<=_gk).*(?=_a)')
@@ -19,9 +20,7 @@ gkappa=$(echo "$dir" | grep -oP '(?<=_gk).*(?=_a)')
 #tmd_tpr='md.tpr'
 #tmd_traj='traj_comp.xtc'
 temp_mdp='../temp/temp.mdp'
-top='../temp/c7eq.top'
-refpdb1='../temp/c7eqf.pdb'
-refpdb2='../temp/c7axf.pdb'
+top=$(echo ../temp/*.top)
 plumed_tmp='../temp/plumed_tmp.dat'
 
 while [ $# -gt 0 ]; do
@@ -32,7 +31,7 @@ while [ $# -gt 0 ]; do
             ;;
         -h)
 	    echo "easy peasy args detection with following dir format: N*nbOfWin*_t*ttot*_k*kappa*_gk*gkappa*_a*alpha*_deq*deq*"
-            echo "-f tmd.txt -tpr tmd.tpr -traj tmd.traj -mdp temp.mdp -top mol.top -ref1 refpdb1.pdb -ref2 refpdb2.pdb -pltmp plumed_tmp.dat"
+            echo "-f tmd.txt -tpr tmd.tpr -traj tmd.traj -mdp temp.mdp -top mol.top -pltmp plumed_tmp.dat"
 	    echo "other options: -w=nbOfWin, -wmax=winmax, -wmin=winmin, -refmid=ref pdb for gCV"
 	    exit
             ;;
@@ -51,14 +50,6 @@ while [ $# -gt 0 ]; do
 	-top)
             shift
             top="$1"
-            ;;
-	-ref1)
-            shift
-            refpdb1="$1"
-	    ;;
-	-ref2)
-            shift
-            refpdb2="$1"
             ;;
 	-refmid)
 	    shift
@@ -89,9 +80,13 @@ while [ $# -gt 0 ]; do
             shift
             alpha="$1"
             ;;
-	--deq|-d)
+	--deqx|-d)
 	    shift
-	    deq="$1"
+	    deqx="$1"
+	    ;;
+	--deqy|-d)
+            shift
+            deqy="$1"
 	    ;;
 	--kappa|-k)
 	    shift
@@ -124,7 +119,7 @@ read group
 
 for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax"); do
    if mkdir "E_${ksi}"; then
-	values=$(start4umb.py -f $tmd_plum_out -v $ksi)
+	values=$(start4umb.py -f $tmd_plum_out -v $ksi -wm $winmin $winmax)
 	#value=$(echo "$values" | grep -oP '(?<=\().*(?=,)')
 	#gksi=$(echo "$values" | grep -oP '(?<=, ).*(?=\))')
 	read -ra ADDR <<< $(echo "${values//[\(\)\,]}")
@@ -135,10 +130,9 @@ for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax"); do
 	$group
 EOF
 	gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1	
-	cp "$refpdb1" "./E_${ksi}"
-	cp "$refpdb2" "./E_${ksi}"
+	cp ../temp/*.pdb "./E_${ksi}"
 	cp "$refmid" "./E_${ksi}"
-	sed "s/_POSI_/${ksi}/g;s/_gPOSI_/${gksi}/g;s/_DEQ_/${deq}/g;s/_ALPHA_/${alpha}/g;s/_KAPPA_/${kappa}/g;s/_gKAPPA_/${gkappa}/g;" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
+	sed "s/_POSI_/${ksi}/g;s/_gPOSI_/${gksi}/g;s/_DEQx_/${deqx}/g;s/_DEQy_/${deqy}/g;s/_ALPHA_/${alpha}/g;s/_KAPPA_/${kappa}/g;s/_gKAPPA_/${gkappa}/g;" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
 	echo -e "\nused tmd directory: ${tmd_plum_out}" >> mdout.mdp
 	echo 'done'
    else

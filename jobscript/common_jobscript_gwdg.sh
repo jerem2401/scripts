@@ -118,7 +118,7 @@ while [ $# -gt 0 ]; do
 	-go) bGo=1;;
 	-p) shift
             queue=$1
-	    if [ $queue == 'medium' ]; then
+	    if [ $queue == 'medium' ] || [ $queue == 'gpu' ]; then
 		med='#SBATCH -A all'
 	    else
 		med=''
@@ -447,7 +447,6 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             nGPUsPerNode=2
             {
                 echo "#SBATCH --gres=gpu:gtx980:$nGPUsAsked"
-		echo '#SBATCH --exclude=gpu-hub' # Exclude the our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
 	maxwell4)
