@@ -74,6 +74,11 @@ do_wham2d() {
    done
 }
 
+#clean_wham2d() {
+#	for k in `seq 1 $c`; do
+#	   sed '/inf/d' "c_${k}/2dpmf.txt" > "c_${k}/2dpmf_clean.txt"
+	
+
 #mk_chunk
 #mk_metd
 
