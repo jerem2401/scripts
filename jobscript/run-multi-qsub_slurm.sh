@@ -63,7 +63,6 @@ if [ $nchain -gt 1 ]; then
     jobscript="jobchain.sh -n $nchain"
     bChain=1
 else
-    jobscript=/usr/users/jlapier/gitrepo/scripts/jobscript/jobscript_slurm_gwdg.sh
     bChain=0
 fi
 
@@ -72,6 +71,7 @@ Qsystem=unset
 if hostname | grep -q gwdu; then
     Qsystem=slurm                                      #used to be LSF;  Gari Change 
     echo "This is at the GWDG"
+    jobscript=/usr/users/jlapier/gitrepo/scripts/jobscript/jobscript_slurm_gwdg.sh
 elif hostname | egrep -q 'jj28l..'; then
     echo This is JUROPA
     Qsystem=moab
@@ -79,6 +79,7 @@ elif hostname | egrep -q 'hicegate'; then
     Qsystem=PBS
 elif [ `hostname` = "smaug" ]; then
     Qsystem=slurm
+    jobscript=/data/users/jeremy/gitrepo/scripts/jobscript/jobscript_slurm_smaug.sh
 else
     echo "$0: ERROR. Don't know this machine ($(hostname))"; exit 1
 fi

@@ -75,7 +75,7 @@ trap "rm -rf $sbatch_tempfile" EXIT
 
 case `hostname` in
     smaug)
-	ppn=12
+	ppn=6
 	gmxrc=/data/shared/opt/gromacs/2018.6/bin/GMXRC.bash
 	queue=deflt
 	machine=smaug
