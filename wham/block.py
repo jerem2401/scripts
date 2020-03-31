@@ -61,22 +61,22 @@ def wham_chunk(c):
 
 
 
-def block_avg():
+def block_avg(f2):
     #computing block avergaes. std and sem plotting the final block_averaged pmf with error bars
     print('Here comes the block averaging')
 
-    files=glob.glob('test_wham_pmf_*')
+    files=glob.glob(f2)
     files.sort()
     lf=len(files)
     ref=files[round(lf/2)]
-    ksir, freer = np.loadtxt(ref, unpack=True, delimiter='    ')
+    ksir, pror, freer = np.loadtxt(ref, unpack=True, delimiter=' ')
     
-    freer[np.where(ksir == -1)]
+    min_freer=np.amin(freer)
     
     allf=[]
     for i in files:
-        ksi, free = np.loadtxt(i, unpack=True, delimiter='    ')
-        delta=freer[np.where(ksir == -1)]-free[np.where(ksi == -1)]
+        ksi, pro, free = np.loadtxt(i, unpack=True, delimiter=' ')
+        delta=min_freer-free[np.where(freer == min_freer)]
         free=free+delta
         allf.append(free)
     
@@ -90,7 +90,7 @@ def block_avg():
     for i in range(len(ksir)):
         print(str(ksir[i])+'    '+str(avg[i])+'    '+str(sem[i]), file=fp)
     fp.close()
-    #np.savetxt(r'block_pmf.out', (ksir,avg,sem),fmt='%.6f',delimiter='    ')
+    np.savetxt(r'block_pmf.out', np.c_[ksir,avg,sem],fmt='%.3f',delimiter='    ')
     
     return(ksir,avg,sem)
 
@@ -121,7 +121,7 @@ def main(raw_args=None):
     
     dflen, chlen = rew_chunk(args.f,args.c,args.k)
     wham_chunk(args.c)
-    ksir, avg, sem = block_avg()
+    ksir, avg, sem = block_avg('test_wham_pmf_*')
     plot_bpmf(ksir,avg,sem,args.c)
 
 if __name__ == "__main__":

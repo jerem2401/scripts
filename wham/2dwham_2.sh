@@ -20,7 +20,7 @@ done
 #args needed: -f, -c
 mk_chunk() {
    seq -f "c_%.0f" 1 $c | xargs mkdir
-   
+
    for i in ${files}; do
        collen=$(wc -l < $i)
        chlen=$(($collen / $c))
@@ -36,7 +36,7 @@ mk_chunk() {
               endl=$collen
            else
    	      endl=$((endl+chlen))
-           fi 
+           fi
    	   echo "endl   = $endl";
    	   $(awk -v a=$startl -v b=$endl '(NR>=a) && (NR<=b)' $i > "c_${k}/${file}_${k}.txt") &
    	   startl=$((startl+chlen));
@@ -74,10 +74,12 @@ do_wham2d() {
    done
 }
 
-#clean_wham2d() {
-#	for k in `seq 1 $c`; do
-#	   sed '/inf/d' "c_${k}/2dpmf.txt" > "c_${k}/2dpmf_clean.txt"
-	
+clean_wham2d() {
+    for k in `seq 1 $c`; do
+        sed '/inf/d' "c_${k}/2dpmf.txt" > "c_${k}/2dpmf_clean.txt"
+        $(projection.py -f "c_${k}/2dpmf_clean.txt" -o "c_${k}/1dpmf_${k}.txt")
+    done
+}
 
 #mk_chunk
 #mk_metd
