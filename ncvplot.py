@@ -24,37 +24,35 @@ def main():
     parser.add_argument('-rmsdy', help='provide name of rmsdy in colvar file', action='store', dest='rmsdy', type=str)
     args = parser.parse_args()
 
+    cwd = os.getcwd()
+    cwds = cwd.split('/')
+
+    if args.a != None:
+        a=args.a
+    else:
+        a = float(re.search(r"(?<=_a).*(?=_deqx)", cwds[-1]).group())
+        print("careful alpha guessed from working directory name:"+str(a))
+
+    #function
+    def nCV(X,Y):
+        Z = ((args.deqx/X)**a)-((args.deqy/Y)**a)
+        return Z
 
     if args.umb == False:
 
         files=args.f
 
-        cwd = os.getcwd()
-        cwds = cwd.split('/')
-        
-        if args.a != None:
-            a=args.a
-        else:
-            a = float(re.search(r"(?<=_a).*(?=_deq)", cwds[-1]).group())
-            print("careful alpha guessed from working directory name:"+str(alpha))
-	        
-
-        #function
-        def nCV(X,Y):
-            Z = ((args.deqx/X)**a)-((args.deqy/Y)**a)
-            return Z
-       
         ###################################Special values################################################
         Xeq=0.001376
         Yeq=0.098296
-        
+
         Xax=0.098361
         Yax=0.001384
-        
+
         eqCVval=nCV(Xeq,Yeq)
         axCVval=nCV(Xax,Yax)
         #################################################################################################
-            
+
         fig=plt.figure(1, figsize=(10,6*len(files)))
         fig=plt.figure(1)
 
@@ -64,7 +62,7 @@ def main():
             RMSDax = df[args.rmsdy][::args.s]
             phi = df['phi'][::args.s]
             psi = df['psi'][::args.s]
-            
+
             xy = np.arange(0.001, max(float(RMSDeq.max()),float(RMSDax.max())), 0.005)
             X, Y = np.meshgrid(xy, xy)
             Z=nCV(X,Y)
@@ -117,7 +115,7 @@ def main():
 
             #following paragraph not needed anymore since now os.popen + sort already list by increasing value of ksi
             #get dictionary of CVval values with their indexes (last line inverse keys and values)
-            #indexing = enumerate(CVval2) 
+            #indexing = enumerate(CVval2)
             #dico=dict(list(indexing))
             #dico={v: k for k, v in dico.items()}
             #reordering values in list according to CVval2 order
@@ -130,20 +128,33 @@ def main():
             clcut=[colvar_list[i:i + 20] for i in range(0, len(colvar_list), 20)]
 
             #function
-            dfxmax=plumed_pandas.read_as_pandas(colvar_list[-1])
-            dfymax=plumed_pandas.read_as_pandas(colvar_list[0])
+            dfxmax=plumed_pandas.read_as_pandas(colvar_list[0])
+            dfymax=plumed_pandas.read_as_pandas(colvar_list[-1])
 
-            RMSDxmax = dfxmax[args.rmsdx][0,-1]
-            RMSDymax = dfymax[args.rmsdy][0,-1]
+            #to genereate the borns of the grid for Z function (and for max axis)
+            #, I tool the 1st element of the 2 rmsds and add 5% to it instea
+            #of loading all the dataf and taking the max +5%
+            RMSDxmax = dfxmax[args.rmsdx][0]+(0.05*dfxmax[args.rmsdx][0])
+            RMSDymax = dfymax[args.rmsdy][0]+(0.05*dfymax[args.rmsdx][0])
+            maxRMSD  = max(RMSDymax,RMSDxmax)+(max(RMSDymax,RMSDxmax)*0.10)
 
-            xy = np.arange(0.001, max(float(RMSDxmax.max()),float(RMSDymax.max())), 0.005)
+            phixm  = dfxmax['phi'][0]+(0.05*dfxmax['phi'][0])
+            psixm  = dfxmax['psi'][0]+(0.05*dfxmax['psi'][0])
+
+            phiym  = dfymax['phi'][0]+(0.05*dfymax['phi'][0])
+            psixm  = dfymax['psi'][0]+(0.05*dfymax['psi'][0])
+
+            angmin   = min(phixm,psixm,phiym,psixm)
+            angmax   = max(phixm,psixm,phiym,psixm)
+
+            xy = np.arange(0.001, maxRMSD, 0.005)
             X, Y = np.meshgrid(xy, xy)
             Z=nCV(X,Y)
 
             #data objects
             for nbl, k in enumerate(clcut, 0):
                 plt.figure(1)
-                plt.figure(figsize=(12,5*len(k))) 
+                plt.figure(figsize=(12,5*len(k)))
                 for pltn, i in zip(range(1, len(k)*2+1, 2), k):
                     df=plumed_pandas.read_as_pandas(i)
                     RMSDeq = df[args.rmsdx][::args.s]
@@ -182,11 +193,13 @@ def main():
                     plt.xlabel('RMSDeq')
                     plt.ylabel('RMSDax')
                     plt.scatter(RMSDeq, RMSDax, c=list(range(1, len(RMSDax)+1, 1)), cmap=plt.cm.get_cmap('rainbow'), s=10)
+                    plt.xlim(0,maxRMSD)
+                    plt.ylim(0,maxRMSD)
                     plt.title(param.group()+'\n'+param2.group())
 
                     plt.subplot(len(k), 2, pltn+1)
-                    plt.xlim(-3.2, 3.2)
-                    plt.ylim(-3.2, 3.2)
+                    plt.xlim(angmin, angmax)
+                    plt.ylim(angmin, angmax)
                     plt.title('phi & psi dihedral angles')
                     plt.xlabel('phi')
                     plt.ylabel('psi')

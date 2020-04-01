@@ -1,3 +1,10 @@
+# Erase background with current bg color
+defbce "on"
+
+# Increase scrollback size
+defscrollback = 600
+scrollback = 600
+
 split -v
 focus
 screen -t bash

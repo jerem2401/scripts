@@ -20,7 +20,8 @@ do
 	do
 		name=$(echo ${file} | grep -oP '(?<=colvar).*(?=.txt)')
 		echo "will execute rew on ${file} with command: ${cmd} and output as histo_${name}.txt"
-		$(rew_hist_final.py -f $file -k 20000 -min 0 -max 0.18 -s 0.001 -col RMSDMID --o histo_$name.txt) &
+		#try command.py -f toto -s titi &> | tee test.txt
+		(rew_hist_final.py -f $file -k 20000 -min 0 -max 0.45 -s 0.004 -col RMSDMID --o histo_$name.txt &> rew.out) &
 		PID="$!"
 		#PID_LIST+="$PID "
 	done
