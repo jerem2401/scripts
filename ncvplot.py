@@ -123,20 +123,22 @@ def main():
             #reordering values in list according to CVval2 order
             #colvar_listS = [None] * len(colvar_list)
             #for i in colvar_list:
-            #    colvar_listS[dico[float(re.search(r"(?<=E_).*(?=/)", i).group())]] = i
+            #colvar_listS[dico[float(re.search(r"(?<=E_).*(?=/)", i).group())]] = i
             #colvar_list=colvar_listS
 
             #cut colvar_list in several lists of 20 elem to lighten the plot generation and avoid crash (for std desktop ressources)
             clcut=[colvar_list[i:i + 20] for i in range(0, len(colvar_list), 20)]
 
-            #function parameters#######################CHANGE CODE TO GET PARAM FROM COLVAR##########################
-            a=0.5
-            deq=0.05
-            x = np.arange(0.001, 0.180, 0.005)
-            y = np.arange(0.001, 0.180, 0.005)
-            X, Y = np.meshgrid(x, y)
-            Z = ((deq/X)**a)-((deq/Y)**a)
-            #function parameters#######################CHANGE CODE TO GET PARAM FROM COLVAR##########################
+            #function
+            dfxmax=plumed_pandas.read_as_pandas(colvar_list[-1])
+            dfymax=plumed_pandas.read_as_pandas(colvar_list[0])
+
+            RMSDxmax = dfxmax[args.rmsdx][0,-1]
+            RMSDymax = dfymax[args.rmsdy][0,-1]
+
+            xy = np.arange(0.001, max(float(RMSDxmax.max()),float(RMSDymax.max())), 0.005)
+            X, Y = np.meshgrid(xy, xy)
+            Z=nCV(X,Y)
 
             #data objects
             for nbl, k in enumerate(clcut, 0):
@@ -144,8 +146,8 @@ def main():
                 plt.figure(figsize=(12,5*len(k))) 
                 for pltn, i in zip(range(1, len(k)*2+1, 2), k):
                     df=plumed_pandas.read_as_pandas(i)
-                    RMSDeq = df['RMSDEQ'][::args.s]
-                    RMSDax = df['RMSDAX'][::args.s]
+                    RMSDeq = df[args.rmsdx][::args.s]
+                    RMSDax = df[args.rmsdy][::args.s]
                     phi = df['phi'][::args.s]
                     psi = df['psi'][::args.s]
 
@@ -201,6 +203,6 @@ def main():
         else:
             print("you should specify the colvar_files with -f or turn umb plot mode on with -umb")
 
-# If called from the command line... 
+# If called from the command line...
 if __name__ == "__main__":
     main()
