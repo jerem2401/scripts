@@ -57,6 +57,7 @@ excludeNodes=''
 bEnsureFullNode=0  # if you run 8 2-core jobs (with pinning, make sure the node is filled by your jobs): #BSUB -R np16                                                                            
 batchInitLine=''
 med=''
+nGPUsAsked=1
 
 sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
@@ -117,7 +118,7 @@ while [ $# -gt 0 ]; do
 	-go) bGo=1;;
 	-p) shift
             queue=$1
-	    if [ $queue == 'medium' ]; then
+	    if [ $queue == 'medium' ] || [ $queue == 'gpu' ]; then
 		med='#SBATCH -A all'
 	    else
 		med=''
@@ -295,6 +296,10 @@ while [ $# -gt 0 ]; do
 		gmxrc="/usr/users/cmb/shared/opt/gromacs/sandy-bridge/$version/bin/GMXRC"
 	    fi
             ;;
+        -ngpu)
+            shift
+            nGPUsAsked=$1
+            ;;
         *)
             echo -e "\n$0: Error, unknown argument: $1"
             exit 192
@@ -340,7 +345,7 @@ if [ "$multidirs" = "" ] && [ "$plumed" = "-plumed on" ]; then
             ls *.dat >&2
             exit 1
         else
-            plumed="-plumed $(ls *.dat)"
+            plumed="-plumed $dir/$(ls *.dat)"
         fi  
     fi      
 fi     
@@ -448,7 +453,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             nGPUsPerNode=1
             logicalCoresPerPhysical=2
             {
-                echo '#SBATCH --gres=gpu:gtx1070:1'                                                                                
+                echo "#SBATCH --gres=gpu:gtx1070:$nGPUsAsked"                                                                                
 		echo '#SBATCH --exclude=dge[015-045]'
                 queue=gpu-hub                                                                                                                                                          
             } >> $sbatch_tempfile
@@ -457,15 +462,14 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             # Use GTX 980                                                                                                             
             nGPUsPerNode=2
             {
-                echo '#SBATCH --gres=gpu:gtx980:1'
-		echo '#SBATCH --exclude=gpu-hub' # Exclude the our own Pascal nodes
+                echo "#SBATCH --gres=gpu:gtx980:$nGPUsAsked"
             } >> $sbatch_tempfile
             ;;
 	maxwell4)
             # Use nodes with 4 GTX 980
             nGPUsPerNode=4
             {
-                echo '#SBATCH --gres=gpu:gtx980:1'
+                echo "#SBATCH --gres=gpu:gtx980:$nGPUsAsked"
             } >> $sbatch_tempfile
             ;;
         tesla)
@@ -481,7 +485,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             # Use GTX 1080                                                                                                      
             nGPUsPerNode=2
             {
-                echo '#SBATCH --gres=gpu:gtx1080:1'
+                echo "#SBATCH --gres=gpu:gtx1080:$nGPUsAsked"
 		echo '#SBATCH --exclude=gpu-hub' # Exclude our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
@@ -490,7 +494,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             nGPUsPerNode=4
             logicalCoresPerPhysical=2
             {
-                echo '#SBATCH --gres=gpu:gtx1070:1'
+                echo "#SBATCH --gres=gpu:gtx1070:$nGPUsAsked"
                 queue=gpu-hub
             } >> $sbatch_tempfile
             ;;
@@ -602,13 +606,16 @@ echo Host \$SLURM_JOB_NODELIST
 echo Jobname \$SLURM_JOB_NAME
 echo Subcwd \$SLURM_SUBMIT_DIR
 
-cd $dir
 EOF
     } > $jobfile
 
 if [ $loc = 1 ]; then
     {
         echo -e "mkdir /local/${USER}_\$SLURM_JOB_ID\ncd /local/${USER}_\$SLURM_JOB_ID"
+    } >> $jobfile
+else
+    {
+    echo -e "cd $dir"
     } >> $jobfile
 fi
 
@@ -663,9 +670,9 @@ fi
                 fi
                 
                 mdrunCall="$mpirun$mdrun"
-                mdrunArgs="$cpiArg -stepout $stepout $verb -s "${dir}/${tpr}" -maxh $maxh $dd $npme $deffnm $opt $edi $pinArgs $plumed"
+                mdrunArgs="$cpiArg -stepout $stepout $verb -s ${dir}/${tpr} -maxh $maxh $dd $npme $deffnm $opt $edi $pinArgs $plumed"
 		if [ "$loc" = 0 ]; then
-                    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& md${key}.lis"
+                    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >> md${key}.lis 2>&1"
 		else
 		    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >> /local/${USER}_\$SLURM_JOB_ID/md${key}.lis 2>&1"
 		fi
@@ -702,8 +709,8 @@ fi
                     if [ $npld -ne 1 ]; then
                         echo "Found $npld plumed.dat files in dir `pwd`" >&2; exit 1
                     fi
-                    plumed="-plumed $(ls *.dat)"
-                fi		
+                    plumed="-plumed $dir/$(ls *.dat)"
+                fi
 
                 mdrunCall="$mpirun$mdrun"
                 mdrunArgs="$cpiArg -stepout $stepout $verb -s $tpr -maxh $maxh $plumed $dd $npme $deffnm $opt $edi $pinArgs $gpuID_flag"
@@ -722,7 +729,7 @@ if [ $loc = 1 ]; then
         echo -e "echo \"copying files from /local/${USER}_\${SLURM_JOB_ID} to \${SLURM_SUBMIT_DIR} at \$(date)\""
 	echo -e "cp --backup --suffix=.old_key${key} /local/\${USER}_\${SLURM_JOB_ID}/* \${SLURM_SUBMIT_DIR}"
 	echo -e "echo \"Ending job at \$(date)\""
-    } >> $jobfile
+    } >> $dir/$jobfile
 fi
 
 

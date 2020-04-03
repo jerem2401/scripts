@@ -40,7 +40,7 @@ extraLine=""
 nperjob=0
 nchain=0
 GOchain=""
-
+extend=0
 opt=""
 
 while [ $# -gt 0 ]; do
@@ -51,6 +51,8 @@ while [ $# -gt 0 ]; do
 	    nperjob=$1 ;;
 	-nchain) shift
 	    nchain=$1 ;;
+	-ext)
+	    extend=1;;
 	*)
 	    # options may contain multiple words -
 	    # pack into one word as a work-around to avoid trouble in jobscript.sh	   
@@ -89,7 +91,7 @@ N_RUNS=0
 dirlist=""
 for i in `ls -d $dir 2> /dev/null`; do
     # Check if run is alredy finished:
-    if [  -e $i/confout.gro  ]; then 
+    if [  -e $i/confout.gro  ] && (($extend == 0)); then 
 	echo "Found $i/confout.gro. Not running this directory."
 	continue
     else
