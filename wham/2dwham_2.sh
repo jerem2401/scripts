@@ -73,6 +73,7 @@ do_wham2d() {
       done
       wait $PID
    done
+   sleep 10
    echo "do_wham2d done"
 }
 
