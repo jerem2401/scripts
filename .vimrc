@@ -13,6 +13,33 @@ set number
 " set tw=79
 set colorcolumn=80
 
+" status line
+" display file name
+set laststatus=2
+" set statusline=%F "tail of the filename
+set statusline=
+set statusline+=%#DiffAdd#%{(mode()=='n')?'\ \ NORMAL\ ':''}
+set statusline+=%#DiffChange#%{(mode()=='i')?'\ \ INSERT\ ':''}
+set statusline+=%#DiffDelete#%{(mode()=='r')?'\ \ RPLACE\ ':''}
+set statusline+=%#Cursor#%{(mode()=='v')?'\ \ VISUAL\ ':''}
+set statusline+=\ %n\           " buffer number
+set statusline+=%#Visual#       " colour
+set statusline+=%{&paste?'\ PASTE\ ':''}
+set statusline+=%{&spell?'\ SPELL\ ':''}
+set statusline+=%#CursorIM#     " colour
+set statusline+=%R                        " readonly flag
+set statusline+=%M                        " modified [+] flag
+set statusline+=%#Cursor#               " colour
+set statusline+=%#CursorLine#     " colour
+set statusline+=\ %F\                   " long file name isntead of %t for short
+set statusline+=%=                          " right align
+set statusline+=%#CursorLine#   " colour
+set statusline+=\ %Y\                   " file type
+set statusline+=%#CursorIM#     " colour
+set statusline+=\ %3l:%-2c\         " line + column
+set statusline+=%#Cursor#       " colour
+set statusline+=\ %3p%%\                " percentage
+
 " following PEP8 indentation 4 python
 autocmd BufNewFile,BufRead *.py
 \ set tabstop=4
@@ -52,11 +79,12 @@ autocmd ColorScheme * highlight ExtraWhitespace ctermbg=red guibg=red
 au InsertLeave * match ExtraWhitespace /\s\+$/
 
 " Color scheme
+" wombat:
 " mkdir -p ~/.vim/colors && cd ~/.vim/colors
 " wget -O wombat256mod.vim http://www.vim.org/scripts/download_script.php?src_id=13400
-set t_Co=256
+" set t_Co=256
 
-
+" gruvbox:
 " installing gruvbox colorscheme: following:https://github.com/morhetz/gruvbox/wiki/Installation
 color gruvbox
 :set bg=dark
@@ -77,30 +105,9 @@ color gruvbox
 : map <F3> :PMinus<CR>
 : map <F4> :PPlus<CR>
 
-
-" status line
-" display file name
-" set laststatus=2
-" set statusline=%f "tail of the filename
-set statusline=
-set statusline+=%#DiffAdd#%{(mode()=='n')?'\ \ NORMAL\ ':''}
-set statusline+=%#DiffChange#%{(mode()=='i')?'\ \ INSERT\ ':''}
-set statusline+=%#DiffDelete#%{(mode()=='r')?'\ \ RPLACE\ ':''}
-set statusline+=%#Cursor#%{(mode()=='v')?'\ \ VISUAL\ ':''}
-set statusline+=\ %n\           " buffer number
-set statusline+=%#Visual#       " colour
-set statusline+=%{&paste?'\ PASTE\ ':''}
-set statusline+=%{&spell?'\ SPELL\ ':''}
-set statusline+=%#CursorIM#     " colour
-set statusline+=%R                        " readonly flag
-set statusline+=%M                        " modified [+] flag
-set statusline+=%#Cursor#               " colour
-set statusline+=%#CursorLine#     " colour
-set statusline+=\ %t\                   " short file name
-set statusline+=%=                          " right align
-set statusline+=%#CursorLine#   " colour
-set statusline+=\ %Y\                   " file type
-set statusline+=%#CursorIM#     " colour
-set statusline+=\ %3l:%-2c\         " line + column
-set statusline+=%#Cursor#       " colour
-set statusline+=\ %3p%%\                " percentage
+" 4smaug
+let hostname=system("hostname -s | tr -d '\n'")
+if hostname == 'smaug'
+    set directory=/home/users/jeremy/.vim/swapfiles
+    set backupdir=/home/users/jeremy/.vim/tmp
+endif
