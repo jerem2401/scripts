@@ -1,6 +1,6 @@
 #!/bin/sh
 
-session="python"
+session=$1
 
 #start session, -s sessions name
 tmux new-session -s $session -d
