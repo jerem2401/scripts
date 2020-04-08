@@ -709,7 +709,7 @@ fi
                     if [ $npld -ne 1 ]; then
                         echo "Found $npld plumed.dat files in dir `pwd`" >&2; exit 1
                     fi
-                    plumed="-plumed $dir/$(ls *.dat)"
+                    plumed="-plumed $dir/$sdir/$(ls *.dat)"
                 fi
 
                 mdrunCall="$mpirun$mdrun"
