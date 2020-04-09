@@ -2,6 +2,11 @@
 
 prep2dwham() {
    echo "careful, prep2dwham is aimed to work in a specific directory tree fromat"
+   for f in ./colv*; do
+      [ -e "$f" ] && echo "colvar files exist, exiting prep2dwham" && return || echo "colvar files do not exist, continuing prep2dwham"
+   break
+   done
+
    for i in ../colv*; do
       var2=$(basename "$i")
       awk '(NR>5) {print $1,$7,$6}' $i > ./$var2
@@ -11,6 +16,8 @@ prep2dwham() {
 
 mk_chunk() {
    echo "starting mk_chunk"
+   mkdir "c${c}"
+   cd "c${c}"
    seq -f "c_%.0f" 1 $c | xargs mkdir
 
    for i in ${files}; do
@@ -59,7 +66,7 @@ do_wham2d() {
    if [ $(hostname) = dema9 ]; then
       wham='/localdisk/bin/wham/wham-2d/wham-2d'
    else
-      wham='~/bin/wham/wham-2d/wham-2d'
+      wham='/usr/users/jlapier/bin/wham/wham-2d/wham-2d'
    fi
 
    for i in `seq 0 4 $c`; do
@@ -73,7 +80,6 @@ do_wham2d() {
       done
       wait $PID
    done
-   sleep 10
    echo "do_wham2d done"
 }
 
@@ -81,6 +87,7 @@ clean_wham2d() {
    echo "starting clean_wham2d"
    for k in `seq 1 $c`; do
        sed '/inf/d' "c_${k}/2dpmf.txt" > "c_${k}/2dpmf_clean.txt"
+       wait $!
        $(projection.py -f "c_${k}/2dpmf_clean.txt" -o "c_${k}/1dpmf_${k}.txt")
    done
    python -c "from block import block_avg; print(block_avg('c_*/1dpmf*'))"

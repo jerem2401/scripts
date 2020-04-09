@@ -40,6 +40,7 @@ done
 
 source 2dwham_2.sh
 
+prep2dwham
 mk_chunk
 mk_metd
 do_wham2d
