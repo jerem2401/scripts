@@ -16,6 +16,7 @@ if [[ $session == python* ]]; then
     if [[ $host == gwdu* ]]; then
         tmux send-keys -t $session 'module load conda' C-m
         tmux send-keys -t $session 'source activate env1' C-m
+        tmux send-keys -t $session 'python' C-m
     else
         tmux send-keys -t $session 'python' C-m
     fi

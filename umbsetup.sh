@@ -126,10 +126,10 @@ for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax"); do
 	value=${ADDR[0]}
 	gksi=${ADDR[1]}
 	gkappa=${ADDR[2]}
-        gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" <<EOF
+        gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -b "$value" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" <<EOF
 	$group
 EOF
-	gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1	
+	gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1
 	cp ../temp/*.pdb "./E_${ksi}"
 	cp "$refmid" "./E_${ksi}"
 	sed "s/_POSI_/${ksi}/g;s/_gPOSI_/${gksi}/g;s/_DEQx_/${deqx}/g;s/_DEQy_/${deqy}/g;s/_ALPHA_/${alpha}/g;s/_KAPPA_/${kappa}/g;s/_gKAPPA_/${gkappa}/g;" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"

@@ -132,20 +132,20 @@ def main():
             dfymax=plumed_pandas.read_as_pandas(colvar_list[-1])
 
             #to genereate the borns of the grid for Z function (and for max axis)
-            #, I tool the 1st element of the 2 rmsds and add 5% to it instea
-            #of loading all the dataf and taking the max +5%
-            RMSDxmax = dfxmax[args.rmsdx][0]+(0.05*dfxmax[args.rmsdx][0])
-            RMSDymax = dfymax[args.rmsdy][0]+(0.05*dfymax[args.rmsdx][0])
-            maxRMSD  = max(RMSDymax,RMSDxmax)+(max(RMSDymax,RMSDxmax)*0.10)
+            #, I tool the 1st element of the 2 rmsds and add 10% to it instea
+            #of loading all the dataf and taking the max +10%
+            RMSDxmax = dfxmax[args.rmsdx][0]+(0.10*dfxmax[args.rmsdx][0])
+            RMSDymax = dfymax[args.rmsdy][0]+(0.10*dfymax[args.rmsdx][0])
+            maxRMSD  = max(RMSDymax,RMSDxmax)
 
-            phixm  = dfxmax['phi'][0]+(0.05*dfxmax['phi'][0])
-            psixm  = dfxmax['psi'][0]+(0.05*dfxmax['psi'][0])
+            phixm  = dfxmax['phi'][0]+(1.5*dfxmax['phi'][0])
+            psixm  = dfxmax['psi'][0]+(1.5*dfxmax['psi'][0])
 
-            phiym  = dfymax['phi'][0]+(0.05*dfymax['phi'][0])
-            psixm  = dfymax['psi'][0]+(0.05*dfymax['psi'][0])
+            phiym  = dfymax['phi'][0]+(1.5*dfymax['phi'][0])
+            psiym  = dfymax['psi'][0]+(1.5*dfymax['psi'][0])
 
-            angmin   = min(phixm,psixm,phiym,psixm)
-            angmax   = max(phixm,psixm,phiym,psixm)
+            angmin   = min(phixm,psixm,phiym,psiym)
+            angmax   = max(phixm,psixm,phiym,psiym)
 
             xy = np.arange(0.001, maxRMSD, 0.005)
             X, Y = np.meshgrid(xy, xy)

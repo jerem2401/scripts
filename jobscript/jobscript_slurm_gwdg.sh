@@ -262,7 +262,7 @@ while [ $# -gt 0 ]; do
             email="$1" ;;
 	-batch_line)
 	    shift
-	    batchInitLine=$1;;
+	    batchInitLine="$1";;
         -feature)
             shift
             feature=$1 ;;
@@ -468,8 +468,10 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
 	maxwell4)
             # Use nodes with 4 GTX 980
             nGPUsPerNode=4
+            logicalCoresPerPhysical=1
             {
                 echo "#SBATCH --gres=gpu:gtx980:$nGPUsAsked"
+                echo "#SBATCH --exclude=dge[001-007],dte[001,010]"
             } >> $sbatch_tempfile
             ;;
         tesla)
@@ -485,8 +487,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             # Use GTX 1080                                                                                                      
             nGPUsPerNode=2
             {
-                echo "#SBATCH --gres=gpu:gtx1080:$nGPUsAsked"
-		echo '#SBATCH --exclude=gpu-hub' # Exclude our own Pascal nodes
+                echo "#SBATCH --gres=gpu:gtx1080:$nGPUsAsked" # Exclude our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
         pascal40)
