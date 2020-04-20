@@ -11,7 +11,7 @@ inoremap jj <ESC>
 " show line numbers and lenght
 set number
 " set tw=79
-set colorcolumn=80
+set colorcolumn=100
 
 " status line
 " display file name
