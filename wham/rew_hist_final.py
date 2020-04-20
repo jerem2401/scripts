@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import plumed_pandas
-import numpy as np
-import pandas as pd
 import argparse
 import re
 import sys
 import os
+import numpy as np
+import pandas as pd
+import plumed_pandas
 
 def main():
 
@@ -41,13 +41,13 @@ def main():
                 hist2, bin_edges = np.histogram(df, bins=[i for i in np.around(np.arange(args.min,args.max,args.s), decimals=3)],density=True)
                 hist2 = hist2 / hist2.sum()
             else:
-                df = df[['nCV','guide_restraint.bias']]
+                df = df[['nCV', 'guide_restraint.bias']]
                 hist2, bin_edges = np.histogram(df['nCV'], bins=[i for i in np.around(np.arange(args.min,args.max,args.s), decimals=3)], weights=[np.exp(i/2.49434) for i in df['guide_restraint.bias']],density=True)
                 hist2 = hist2 / hist2.sum()
 
             d = {'z': bin_edges[0:-1],'hist': hist2}
 
-            hdf=pd.DataFrame(d)
+            hdf = pd.DataFrame(d)
 
             # /!\ saved in working directory
             if args.o == None:
@@ -81,7 +81,7 @@ def main():
                 ax.plot(z, thishist)
 
             plt.xlim(min(z), max(z))
-            plt.savefig('hist_'+str([h1,h2].index(i))+'.jpeg')
+            plt.savefig('hist_'+str([h1, h2].index(i))+'.jpeg')
             plt.close()
 
     if args.plot == 'all1':
@@ -90,7 +90,7 @@ def main():
         import matplotlib
         matplotlib.rcParams.update({'font.size': 23})
         histo_files = os.popen('ls histo*.txt | sort -t _ -k 2 -n').read().split()
-        fig=plt.figure(figsize=(15,8))
+        fig = plt.figure(figsize=(15,8))
         for i in  histo_files:
             z, thishist = np.loadtxt(i, unpack=True)
             plt.plot(z, thishist)
