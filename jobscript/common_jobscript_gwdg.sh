@@ -590,13 +590,16 @@ echo Host \$SLURM_JOB_NODELIST
 echo Jobname \$SLURM_JOB_NAME
 echo Subcwd \$SLURM_SUBMIT_DIR
 
-cd $dir
 EOF
     } > $jobfile
 
 if [ $loc = 1 ]; then
     {
         echo -e "mkdir /local/${USER}_\$SLURM_JOB_ID\ncd /local/${USER}_\$SLURM_JOB_ID"
+    } >> $jobfile
+else
+    {
+    echo -e "cd $dir"
     } >> $jobfile
 fi
 
@@ -699,10 +702,10 @@ fi
 
 if [ $loc = 1 ]; then
     {
-        echo -e "echo \"copying files from /local/${USER}_\${SLURM_JOB_ID} to \${SLURM_SUBMIT_DIR} at \$(date)\""
-	echo -e "cp --backup --suffix=.old_key${key} /local/\${USER}_\${SLURM_JOB_ID}/* \${SLURM_SUBMIT_DIR}"
+        echo -e "echo \"copying files from /local/${USER}_\${SLURM_JOB_ID} to ${dir} at \$(date)\""
+	echo -e "cp --backup --suffix=.old_key${key} /local/\${USER}_\${SLURM_JOB_ID}/* ${dir}"
 	echo -e "echo \"Ending job at \$(date)\""
-    } >> $jobfile
+    } >> $dir/$jobfile
 fi
 
 

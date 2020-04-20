@@ -727,8 +727,8 @@ fi
 
 if [ $loc = 1 ]; then
     {
-        echo -e "echo \"copying files from /local/${USER}_\${SLURM_JOB_ID} to \${SLURM_SUBMIT_DIR} at \$(date)\""
-	echo -e "cp --backup --suffix=.old_key${key} /local/\${USER}_\${SLURM_JOB_ID}/* \${SLURM_SUBMIT_DIR}"
+        echo -e "echo \"copying files from /local/${USER}_\${SLURM_JOB_ID} to ${dir} at \$(date)\""
+	echo -e "cp --backup --suffix=.old_key${key} /local/\${USER}_\${SLURM_JOB_ID}/* ${dir}"
 	echo -e "echo \"Ending job at \$(date)\""
     } >> $dir/$jobfile
 fi

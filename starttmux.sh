@@ -37,5 +37,7 @@ else
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -v
     tmux send-keys -t $session 'clear' C-m
+    tmux split-window -h
+    tmux send-keys -t $session 'clear' C-m
     tmux attach -t $session
 fi
