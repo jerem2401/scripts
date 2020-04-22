@@ -1,5 +1,4 @@
 #!/bin/bash
-
 shopt -s -o nounset
 
 calc() { awk 'BEGIN {print '"$*"'}' < /dev/null; }
@@ -279,8 +278,8 @@ while [ $# -gt 0 ]; do
 	-version)
 	    shift
             version=$1
-	    if [ "$version" = "2019.4" ]; then
-		gmxrc="/data/shared/opt/gromacs/$version/gromacs-2019.4/bin/GMXRC"
+	    if [ "$version" = "2018.8_plumed" ]; then
+		gmxrc="/data/shared/opt/gromacs/$version/gromacs-2018.8/bin/GMXRC"
 	    else
 		gmxrc="/data/shared/opt/gromacs/$version/bin/GMXRC"
 	    fi
