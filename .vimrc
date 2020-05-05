@@ -1,9 +1,10 @@
 " Enable syntax
 :syntax on
-" set clipboard^=unnamed,unnamedplus
 
-" disable last hilighting
-:noh
+" set clipboard=unnamed,unnamedplus
+set hlsearch
+" map :noh, which clear search hilight
+nnoremap <silent> ,<space> :nohlsearch<CR>
 
 " shortcut for leaving insert mode
 inoremap jj <ESC>
