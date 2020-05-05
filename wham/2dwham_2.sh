@@ -16,13 +16,15 @@
 
 prep2dwham() {
     echo "careful, prep2dwham is aimed to work in a specific directory tree fromat"
-    for i in ../../../colv*; do
+    for i in ../../../E_*/colv*; do
         var2=$(basename "$i")
         if [ -e "$var2" ]; then
             echo "colvar file $var2 exists, skipping this file"
             continue
         fi
-        awk '(NR>5) {print $1,$7,$6}' $i > ./$var2
+	echo "preparing colvar: $var2"
+        time5ns=$(awk '$1~/^5000.*/{print NR;exit}' $i)
+        awk -v var=$time5ns '(NR>=var) {print $1,$7,$6}' $i > ./$var2
     done
     echo "prep2dwham done"
 }
