@@ -30,28 +30,81 @@
 #}
 
 prep2dwham() {
-    echo "careful, prep2dwham is aimed to work in a specific directory tree fromat"
-    unset coll
-    declare -a coll
-    for i in ./colv*; do
-        coll+=( "$i" )
-    done
-    colllen=$(echo "${#coll[@]}")
-    for index in $(seq 0 4 "$colllen"); do
-        for i in "${coll[@]:${index}:4}"; do
-            var2=$(basename "$i")
-            if [ -e "$var2" ]; then
-                echo "colvar file $var2 exists, skipping this file"
-                continue
-            fi
-    	    echo "preparing colvar: $var2"
-            time5ns=$(awk '$1~/^5000.*/{print NR;exit}' $i)
-            echo "time5ns = $time5ns"
-            (awk -v var=$time5ns '(NR>=var) {print $1,$7,$6}' $i > ./$var2) &
+
+    #check if we need to clean the data according to dir name (if clean > 0 => cure else not)
+    clean=basename $(pwd) | grep -o '[0-9]*'
+
+    if (("$clean" = 0)); then
+
+        echo "careful, prep2dwham is aimed to work in a specific directory tree fromat"
+        unset coll
+        declare -a coll
+        for i in ./colv*; do
+            coll+=( "$i" )
         done
-        wait $!
-    done
-    echo "prep2dwham done"
+        colllen=$(echo "${#coll[@]}")
+        for index in $(seq 0 4 "$colllen"); do
+            for i in "${coll[@]:${index}:4}"; do
+                var2=$(basename "$i")
+                if [ -e "$var2" ]; then
+                    echo "colvar file $var2 exists, skipping this file"
+                    continue
+                fi
+        	    echo "preparing colvar: $var2"
+                time5ns=$(awk '$1~/^5000.*/{print NR;exit}' $i)
+                echo "time5ns = $time5ns"
+                (awk -v var=$time5ns '(NR>=var) {print $1,$7,$6}' $i > ./$var2) &
+            done
+            wait $!
+        done
+        echo "prep2dwham done"
+
+     else
+        while read line; do
+        	E=$(echo $line | grep -oP '(?<=histo_).*(?=_)');
+        	echo E_$E;
+        	v=$(echo $line | awk '{print $4}');
+        	echo $v;
+        	f=$(echo $line | grep -oP '(?<=histo_).*(?= )');
+        	echo "colvar${f}.txt";
+        	Elist+=( "E_${E}" )
+        	vlist+=( "${v}" )
+        	flist+=( "colvar${f}" )
+        done < ../histo_RMSDMID/hist_curing.txt
+
+        echo "var attribution done"
+
+        #slice=$1
+        len=$(echo "${#flist[@]}")
+
+        #lenT=$(echo "$((${len}-1))")
+
+        for i in $(seq 0 4 "$len")
+        do
+        	echo "i= ${i}"
+        	endi=$(echo "$((${i}+4))")
+        	echo "endi= ${endi}"
+        	ib=$i
+        	for file in "${flist[@]:${i}:4}"
+        	do
+        		if [ ! -f $file ]
+        		then
+        			v="${vlist[${ib}]}"
+        			E="${Elist[${ib}]}"
+        			echo "will execute awk on ${file} with v= ${v} and dir = ${E}"
+                                time5ns=$(awk '$1~/^5000.*/{print NR;exit}' "../../${E}/${file}") &
+                                echo "time5ns = $time5ns"
+        			awk -v var=$time5ns -v v=$v '(NR>var) && ($6 < v) {print $1,$7,$6}' "../../${E}/${file}" > "./${file}" &
+        			PID="$!"
+        			ib=$(echo "$((${ib}+1))")
+        			#PID_LIST+="$PID "
+        		else
+        			echo "${file} already exists"
+        		fi
+        	done
+        	wait $PID
+        done
+    fi
 }
 
 

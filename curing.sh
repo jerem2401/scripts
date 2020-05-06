@@ -33,8 +33,10 @@ do
 		then
 			v="${vlist[${ib}]}"
 			E="${Elist[${ib}]}"
-			echo "will execute awk on ${file} with v= ${v} and dir = ${E}" &
-			awk -v v=$v 'NR<=5{print}; (NR>5) && ($6 < v) {print}' "../../${E}/${file}" > "./${file}" &
+			echo "will execute awk on ${file} with v= ${v} and dir = ${E}"
+                        time5ns=$(awk '$1~/^5000.*/{print NR;exit}' ${file})
+                        echo "time5ns = $time5ns"
+			awk -v var=$time5ns -v v=$v '(NR>var) && ($6 < v) {print $1,$7,$6}' "../../${E}/${file}" > "./${file}" &
 			PID="$!"
 			ib=$(echo "$((${ib}+1))")
 			#PID_LIST+="$PID "
