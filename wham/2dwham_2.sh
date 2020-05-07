@@ -32,30 +32,41 @@
 prep2dwham() {
 
     #check if we need to clean the data according to dir name (if clean > 0 => cure else not)
-    clean=basename $(pwd) | grep -o '[0-9]*'
+    clean=$(basename $(pwd) | grep -o '[0-9]*')
 
-    if (("$clean" = 0)); then
+    if (("$clean" == 0)); then
 
         echo "careful, prep2dwham is aimed to work in a specific directory tree fromat"
+
         unset coll
         declare -a coll
-        for i in ./colv*; do
+
+        unset PID
+        declare -a PID
+
+        for i in ../../colv*; do
             coll+=( "$i" )
         done
         colllen=$(echo "${#coll[@]}")
+
+        time5ns=$(awk '$1~/^5000.*/{print NR;exit}' "${coll[0]}")
+        echo "time5ns = $time5ns"
+
         for index in $(seq 0 4 "$colllen"); do
             for i in "${coll[@]:${index}:4}"; do
                 var2=$(basename "$i")
                 if [ -e "$var2" ]; then
                     echo "colvar file $var2 exists, skipping this file"
+                    #just to play around with continue, could be replace by a else
                     continue
                 fi
-        	    echo "preparing colvar: $var2"
-                time5ns=$(awk '$1~/^5000.*/{print NR;exit}' $i)
-                echo "time5ns = $time5ns"
+        	echo "preparing colvar: $var2"
                 (awk -v var=$time5ns '(NR>=var) {print $1,$7,$6}' $i > ./$var2) &
+                PID+=( "$!" )
             done
-            wait $!
+            for pid in ${PID[*]}; do
+                wait $pid
+            done
         done
         echo "prep2dwham done"
 
@@ -72,6 +83,9 @@ prep2dwham() {
         	flist+=( "colvar${f}" )
         done < ../histo_RMSDMID/hist_curing.txt
 
+        time5ns=$(awk '$1~/^5000.*/{print NR;exit}' "../../${Elist[0]}/${flist[0]}")
+        echo "time5ns = $time5ns"
+
         echo "var attribution done"
 
         #slice=$1
@@ -79,30 +93,30 @@ prep2dwham() {
 
         #lenT=$(echo "$((${len}-1))")
 
-        for i in $(seq 0 4 "$len")
-        do
+        for i in $(seq 0 4 "$len"); do
         	echo "i= ${i}"
         	endi=$(echo "$((${i}+4))")
         	echo "endi= ${endi}"
         	ib=$i
-        	for file in "${flist[@]:${i}:4}"
-        	do
-        		if [ ! -f $file ]
-        		then
-        			v="${vlist[${ib}]}"
-        			E="${Elist[${ib}]}"
-        			echo "will execute awk on ${file} with v= ${v} and dir = ${E}"
-                                time5ns=$(awk '$1~/^5000.*/{print NR;exit}' "../../${E}/${file}") &
-                                echo "time5ns = $time5ns"
-        			awk -v var=$time5ns -v v=$v '(NR>var) && ($6 < v) {print $1,$7,$6}' "../../${E}/${file}" > "./${file}" &
-        			PID="$!"
-        			ib=$(echo "$((${ib}+1))")
-        			#PID_LIST+="$PID "
-        		else
-        			echo "${file} already exists"
-        		fi
+
+                unset PID
+                declare -a PID
+
+        	for file in "${flist[@]:${i}:4}"; do
+                    if [ ! -f $file ]; then
+                    	v="${vlist[${ib}]}"
+                    	E="${Elist[${ib}]}"
+                    	echo "will execute awk on ${file} with v= ${v} and dir = ${E}"
+                    	awk -v var=$time5ns -v v=$v '(NR>var) && ($6 < v) {print $1,$7,$6}' "../../${E}/${file}" > "./${file}" &
+                    	PID+=( "$!" )
+                    	ib=$(echo "$((${ib}+1))")
+                    else
+                    	echo "${file} already exists"
+                    fi
         	done
-        	wait $PID
+                for pid in ${PID[*]}; do
+        	    wait $pid
+                done
         done
     fi
 }
@@ -120,22 +134,32 @@ mk_chunk() {
        echo "colvar len = ${collen} and chunk lenght = ${chlen}"
        startl=1
        endl=$chlen
+
+       unset PID
+       declare -a PID
+
        for k in `seq 1 $c`; do
-           file=$(basename "$i" .txt);
-   	   echo "file=${file}";
-           echo "k=${k}";
-   	   echo "startl = $startl";
+           file=$(basename "$i" .txt)
+   	   echo "file=${file}"
+           echo "k=${k}"
+   	   echo "startl = $startl"
+
 	   if [ $k == $c ]; then
               endl=$collen
+           elif [ $k == 1 ]; then
+              endl=$chlen
            else
    	      endl=$((endl+chlen))
            fi
-   	   echo "endl   = $endl";
+
+   	   echo "endl   = $endl"
    	   $(awk -v a=$startl -v b=$endl '(NR>=a) && (NR<=b)' $i > "c_${k}/${file}_${k}.txt") &
-   	   startl=$((startl+chlen));
-   	   PID="$!"
+   	   startl=$((startl+chlen))
+   	   PID+=( "$!" )
        done
-       wait $PID
+       for pid in ${PID[*]}; do
+           wait $pid
+       done
    done
    echo "mk_chunk done"
 }
@@ -143,12 +167,13 @@ mk_chunk() {
 #args needed: -c
 mk_metd() {
    for k in `seq 1 $c`; do
+      [ -e "c${c}/c_${k}/metd.txt" ] && echo "c${c}/c_${k}/metd.txt exists, removing file first"
       echo "making metd.txt for c_${k}"
-      for i in c_$k/colv*; do
+      for i in c$c/c_$k/colv*; do
          cnt=$(echo "$i" | grep -oP '(?<=colvar)[^_]*')
          cnt2="$(cut -d'_' -f3 <<<$i)"
-	 read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=).*(?= )' ../../../../E_$cnt/plumed_* | tr "\n" " ")
-         echo "$(basename $i)   $cnt   $cnt2   $cntkappa   $cnt2kappa" >> "c_${k}/metd.txt"
+	 read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=).*(?= )' ../../E_$cnt/plumed_* | tr "\n" " ")
+         echo "$(basename $i)   $cnt   $cnt2   $cntkappa   $cnt2kappa" >> "c${c}/c_${k}/metd.txt"
       done
    done
    echo "mk_metd done"
@@ -164,15 +189,19 @@ do_wham2d() {
    fi
 
    for i in `seq 0 4 $c`; do
+      unset PID
+      declare -a PID
       for k in `seq $(($i+1)) $(($i+4))`; do
-         if cd c_$k; then
+         if cd "c${c}/c_${k}"; then
             echo "launching 2dwham in c_$k with: E1min=$E1min; E1max=$E1max; bin=$bin; E2min=$E2min; E2max=$E2max"
             ($wham Px=0 $E1min $E1max $bin Py=0 $E2min $E2max $bin 0.000001 300 0 metd.txt 2dpmf.txt 0 &> 2dwham.out) &
-            PID="$!"
-            cd ..
+            PID+=( "$!" )
+            cd ../..
          fi
       done
-      wait $PID
+      for pid in ${PID[*]}; do
+          wait $pid
+      done
    done
    echo "do_wham2d done"
 }
@@ -180,17 +209,12 @@ do_wham2d() {
 clean_wham2d() {
    echo "starting clean_wham2d"
    for k in `seq 1 $c`; do
-       sed '/inf/d' "c_${k}/2dpmf.txt" > "c_${k}/2dpmf_clean.txt"
+       sed '/inf/d' "c${c}/c_${k}/2dpmf.txt" > "c${c}/c_${k}/2dpmf_clean.txt"
        wait $!
-       $(projection.py -f "c_${k}/2dpmf_clean.txt" -o "c_${k}/1dpmf_${k}.txt")
+       $(projection.py -f "c${c}/c_${k}/2dpmf_clean.txt" -o "c${c}/c_${k}/1dpmf_${k}.txt")
    done
-   python -c "from block import block_avg; print(block_avg('c_*/1dpmf*'))"
+   python -c "from block import block_avg; print(block_avg('c*/c_*/1dpmf*'))"
    echo "clean_wham2d done"
 }
 
-#mk_chunk
-#mk_metd
-
 #column -t metd.txt > temp.txt
-#sed '/inf/d' 2dpmf.txt > 2dpmf_clean.txt
-

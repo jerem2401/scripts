@@ -49,14 +49,14 @@ def rew_chunk(f,c,k):
 def wham_chunk(c):
     #do wham with the whamloop function of wham_pmf.py
     print('here comes the wham loop')
-    
+
     for i in range(c):
         histo_files=glob.glob('hist*_c'+str(i)+'.dat')
         whamloop(histo_files)
-        
+
         os.rename('test_wham_z.out', 'test_wham_z_'+str(i)+'.out')
         os.rename('test_wham_pmf.out', 'test_wham_pmf_'+str(i)+'.out')
-    
+
         print('pmf of chunk '+str(i)+' is done')
 
 
@@ -70,28 +70,32 @@ def block_avg(f2):
     lf=len(files)
     ref=files[round(lf/2)]
     ksir, pror, freer = np.loadtxt(ref, unpack=True, delimiter=' ')
-    
+
     min_freer=np.amin(freer)
-    
+
     allf=[]
     for i in files:
         ksi, pro, free = np.loadtxt(i, unpack=True, delimiter=' ')
-        delta=min_freer-free[np.where(freer == min_freer)]
-        free=free+delta
+        #delta=min_freer-free[np.where(freer == min_freer)]
+        #shift every pmf to the ref (min of middle block)
+        #free=free+delta
+        #shift ervery pmf so the ref free nrg point is shifted to 0
+        #free=free-min_freer
+        free=free-free[np.where(freer == min_freer)]
         allf.append(free)
-    
+
     arr=np.vstack(allf)
-    
-    avg=np.average(arr, axis=0)    
+
+    avg=np.average(arr, axis=0)
     #std=np.std(arr, axis=0, ddof=1)
     sem=stats.sem(arr, axis=0)
-    
+
     fp = open('block_pmf.out', 'w')
     for i in range(len(ksir)):
         print(str(ksir[i])+'    '+str(avg[i])+'    '+str(sem[i]), file=fp)
     fp.close()
     np.savetxt(r'block_pmf.out', np.c_[ksir,avg,sem],fmt='%.3f',delimiter='    ')
-    
+
     return(ksir,avg,sem)
 
 def plot_bpmf(ksir,avg,sem,c):

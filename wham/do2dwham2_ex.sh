@@ -37,11 +37,13 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+module load conda
+source activate env1
 
 source 2dwham_2.sh
 
-prep2dwham
-mk_chunk
-mk_metd
-do_wham2d
-clean_wham2d
+#prep2dwham 2>&1 | tee -a prep2dwham.out
+#mk_chunk 2>&1 | tee -a mk_chunk.out
+#mk_metd 2>&1 | tee -a mk_metd.out
+do_wham2d | tee -a do_wham2d.out
+clean_wham2d | tee -a clean_wham2d.out
