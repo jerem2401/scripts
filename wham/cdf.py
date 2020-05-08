@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-import argparse
-import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-hist', help='taking counts and x from histo files', nargs='*', action='store', dest='hist')
@@ -13,32 +12,32 @@ args = parser.parse_args()
 
 if args.hist != None:
     #files=os.popen('ls '+args.hist+'*').read().split()
-    v_given=[args.val[0]]*len(args.hist)
-    v_closest=[]
-    torm=[]
+    v_given = [args.val[0]]*len(args.hist)
+    v_closest = []
+    torm = []
 
     for i in args.hist:
-        f=open(i,"r")
-        lines=f.readlines()
-        x=[]
-        y=[]
+        f = open(i, "r")
+        lines = f.readlines()
+        x = []
+        y = []
         for j in lines:
             x.append(float(j.split(' ')[0]))
             y.append(float(j.split(' ')[1]))
         f.close()
 
-        cdf=np.cumsum(y)
-        dic={k:v for k,v in zip(cdf,x)}
-        cdfa=np.asarray(cdf)
-        idx=(np.abs(cdfa - args.val)).argmin()
-        
+        cdf = np.cumsum(y)
+        dic = {k:v for k, v in zip(cdf, x)}
+        cdfa = np.asarray(cdf)
+        idx = (np.abs(cdfa - args.val)).argmin()
+
         print('value given: '+str(args.val)+'\nclosest value found: '+str(cdf[idx])+'\nmust remove everything > '+str(dic[cdf[idx]])+' in file: '+str(i))
         v_closest.append(float(cdf[idx]))
         torm.append(float(dic[cdf[idx]]))
 
-        if args.plot == True:
-            fig, ax = plt.subplots(figsize=(10,7)) 
-            ax.plot (x, cdf)
+        if args.plot:
+            fig, ax = plt.subplots(figsize=(10, 7))
+            ax.plot(x, cdf)
 
             plt.title(i.strip('.txt'))
             plt.savefig('./'+i.split('/')[-1].strip('.txt')+'.jpeg')
@@ -51,13 +50,10 @@ for i in range(len(args.hist)):
 f.close()
 
 #np.savetxt(r'./hist_curing.txt', np.transpose([v_given,v_closest,args.hist,torm]), header='#v_given v_closest file 2rm', fmt="%f %f %s %f")
-#else: 
+#else:
 #not supported yet
-
 
 #num_bins = 20
 #counts, bin_edges = np.histogram (data, bins=num_bins, normed=True)
 #cdf = np.cumsum (counts)
 #plt.plot (bin_edges[1:], cdf/cdf[-1])
-
-
