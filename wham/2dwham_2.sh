@@ -44,7 +44,7 @@ prep2dwham() {
         unset PID
         declare -a PID
 
-        for i in ../../colv*; do
+        for i in ../../E*/colv*; do
             coll+=( "$i" )
         done
         colllen=$(echo "${#coll[@]}")
