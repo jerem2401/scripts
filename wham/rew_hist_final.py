@@ -27,8 +27,8 @@ def main():
     if args.plot == None:
         pos=re.search('(-|[0-9]|\.)+(?=_)', args.f).group()
 
-        if os.path.exists('./histo_'+str(pos)+'_.dat'):
-            print('./histo_'+str(pos)+'_.dat exists !')
+        if os.path.exists('./histo_'+str(pos)+'_.txt'):
+            print('./histo_'+str(pos)+'_.txt exists !')
             sys.exit()
         elif args.o != None and os.path.exists(args.o):
             print(args.o+' exists !')
@@ -51,8 +51,8 @@ def main():
 
             # /!\ saved in working directory
             if args.o == None:
-                np.savetxt(r'./histo_'+str(pos)+'_.dat', hdf.values, header="col1=z col2=hist\n#1 #2 "+str(pos)+"\n#1 #2 "+str(args.k), fmt='%.6f')
-                print('./histo_'+str(pos)+'_.dat is done')
+                np.savetxt(r'./histo_'+str(pos)+'_.txt', hdf.values, header="col1=z col2=hist\n#1 #2 "+str(pos)+"\n#1 #2 "+str(args.k), fmt='%.6f')
+                print('./histo_'+str(pos)+'_.txt is done')
             else:
                 np.savetxt(args.o, hdf.values, fmt='%.6f')
                 print(args.o+' is done')
@@ -85,15 +85,22 @@ def main():
             plt.close()
 
     if args.plot == 'all1':
-
+        import statistics
         import matplotlib.pyplot as plt
         import matplotlib
         matplotlib.rcParams.update({'font.size': 23})
         histo_files = os.popen('ls histo*.txt | sort -t _ -k 2 -n').read().split()
         fig = plt.figure(figsize=(15,8))
+        fig, axs = plt.subplots(figsize=(15,8))
+        n = 1
         for i in  histo_files:
+            label = str(n)
+            x = float(i.split('_')[1])
             z, thishist = np.loadtxt(i, unpack=True)
-            plt.plot(z, thishist)
+            y = max(thishist)
+            axs.plot(z, thishist)
+            axs.annotate(s=label,xy=(x,y))
+            n+=1
         plt.xlim(min(z), max(z))
         plt.savefig('hist_all1.jpeg')
         plt.close()
