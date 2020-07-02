@@ -32,7 +32,6 @@ def main():
         gkap = df.iloc[mindiff]['restraint2.RMSDMID_kappa']
 
     return (tvalue, gksi, gkap)
-
 # If called from the command line...
 if __name__ == "__main__":
     print(main())

@@ -454,7 +454,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             logicalCoresPerPhysical=2
             {
                 echo "#SBATCH --gres=gpu:gtx1070:$nGPUsAsked"                                                                                
-		echo '#SBATCH --exclude=dge[015-045]'
+		echo '#SBATCH --exclude=dge[015-045],gwdo[168-169]'
                 queue=gpu-hub                                                                                                                                                          
             } >> $sbatch_tempfile
             ;;
@@ -486,6 +486,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
         gtx1080)
             # Use GTX 1080                                                                                                      
             nGPUsPerNode=2
+            logicalCoresPerPhysical=1
             {
                 echo "#SBATCH --gres=gpu:gtx1080:$nGPUsAsked" # Exclude our own Pascal nodes
             } >> $sbatch_tempfile

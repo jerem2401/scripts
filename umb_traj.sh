@@ -52,5 +52,4 @@ if [ $wat -eq 0 ]; then
     gmx trjcat -f nopbc2_* -o cat_prot.xtc -cat
     echo 1 | gmx trjconv -f "nopbc2_${lsub}.xtc" -s $li/*.tpr -o 0_prot.pdb -dump 0
     wait $!
-    rm -f ./nopbc*
 fi
