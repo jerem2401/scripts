@@ -1,14 +1,12 @@
 #! /bin/bash
 
+wat=0
+
 while [ $# -gt 0 ]; do
     case "$1" in
 	-wat)
             shift
 	    wat=1
-            ;;
-        -prot)
-            shift
-            wat=0
             ;;
     esac
     shift
@@ -18,9 +16,9 @@ if [ "$wat" -eq 1 ]; then
     c=2
     for i in $(command ls -d ../../E_-*); do
         sub=${i#../../E_}
-        if (( $(echo "$sub <= -0.5" | bc -l) )) && (( $c%2 == 0 )); then
+        if (( $(echo "$sub <= -0.25" | bc -l) )) && (( $c%2 == 0 )); then
             echo $sub
-            echo 0 | gmx trjconv -f "${i}/traj_comp.xtc" -s $i/*.tpr -o "nopbc1_${sub}.xtc" -pbc atom -ur compact -dt 4000
+            echo 0 | gmx trjconv -f "${i}/traj_comp.xtc" -s $i/*.tpr -o "nopbc1_${sub}.xtc" -pbc atom -ur compact -dt 200
             wait $!
             echo 1 0 | gmx trjconv -f "nopbc1_${sub}.xtc" -s $i/*.tpr -o "nopbc2_${sub}.xtc" -center -pbc mol -ur compact
             #echo 0 | gmx trjconv -f "nopbc2_${sub}.xtc" -s $i/*.tpr -o "nopbc3_${sub}.xtc" -pbc whole
@@ -41,7 +39,7 @@ if [ $wat -eq 0 ]; then
         sub=${i#../../E_}
         if (( $(echo "$sub <= -0.5" | bc -l) )) && (( $c%2 == 0 )); then
             echo $sub
-            echo 1 | gmx trjconv -f "${i}/traj_comp.xtc" -s $i/*.tpr -o "nopbc1_${sub}.xtc" -pbc atom -ur compact -dt 4000
+            echo 1 | gmx trjconv -f "${i}/traj_comp.xtc" -s $i/*.tpr -o "nopbc1_${sub}.xtc" -pbc atom -ur compact -dt 200
             wait $!
             echo 1 | gmx trjconv -f "nopbc1_${sub}.xtc" -s $i/*.tpr -o "nopbc2_${sub}.xtc" -pbc whole
             lsub=$sub
@@ -49,8 +47,8 @@ if [ $wat -eq 0 ]; then
         fi
     let c=c+1
     done
-    gmx trjcat -f nopbc2_* -o cat_prot.xtc -cat
+    #gmx trjcat -f nopbc2_* -o cat_prot.xtc -cat
     echo 1 | gmx trjconv -f "nopbc2_${lsub}.xtc" -s $li/*.tpr -o 0_prot.pdb -dump 0
     wait $!
-    rm -f ./nopbc*
+    #rm -f ./nopbc*
 fi
