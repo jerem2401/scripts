@@ -90,6 +90,11 @@ au InsertLeave * match ExtraWhitespace /\s\+$/
 color gruvbox
 :set bg=dark
 
+
+"" fixing backspace in new install of vim
+"set backspace=indent,eol,start
+
+
 " " PLUMED STUFFS
 " " This allows including the proper PLUMED syntax file:
 " ":let &runtimepath.=','.$PLUMED_VIMPATH
@@ -111,4 +116,12 @@ let hostname=system("hostname -s | tr -d '\n'")
 if hostname == 'smaug'
     set directory=/home/users/jeremy/.vim/swapfiles
     set backupdir=/home/users/jeremy/.vim/tmp
+endif
+
+" system clipboard for wayland display server, wl-clipboard must be installed first: sudo apt-get update, sudo apt-get install wl-clipboard 
+let serverdisp = $XDG_SESSION_TYPE
+if serverdisp == 'wayland'
+    xnoremap "+y y:call system("wl-copy", @")<cr>
+    nnoremap "+p :let @"=substitute(system("wl-paste --no-newline"), '<C-v><C-m>', '', 'g')<cr>p
+    nnoremap "*p :let @"=substitute(system("wl-paste --no-newline --primary"), '<C-v><C-m>', '', 'g')<cr>p
 endif
