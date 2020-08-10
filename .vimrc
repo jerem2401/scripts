@@ -1,6 +1,6 @@
 " Automate bash script header
-autocmd BufNewFile *.sh so ${HOME}/.vim/bash_header
-autocmd BufNewFile *.py so ${HOME}/.vim/python_header
+autocmd BufNewFile *.sh so ${HOME}/gitrepo/scripts/bash_header
+autocmd BufNewFile *.py so ${HOME}/gitrepo/scripts/python_header
 
 " Enable syntax
 :syntax on
