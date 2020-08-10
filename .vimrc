@@ -1,3 +1,7 @@
+" Automate bash script header
+autocmd BufNewFile *.sh so ${HOME}/.vim/bash_header
+autocmd BufNewFile *.py so ${HOME}/.vim/python_header
+
 " Enable syntax
 :syntax on
 
@@ -54,7 +58,18 @@ autocmd BufNewFile,BufRead *.py
 set foldmethod=indent
 set foldlevel=99
 
+" Show whitespace
+" " MUST be inserted BEFORE the colorscheme command
+" autocmd colorscheme * highlight ExtraWhitespace ctermbg=red guibg=red
+" au InsertLeave * match ExtraWhitespace /\s\+$/
 
+autocmd BufWinEnter <buffer> match Error /\s\+$/
+autocmd InsertEnter <buffer> match Error /\s\+\%#\@<!$/
+autocmd InsertLeave <buffer> match Error /\s\+$/
+autocmd BufWinLeave <buffer> call clearmatches()
+ 
+" Load color scheme at last to avoid garabage rgb character at beginning of buffer
+autocmd vimenter * colorscheme gruvbox
 " Setup Pathogen to manage your plugins
 " mkdir -p ~/.vim/autoload ~/.vim/bundle
 " curl -so ~/.vim/autoload/pathogen.vim
@@ -67,6 +82,9 @@ set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
 set statusline+=%*
 
+let g:syntastic_python_checkers = ["python", "flake8", "pylint"]
+let g:syntastic_sh_checkers = ["sh", "ShellCheck"]
+
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 1
 let g:syntastic_check_on_open = 1
@@ -74,10 +92,6 @@ let g:syntastic_check_on_wq = 0
 " let g:syntastic_python_python_exec = 'python3'
 " let g:syntastic_python_checkers = ['python']
 
-" Show whitespace
-" " MUST be inserted BEFORE the colorscheme command
-autocmd ColorScheme * highlight ExtraWhitespace ctermbg=red guibg=red
-au InsertLeave * match ExtraWhitespace /\s\+$/
 
 " Color scheme
 " wombat:
@@ -87,12 +101,12 @@ au InsertLeave * match ExtraWhitespace /\s\+$/
 
 " gruvbox:
 " installing gruvbox colorscheme: following:https://github.com/morhetz/gruvbox/wiki/Installation
-color gruvbox
-:set bg=dark
+set background=dark
+" colorscheme gruvbox
 
 
-"" fixing backspace in new install of vim
-"set backspace=indent,eol,start
+" fixing backspace in new install of vim
+set backspace=indent,eol,start
 
 
 " " PLUMED STUFFS
@@ -125,3 +139,4 @@ if serverdisp == 'wayland'
     nnoremap "+p :let @"=substitute(system("wl-paste --no-newline"), '<C-v><C-m>', '', 'g')<cr>p
     nnoremap "*p :let @"=substitute(system("wl-paste --no-newline --primary"), '<C-v><C-m>', '', 'g')<cr>p
 endif
+

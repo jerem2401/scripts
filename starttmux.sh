@@ -7,8 +7,9 @@ session=$1
 set -- $(stty size) #$1=rows, $2=columns
 host=$(hostname)
 
+tmux new-session -s $session -d -x "$2" -y "$(($1 - 1))" # status line uses a row
+
 if [[ $session == python* ]]; then
-    tmux new-session -s $session -d -x "$2" -y "$(($1 - 1))" # status line uses a row
     tmux send-keys -t $session 'cd ~/gitrepo/scripts' C-m
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -h
@@ -23,7 +24,6 @@ if [[ $session == python* ]]; then
     tmux split-window -v
     tmux send-keys -t $session 'clear' C-m
     tmux resize-pane -t $session:0.0 -x 105
-    tmux attach -t $session
     #tmux attach -t python
     #tmux new-window -c ~/gitrepo/scripts -n vim
     #tmux select-window -t $session:0
@@ -32,12 +32,28 @@ if [[ $session == python* ]]; then
     #tmux send-keys -t 'cd ~/gitrepo/scripts' C-m
     #tmux selectp -t 1
     #tmux send-keys "" C-m
+elif [[ $session == gwdg ]]; then
+    tmux send-keys -t $session 'cogwdg' C-m
+    tmux send-keys -t $session 'clear' C-m
+    tmux split-window -v
+    tmux send-keys -t $session 'gwdg' C-m
+    tmux send-keys -t $session 'clear' C-m
+    tmux split-window -h
+    tmux send-keys -t $session 'clear' C-m
+elif [[ $session == smaug ]]; then
+    tmux send-keys -t $session 'cosmaug' C-m
+    tmux send-keys -t $session 'clear' C-m
+    tmux split-window -v
+    tmux send-keys -t $session 'smaug' C-m
+    tmux send-keys -t $session 'clear' C-m
+    tmux split-window -h
+    tmux send-keys -t $session 'clear' C-m
 else
-    tmux new-session -s $session -d -x "$2" -y "$(($1 - 1))" # status line uses a row
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -v
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -h
     tmux send-keys -t $session 'clear' C-m
-    tmux attach -t $session
 fi
+
+tmux attach -t $session

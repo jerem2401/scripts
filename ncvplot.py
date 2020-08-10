@@ -4,11 +4,9 @@ import os
 import re
 import matplotlib.pyplot as plt
 import numpy as np
-import subprocess
-import glob
 import plumed_pandas
-import sys
 import argparse
+
 
 def main():
 
