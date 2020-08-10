@@ -117,7 +117,7 @@ echo "arg1:${tmd_plum_out} nbOfWin:${nbOfWin} wmax:${winmax} wmin:${winmin} dist
 echo -n 'on which group do you want to extract frames ?'
 read group
 
-for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax"); do
+for ksi in $(seq -f "%.3f" "$winmin" "$winStep" "$winmax"); do
    if mkdir "E_${ksi}"; then
 	values=$(start4umb.py -f $tmd_plum_out -v $ksi -wm $winmin $winmax)
 	#value=$(echo "$values" | grep -oP '(?<=\().*(?=,)')
@@ -126,7 +126,8 @@ for ksi in $(seq -f "%.2f" "$winmin" "$winStep" "$winmax"); do
 	value=${ADDR[0]}
 	gksi=${ADDR[1]}
 	gkappa=${ADDR[2]}
-        gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -b "$value" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" <<EOF
+	b=$(echo "$value - 1" | bc -l)
+        gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -b "$b" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" <<EOF
 	$group
 EOF
 	gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1

@@ -88,7 +88,7 @@ def main():
         import statistics
         import matplotlib.pyplot as plt
         import matplotlib
-        matplotlib.rcParams.update({'font.size': 23})
+        matplotlib.rcParams.update({'font.size': 15})
         histo_files = os.popen('ls histo*.txt | sort -t _ -k 2 -n').read().split()
         fig = plt.figure(figsize=(15,8))
         fig, axs = plt.subplots(figsize=(15,8))
