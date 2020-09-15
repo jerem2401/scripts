@@ -26,10 +26,13 @@ for i in conf*_fax.pdb; do sed -i "s/ENDMDL/END/g;s/0.00/1.00/g;" "$i";done
 #git
 git remote set-url origin git@github.com:username/repo.git #replacing SSHS connection to SSH (no need to enter username and psw everytime)
 git clone SSHlink
+git config --global diff.tool vimdiff
+git config --global merge.tool vimdiff
+git config --global alias.d difftool
 git status
 git add file #adding files to stage
 git commit -m "message" #saving snapshot
-git log #see history 
+git log #see history
 git log --oneline --decorate #one line history without dates and emails
 git log --oneline --decorate --graph --all #see history tree
 git push -u origin master #merge branches
@@ -68,3 +71,12 @@ sshare
 
 #SSH
 ssh -A -t jeremy@alef.lusi.uni-sb.de ssh -A -t dema9
+
+#Unison
+unison -fastcheck true /localdisk/mnt/smaug/syncsim /localdisk/mnt/gwdg/simulation/syncsim/
+
+#checksum comparaison:
+echo "2b9f088b2022edb474915d9f69a803d6449d5fdb4c303041f60ac4aefcc208bb Anaconda3-2020.02-Linux-x86_64.sh" | sha256sum --check
+
+#nextcloud
+https://cloud.hiz-saarland.de/remote.php/webdav/
