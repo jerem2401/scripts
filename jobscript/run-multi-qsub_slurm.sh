@@ -81,6 +81,7 @@ elif hostname | egrep -q 'hicegate'; then
     Qsystem=PBS
 elif [ `hostname` = "smaug" ]; then
     Qsystem=slurm
+    #jobscript=/data/users/jeremy/gitrepo/scripts/jobscript/common_jobscript_smaug.sh
     jobscript=/data/users/jeremy/gitrepo/scripts/jobscript/jobscript_slurm_smaug.sh
 else
     echo "$0: ERROR. Don't know this machine ($(hostname))"; exit 1

@@ -108,13 +108,23 @@ set background=dark
 " fixing backspace in new install of vim
 set backspace=indent,eol,start
 
+" 4smaug
+let hostname=system("hostname -s | tr -d '\n'")
+if hostname == 'smaug'
+    set directory=/home/users/jeremy/.vim/swapfiles
+    set backupdir=/home/users/jeremy/.vim/tmp
+
+    :let &runtimepath.=',/data/shared/opt/plumed2/lib/plumed/vim/'
+else
+    :let &runtimepath.=',/usr/users/cmb/shared/opt/plumed/v2.5.1/lib/plumed/vim'
+endif
 
 " " PLUMED STUFFS
 " " This allows including the proper PLUMED syntax file:
 " ":let &runtimepath.=','.$PLUMED_VIMPATH
 " " The former command requires PLUMED_VIMPATH to be set. Alternatively, use
 " this:
-:let &runtimepath.=',/usr/users/cmb/shared/opt/plumed/v2.5.1/lib/plumed/vim'
+" :let &runtimepath.=',/data/shared/opt/plumed2/lib/plumed/vim/'
 " " properly adjusted to the path where PLUMED is installed.
 " " This makes autocompletion work in the expected way:
 :set completeopt=longest,menuone
@@ -124,13 +134,6 @@ set backspace=indent,eol,start
 " TAB to change the hilighted column
 : map <F3> :PMinus<CR>
 : map <F4> :PPlus<CR>
-
-" 4smaug
-let hostname=system("hostname -s | tr -d '\n'")
-if hostname == 'smaug'
-    set directory=/home/users/jeremy/.vim/swapfiles
-    set backupdir=/home/users/jeremy/.vim/tmp
-endif
 
 " system clipboard for wayland display server, wl-clipboard must be installed first: sudo apt-get update, sudo apt-get install wl-clipboard 
 let serverdisp = $XDG_SESSION_TYPE

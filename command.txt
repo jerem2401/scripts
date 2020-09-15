@@ -1,0 +1,70 @@
+find dest* -maxdepth 0 -exec cp file_pat* {} \; #copy several files with file_pat* to to several destinations dest*
+tail -n +7 colvar_pull.txt | awk 'NR == 1 || $4 < min {line = $0; min = $4}END{print line}' # find min in column 4 (+skip first 6 lines)
+echo "rep1/eq2ax rep2/eq2ax rep3/eq2ax rep4/eq2ax rep5/eq2ax" | xargs -n 1 cp -v ../t20_mvAT_k10000_a0.2_deq0.05/eq2ax/c7eq* #cp in several dir
+
+#awk
+awk '(NR>1) && ( ($7 > 0.190) && ($8 > -0.400) )' colvar_pull_cross.txt > test.txt #take all lines (NR>1), which have values in 7th column greater thatn 0.190 and 8th > -0.4
+
+#pymol
+pair_fit /c7eqf///ALA`1/CB, /c7axf///ALA`1/CB, /c7eqf///ALA`1/CA, /c7axf///ALA`1/CA, /c7eqf///ALA`1/N, /c7axf///ALA`1/N, /c7eqf///ALA`1/C, /c7axf///ALA`1/C #aligning specific atoms
+for i in range(1001, 20001, 1000): cmd.extra_fit("conf"+str(i)+"_fax", "conf20000_fax") #align several struct pymol
+
+#Compiling Gromacs on Smaug:
+cmake .. -DCMAKE_INSTALL_PREFIX=/data/shared/opt/gromacs/2018.6_plumed/ -DGMX_SIMD=AVX2_256 -DGMX_BUILD_OWN_FFTW=ON
+make -j 4
+make install
+
+#backup
+rsync -avzHPih --delete --exclude=/localdisk/mnt/ --exclude=/localdisk/lost+found --link-dest=/run/media/jeremy/Backup/18-07-2019_1640/ /localdisk /run/media/jeremy/Backup/$(date '+%d-%m-%Y_%H%M') > log2.log
+
+#create pdb template for plumed RMSD
+for i in $(seq 0 1000 20000); do if [ "$i" -ne 0 ]; then gmx trjconv -s md.tpr -f traj_comp.xtc -dump "$i" -o "$i".pdb; fi; done
+for i in conf*_fax.gro; do gmx editconf -f "$i" -o "${i:0:-3}.pdb";done
+for i in conf*_fax.pdb; do sed -i '1,4d;6,8d;12d;14d;16,18d;22d;24,27d' "$i";done
+for i in conf*_fax.pdb; do sed -i "s/ENDMDL/END/g;s/0.00/1.00/g;" "$i";done
+
+#git
+git remote set-url origin git@github.com:username/repo.git #replacing SSHS connection to SSH (no need to enter username and psw everytime)
+git clone SSHlink
+git status
+git add file #adding files to stage
+git commit -m "message" #saving snapshot
+git log #see history 
+git log --oneline --decorate #one line history without dates and emails
+git log --oneline --decorate --graph --all #see history tree
+git push -u origin master #merge branches
+git fetch #download new data from remote repo, gives fresh view that happened remotly, safer than pull
+git pull origin master #download AND integrates into current working cpoy files, conflict can arrise
+git diff HEAD #difference before commiting (stagged ?)
+git diff master origin/master #difference after commiting
+
+BRANCHING
+git pull #pull changes that can have been made on the master before creating new branch
+git branch branch_name #creating new branch
+git config branch.branch_name.description "description" #adding description to branch
+git config branch.<branch name>.description #displaying branch description
+git checkout branch_name #change branch, "-b" create and change branch
+git push origin [name_of_your_new_branch]
+git fetch
+
+#SLURM
+srun -N 1 -n 4 hostname && echo "Program finished with exit code $? at: `date`" #testing interactive job
+sacct -j JOBID (see also --format option or -l)
+scontrol show job JOBID (seems not to work when old jobs)
+scontrol show partition PARTNAME
+scontrol show nodes
+scontrol show node fang20
+scontrol show node fang[10-13]
+sacct -u jlapier (list my jobs)
+squeue --format="%.18i%.20S%.12P%.25j%.8u%.3t%.12M%.6D%R" (see format)
+squeue --format="%.18i%.20S%.12P%.25j%.8u%.3t%.12M%.8D%R%.10Q%.30V" -S Q
+
+scontrol show config
+scontrol show config | grep ^Priority
+squeue -o %Q -j jobid
+sprio -w
+sprio -j 8374 -l
+sshare
+
+#SSH
+ssh -A -t jeremy@alef.lusi.uni-sb.de ssh -A -t dema9
