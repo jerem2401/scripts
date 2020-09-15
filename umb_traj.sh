@@ -36,10 +36,10 @@ else
     c=2
     for i in $(command ls -d ../../E_*); do
         sub=${i#../../E_}
-	if (( $(echo "$sub > 0.8" | bc -l) )); then
+	if (( $(echo "$sub > -0.25" | bc -l) )); then
         #if (( $(echo "$sub > 0.8" | bc -l) )) && (( $(echo "$sub < 1.000" | bc -l) )) && (( $c%2 == 0 )); then
             echo $sub
-            echo 1 | gmx trjconv -f "${i}/traj_comp.xtc" -s $i/*.tpr -o "nopbc1_${sub}.xtc" -pbc atom -ur compact -dt 200
+            echo 1 | gmx trjconv -f "${i}/traj_comp.xtc" -s $i/*.tpr -o "nopbc1_${sub}.xtc" -pbc atom -ur compact -dt 2000
             wait $!
             #echo 1 | gmx trjconv -f "nopbc1_${sub}.xtc" -s $i/*.tpr -o "nopbc2_${sub}.xtc" -pbc nojump
             echo 1 | gmx trjconv -f "nopbc1_${sub}.xtc" -s $i/*.tpr -o "nopbc2_${sub}.xtc" -pbc mol -ur compact
@@ -48,8 +48,8 @@ else
         fi
     let c=c+1
     done
-    #gmx trjcat -f nopbc2_* -o cat_prot.xtc -cat
+    gmx trjcat -f $(command ls nopbc2_* | sort -t '_' -k2 -n) -o cat_prot.xtc -cat
     echo 1 | gmx trjconv -f "nopbc2_${lsub}.xtc" -s $li/*.tpr -o 0_prot.pdb -dump 0
     wait $!
-    #rm -f ./nopbc*
+    rm -f ./nopbc*
 fi

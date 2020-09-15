@@ -2,7 +2,7 @@
 
 for i in rep*/*/; do
     echo $i
-    echo 1 | gmx trjconv -f $i/traj_comp.xtc -s $i/md.tpr -o $i/nopbc1.xtc -pbc atom -ur compact -dt 4000
+    echo 1 | gmx trjconv -f $i/traj_comp.xtc -s $i/md.tpr -o $i/nopbc1.xtc -pbc atom -ur compact -dt 600
     wait $!
     echo 1 | gmx trjconv -f $i/nopbc1.xtc -s $i/md.tpr -o $i/nopbc2.xtc -pbc whole
     wait $!
