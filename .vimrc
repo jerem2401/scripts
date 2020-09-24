@@ -114,7 +114,7 @@ if hostname == 'smaug'
     set directory=/home/users/jeremy/.vim/swapfiles
     set backupdir=/home/users/jeremy/.vim/tmp
 
-    :let &runtimepath.=',/data/shared/opt/plumed2/lib/plumed/vim/'
+    :let &runtimepath.=',/data/shared/opt/plumed_2.6.1/lib/plumed/vim/'
 else
     :let &runtimepath.=',/usr/users/cmb/shared/opt/plumed/v2.5.1/lib/plumed/vim'
 endif

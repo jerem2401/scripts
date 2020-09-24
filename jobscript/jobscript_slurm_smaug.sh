@@ -393,7 +393,7 @@ if [ "$gpuGeneration" = pascal ]; then
     excludeLine="#SBATCH --exclude=fang[41-50]"
     nGPUsPerNode=1
 elif [ "$gpuGeneration" = turing ]; then
-    excludeLine="#SBATCH --exclude=fang[1-41]"
+    excludeLine="#SBATCH --exclude=fang[1-40]"
     nGPUsPerNode=4
 elif [ "$gpuGeneration" = "" ]; then
     excludeLine=""

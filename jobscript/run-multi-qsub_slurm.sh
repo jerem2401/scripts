@@ -61,28 +61,35 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-if [ $nchain -gt 1 ]; then
-    jobscript="jobchain.sh -n $nchain"
-    bChain=1
-else
-    bChain=0
-fi
 
 # find out queueing systems
 Qsystem=unset
 if hostname | grep -q gwdu; then
-    Qsystem=slurm                                      #used to be LSF;  Gari Change 
     echo "This is at the GWDG"
-    jobscript=/usr/users/jlapier/gitrepo/scripts/jobscript/jobscript_slurm_gwdg.sh
+    Qsystem=slurm
+    if [ $nchain -gt 1 ]; then
+        jobscript="/usr/users/jlapier/gitrepo/scripts/jobscript/jobchain_slurm.sh -n $nchain"
+        bChain=1
+    else
+        bChain=0
+        jobscript=/usr/users/jlapier/gitrepo/scripts/jobscript/jobscript_slurm_gwdg.sh
+    fi
 elif hostname | egrep -q 'jj28l..'; then
     echo This is JUROPA
     Qsystem=moab
 elif hostname | egrep -q 'hicegate'; then
     Qsystem=PBS
 elif [ `hostname` = "smaug" ]; then
+    echo "This is on smaug"
     Qsystem=slurm
-    #jobscript=/data/users/jeremy/gitrepo/scripts/jobscript/common_jobscript_smaug.sh
-    jobscript=/data/users/jeremy/gitrepo/scripts/jobscript/jobscript_slurm_smaug.sh
+    if [ $nchain -gt 1 ]; then
+        jobscript="/data/users/jeremy/gitrepo/scripts/jobscript/jobchain_slurm.sh -n $nchain"
+        bChain=1
+    else
+        bChain=0
+        #jobscript=/data/users/jeremy/gitrepo/scripts/jobscript/common_jobscript_smaug.sh
+        jobscript=/data/users/jeremy/gitrepo/scripts/jobscript/jobscript_slurm_smaug.sh
+    fi
 else
     echo "$0: ERROR. Don't know this machine ($(hostname))"; exit 1
 fi
