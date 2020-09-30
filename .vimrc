@@ -143,3 +143,17 @@ if serverdisp == 'wayland'
     nnoremap "*p :let @"=substitute(system("wl-paste --no-newline --primary"), '<C-v><C-m>', '', 'g')<cr>p
 endif
 
+
+function ShellCmd(findstart, base) abort
+  if a:findstart
+    " ... some logic here to find the start of a word
+    " ... example near `:help E839`
+  else
+    return split($PATH, ':')
+          \ ->map({_,v -> glob(v.'/*', v:true, v:true, v:true)})
+          \ ->flatten()
+          \ ->map({_,v -> fnamemodify(v, ':t')})
+          \ ->filter({_,v -> v =~# '^'.a:base})
+  endif
+endfunction
+setlocal completefunc=ShellCmd

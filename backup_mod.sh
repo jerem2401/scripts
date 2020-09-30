@@ -149,28 +149,37 @@ len1year=${#year_days[@]}
 #remove every folder except the oldest backup in each specific "age-range"
 #This means folders will "travel' (or age) through all those ranges, so you always have one folder in each of those ranges
 #Thus: rm folder from index 0 to lenght of age-range array minus one
+#first line is sanity check
+
+echo "one_week_days are: ${one_week_days[@]}, two_week_days are: ${two_week_days[@]}, month_days are ${month_days[@]}, half_year_days are: ${half_year_days[@]}, year_days are: ${year_days[@]}" >> /media/jeremy/jerem_backup/backup_history.log
+
 for i in "${one_week_days[@]:1:$len1week-1}"
 do
+    echo "removing: $i" >> /media/jeremy/jerem_backup/backup_history.log
     rm -r $i
 done
 
 for j in "${two_week_days[@]:1:$len2week-1}"
 do
+    echo "removing: $j" >> /media/jeremy/jerem_backup/backup_history.log
     rm -r $j
 done
 
 for k in "${month_days[@]:1:$len1month-1}"
 do
+    echo "removing: $k" >> /media/jeremy/jerem_backup/backup_history.log
     rm -r $k
 done
 
 for l in "${half_year_days[@]:1:$len6month-1}"
 do
+    echo "removing: $l" >> /media/jeremy/jerem_backup/backup_history.log
     rm -r $l
 done
 
 for m in "${year_days[@]:1:$len1year-1}"
 do
+    echo "removing: $m" >> /media/jeremy/jerem_backup/backup_history.log
     rm -r $m
 done
 
