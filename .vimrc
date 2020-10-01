@@ -1,6 +1,14 @@
+" to get proper setup according to server
+let hostname=system("hostname -s | tr -d '\n'")
+
 " Automate bash script header
-autocmd BufNewFile *.sh so ${HOME}/gitrepo/scripts/bash_header
-autocmd BufNewFile *.py so ${HOME}/gitrepo/scripts/python_header
+if hostname == 'smaug'
+    autocmd BufNewFile *.sh so /data/users/jeremy/gitrepo/scripts/bash_header
+    autocmd BufNewFile *.py so /data/users/jeremy/gitrepo/scripts/python_header
+else
+    autocmd BufNewFile *.sh so ${HOME}/gitrepo/scripts/bash_header
+    autocmd BufNewFile *.py so ${HOME}/gitrepo/scripts/python_header
+endif
 
 " Enable syntax
 :syntax on
@@ -109,7 +117,6 @@ set background=dark
 set backspace=indent,eol,start
 
 " 4smaug
-let hostname=system("hostname -s | tr -d '\n'")
 if hostname == 'smaug'
     set directory=/home/users/jeremy/.vim/swapfiles
     set backupdir=/home/users/jeremy/.vim/tmp
@@ -143,3 +150,17 @@ if serverdisp == 'wayland'
     nnoremap "*p :let @"=substitute(system("wl-paste --no-newline --primary"), '<C-v><C-m>', '', 'g')<cr>p
 endif
 
+
+function ShellCmd(findstart, base) abort
+  if a:findstart
+    " ... some logic here to find the start of a word
+    " ... example near `:help E839`
+  else
+    return split($PATH, ':')
+          \ ->map({_,v -> glob(v.'/*', v:true, v:true, v:true)})
+          \ ->flatten()
+          \ ->map({_,v -> fnamemodify(v, ':t')})
+          \ ->filter({_,v -> v =~# '^'.a:base})
+  endif
+endfunction
+setlocal completefunc=ShellCmd
