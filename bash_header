@@ -1,8 +1,10 @@
 :insert
 #!/bin/bash
-#
+###############################################################################
 #Author: Jeremy Lapierre <jeremy.lapierre@uni-saarland.de>
 #Option description:
+#
+###############################################################################
 set -o errexit   # abort on nonzero exitstatus
 set -o nounset   # abort on unbound variable
 set -o pipefail  # dont hide errors within pipes

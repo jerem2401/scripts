@@ -9,7 +9,7 @@ host=$(hostname)
 
 tmux new-session -s $session -d -x "$2" -y "$(($1 - 1))" # status line uses a row
 
-if [[ $session == python* ]]; then
+if [[ $session == pythonh* ]]; then
     tmux send-keys -t $session 'cd ~/gitrepo/scripts' C-m
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -h
@@ -32,6 +32,21 @@ if [[ $session == python* ]]; then
     #tmux send-keys -t 'cd ~/gitrepo/scripts' C-m
     #tmux selectp -t 1
     #tmux send-keys "" C-m
+elif [[ $session == pythonv* ]]; then
+    tmux send-keys -t $session 'cd ~/gitrepo/scripts' C-m
+    tmux send-keys -t $session 'clear' C-m
+    tmux split-window -v
+    tmux send-keys -t $session 'clear' C-m
+    if [[ $host == gwdu* ]]; then
+        tmux send-keys -t $session 'module load conda' C-m
+        tmux send-keys -t $session 'source activate env1' C-m
+        tmux send-keys -t $session 'python' C-m
+    else
+        tmux send-keys -t $session 'python' C-m
+    fi
+    tmux split-window -h
+    tmux send-keys -t $session 'clear' C-m
+    tmux resize-pane -t $session:0.0 -y 86
 elif [[ $session == gwdg ]]; then
     tmux send-keys -t $session 'cogwdg' C-m
     tmux send-keys -t $session 'clear' C-m
