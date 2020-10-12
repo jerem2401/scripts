@@ -2,9 +2,9 @@
 '''
 Author(s): Jeremy Lapierre <jeremy.lapierre@uni-saarland.de>
 \nDescription: This script modifies gromacs topology files to simulate with heavy hydrogens. This
-allows to decrease angular and out-of-plane motion involving hydrogens and therefore allowing to
+allows to decrease angular and out-of-plane motions involving hydrogens and therefore allowing to
 increase the time step. To conserve the total mass, the heavy atoms connected to hydrogens will
-also have a proportional reduced mass. Example for methyl group with factor of 3 (default, see
+also have a proportionally reduced mass. Example for methyl group with factor of 3 (default, see
 argument descriptions at the end of the help) :\n
            H (1.008)                     H (3.024)
            |                             |
@@ -12,6 +12,11 @@ argument descriptions at the end of the help) :\n
         (12.01)                       (5.9620)
 
 (FLOAT): Atom mass\n
+
+Another approach is to use virtual sites, however it is not possible to do the update on the GPUs
+with virtual sites. Therefore, using heavy hydrogens allow to double the time step AND to use
+gmx mdrun -update gpu and gain further significant speed-up.
+It is atm only possible to use a factor of 4 with pdb2gmx -heavyh thus the need of this script.
 
 If you are simulating proteins, don't forget to constrain all bonds.\n
 
@@ -25,10 +30,20 @@ for .top.
 4. heavyh_final.py -p topol.top -factor 4 : same as 2. but all hydrogen masses are multiply by a
 factor of 4.
 
-TODO/Notes:\n1. It is not possible to have several Hydrogens with different masses in the same topolgy
-file yet. If those topologies are in different .itp files included in the .top, this will be all
-fine though.\n2. If included .itp files in .top are not in the same directory as the .top,
-the script will not process it.
+Ref:
+1. K Anton Feenstra, Berk Hess and Herman J C Berendsen. Improving Efficiency of Large Time-Scale
+Molecular Dynamics Simulations of Hydrogen-Rich Systems. Journal of Computational Chemistry, 1999.
+2. Chad W. Hopkins, Scott Le Grand, Ross C. Walker and Adrian E. Roitberg. Long-time-step molecular
+dynamics through hydrogen mass repartitioning. Journal of Chemical Theory and Computation, 2015.
+3. Curtis Balusek et al. Accelerating Membrane Simulations with Hydrogen Mass Repartitioning.
+Journal of Chemical Theory and Computation, 2019.
+
+TODO/Notes:\n1. It is not possible to have several Hydrogens with different masses in the same
+topology file yet. If those topologies are in different .itp files included in the .top, this will
+be all fine though.\n2. If included .itp files in .top are not in the same directory as the .top,
+the script will not process it.\n 3. This scripts assumes that [ atoms ] block is followed by the
+[ bonds ] block (not [ pairs ], [ dihedrals ], etc.), this has been the case in all the case systems
+so far, but if this leads to issues, it should be "not too hard" to change this in the script.
 
 '''
 
@@ -37,6 +52,11 @@ from glob import glob
 import re
 from os import path
 from shutil import move
+import itertools
+
+
+class NoHydroError(Exception):
+    """Customized exception"""
 
 
 def file_checker(top, itp, suff):
@@ -79,12 +99,11 @@ def file_checker(top, itp, suff):
         keep = 0
         with open(i, 'r') as topfile:
             for line in topfile:
+                #atom_line_list = line.split()
                 if regx_atmblock.search(line):
                     keep = 1
         if keep == 0:
-            print(f'\nNo [ atoms ] block in {i}, this file will be ignored, make sure to have all'
-                  f' itp and top in the same directory in case full path of itp is not in'
-                  f' the top file though.')
+            print(f'No [ atoms ] block in {i}, this file will be ignored')
             topol2rm.append(i)
 
     topols = [topfile for topfile in topols if topfile not in topol2rm]
@@ -102,135 +121,164 @@ def file_checker(top, itp, suff):
     return topolin_topolout
 
 def top_parser(topol):
-    """This function is parsing the topol file: 1. Pass lines until the [ atoms ] block is reached,
+    """This function is parsing the topol file and creates 2 main dictionaries: toplines and
+    atomblock. The file is read line by line such that everything that is not [ atoms ] is put
+    in toplines associted to their line index. All [ atoms ] lines are put in atomblock with
+    associated line index.
     2. Check format of [ atoms ] block,
     3.Read the atom block (but skip commments) until it is finished to create hydrogen and
     heavy atom sets (based on hydrogen_mass), 4. Read the bond block and make a list of col 1 and 2.
     Also get the hydrogen mass of the topology."""
 
+    toplines = {}
+    atomblock = {}
     hydrogen_mass = set()
-    hydrogenid = set()
-    heavyatmid = set()
+    hydroid2line = {}
+    heavyid2line = {}
     bondlist = []
+    endblock = re.compile(r"^\[ *")
 
     #Sanity check variable
     massin = 0
-    error = []
 
     with open(topol, 'r') as top:
-        for atom_line in iter(top.readline, '[ atoms ]\n'):
-            pass
-        for index, atom_line in enumerate(iter(top.readline, '\n')):
+        for index, atom_line in enumerate(itertools.takewhile(lambda x: '[ atoms ]' not in x, top)):
+            toplines[index] = atom_line
+
+        toplines[max(toplines.keys())+1] = '[ atoms ]\n'
+
+        for index, atom_line in enumerate(itertools.takewhile(lambda x: '[ bonds ]' not in x, top),
+                                          max(toplines.keys())+1):
+            #must be before split(), because index is out of range otherwise but NO ERROR MESSAGE!
+            if atom_line == '\n':
+                toplines[index] = atom_line
+                continue
             atom_line_list = atom_line.split()
-            if index == 0:
-                if 'mass' not in atom_line_list:
-                    error.append('no_mass_error') #'No mass in [ atoms ] block'
-                    #raise SystemExit(error)
-                if 'mass' not in atom_line_list[8] and 'charge' not in atom_line_list[7]:
-                    error.append('atm_format_error') #'unusual [ atoms ] block format input, improve the code.'
-                    #raise SystemExit(error)
-                string_untilmass = re.search(rf".*(?=\bcharge\b)", atom_line).group()
-                nbrchar_b4_mass = len(string_untilmass) + 6 #6 is len(charge)
-                string_withmass = re.search(rf".*(?=\bmass\b)", atom_line).group()
-                nbrchar4mass = len(string_withmass) + 4 - nbrchar_b4_mass #4 is len(mass)
-            elif atom_line.startswith(';'):
-                pass
-            elif 0.99 <= float(atom_line_list[7]) <= 1.1:
-                hydrogen_mass.add(atom_line_list[7])
-                hydrogenid.add(atom_line_list[0])
-                massin += float(atom_line_list[7])
+            #print(atom_line_list)
+            if atom_line_list[0] == ";":
+                toplines[index] = atom_line
+            elif len(atom_line_list) >= 8:
+                if 0.99 <= float(atom_line_list[7]) <= 1.1:
+                    hydrogen_mass.add(atom_line_list[7])
+                    hydroid2line[atom_line_list[0]] = index
+                    atomblock[index] = atom_line_list
+                    massin += float(atom_line_list[7])
+                else:
+                    heavyid2line[atom_line_list[0]] = index
+                    atomblock[index] = atom_line_list
+                    massin += float((atom_line_list[7]))
+
+        #Sanity check
+        if hydrogen_mass == set():
+            raise NoHydroError
+        #End of sanity check
+
+        toplines[max(toplines.keys())+1] = '[ bonds ]\n'
+
+        for index, atom_line in enumerate(top, max(toplines.keys())+1):
+            if endblock.search(atom_line):
+                next_block = atom_line
+                break
+            if atom_line == '\n':
+                toplines[index] = atom_line
+                continue
+            atom_line_list = atom_line.split()
+            if atom_line_list[0] == ";":
+                toplines[index] = atom_line
             else:
-                heavyatmid.add(atom_line_list[0])
-                massin += float((atom_line_list[7]))
-        iterbond = iter(top.readline, '\n')
-        next(iterbond)
-        next(iterbond)
-        for atom_line in iterbond:
-            bondlist.append(atom_line.split()[0:2])
+                bondlist.append(atom_line.split()[0:2])
+                toplines[index] = atom_line
 
-    if len(hydrogen_mass) > 1:
-        #error = ('Not possible to have different hydrogen masses in the same topology, see --help')
-        error.append('multi_h')
-        #raise SystemExit(error)
+        toplines[max(toplines.keys())+1] = next_block
 
-    try:
-        hydrogen_mass = list(hydrogen_mass)[0]
-    except IndexError:
-        error.append('no_hydrogen')
+        for index, atom_line in enumerate(top, max(toplines.keys())+1):
+            toplines[index] = atom_line
 
-    return (nbrchar_b4_mass, nbrchar4mass, float(hydrogen_mass),
-            hydrogenid, heavyatmid, bondlist, massin, error)
+    hydrogen_mass = list(hydrogen_mass)
+
+    return (toplines, atomblock, float(hydrogen_mass[0]),
+            hydroid2line, heavyid2line, bondlist, massin)
 
 
-def h_heavyatm_matcher(bondlist, hydrogenid):
-    """This function creates a dictionary:\n
-       { heavy atom id being connected to hydrogens : nbr of associated H }."""
+def atom_block_modifier(hydrogen_mass, massfactor, bondlist, hydroid2line, heavyid2line, atomblock):
+    """This function iterate over the bonds columns to check which atom ids are linked to an H.
+       Heavy atoms are then retrieved in atomblock thanks to heavyid2line in order to decrease
+       their masses. Hydrogens atoms are also retrieved in atomblock but thanks to hydroid2line and
+       their masses are increased according to the massfactor. Usually H are in 2nd col of the
+       [ bonds ] block, but the elif make sure to also check col 1 just in case. The use of set
+       objects makes sure to do this really fast in contrast to lists (O(n) vs O(1))."""
 
-    print('ok')
-    h_connected_heavy = {}
+    new_hydrogen_mass = hydrogen_mass*massfactor
+    mass2remove = new_hydrogen_mass-hydrogen_mass
+
     #Sanity check variable
     hbond_nbr = 0
 
     for col1col2 in bondlist:
-        if col1col2[1] in hydrogenid:
-            h_connected_heavy[col1col2[0]] = h_connected_heavy.get(col1col2[0], 0) +1
+        if col1col2[1] in hydroid2line.keys():
+            #changing heavy atm mass
+            line2modify = heavyid2line[col1col2[0]]
+            former_mass = float(atomblock[line2modify][7])
+            new_mass = former_mass - mass2remove
+            atomblock[line2modify][7] = str(new_mass)
+            #changing hydrogen mass
+            line2modify = hydroid2line[col1col2[1]]
+            atomblock[line2modify][7] = str(new_hydrogen_mass)
             hbond_nbr += 1
-        elif col1col2[0] in hydrogenid:
-            h_connected_heavy[col1col2[1]] = h_connected_heavy.get(col1col2[1], 0) +1
+        elif col1col2[0] in hydroid2line.keys():
+            line2modify = heavyid2line[col1col2[1]]
+            #atom mass is in 8th column
+            former_mass = float(atomblock[line2modify][7])
+            new_mass = former_mass - mass2remove
+            atomblock[line2modify][7] = str(new_mass)
+            #changing hydrogen mass
+            line2modify = hydroid2line[col1col2[0]]
+            atomblock[line2modify][7] = str(new_hydrogen_mass)
             hbond_nbr += 1
 
-    if hbond_nbr != len(hydrogenid):
+    if hbond_nbr != len(hydroid2line):
         error = ('Error: the number of parsed hydrogens in hydrogenid variable is not the same as '
-                 'the number of hydrogen bonds in hbond_nbr')
+                 'the number of hydrogen bonds in hbond_nbr. Something is wrong !')
         raise SystemExit(error)
 
-    print('ok')
-    return h_connected_heavy
+    massout = sum([float(column[7]) for column in atomblock.values()])
+
+    return atomblock, massout
 
 
-def writer(hydrogen_mass, massfactor, nbrchar_b4_mass, nbrchar4mass, topol, out, h_connected_heavy):
-    """This function writes the output topology (and/or .itps)"""
+def writer(toplines, atomblock, out):
+    """This function reformates the modified atomblock, merges the toplines and the formatted
+       modified atomblock and finally writes the ouptput topologies"""
 
-    new_hydrogen_mass = hydrogen_mass*massfactor
-    mass2remove = new_hydrogen_mass-hydrogen_mass
-    new_hydrogen_mass = f'{new_hydrogen_mass:.4f}'
-    new_hydrogen_mass = f'{new_hydrogen_mass:>11}'
-    #Sanity check variable
-    massout = 0
-    regx4mass = re.compile(r"(?<=^.{%s}).{%s}" % (nbrchar_b4_mass, nbrchar4mass))
+    atomblock_f = {}
+    for linenbr, atmline_list in atomblock.items():
+        if len(atmline_list) == 8:
+            atomblock_f[linenbr] = (f'{atmline_list[0]:>7}{atmline_list[1]:>12}'
+                                    f'{atmline_list[2]:>8}{atmline_list[3]:>8}'
+                                    f'{atmline_list[4]:>8}{atmline_list[5]:>8}'
+                                    f'{f"{float(atmline_list[6]):.11g}":>12}'
+                                    f'{f"{float(atmline_list[7]):.11g}":>12}\n')
+        else:
+            junk = ' '.join([str(elem) for elem in atmline_list[8::]])
+            atomblock_f[linenbr] = (f'{atmline_list[0]:>7}{atmline_list[1]:>12}'
+                                    f'{atmline_list[2]:>8}{atmline_list[3]:>8}'
+                                    f'{atmline_list[4]:>8}{atmline_list[5]:>8}'
+                                    f'{f"{float(atmline_list[6]):.11g}":>12}'
+                                    f'{f"{float(atmline_list[7]):.11g}":>12}'
+                                    f'{junk}\n')
 
-    with open(topol, 'r') as intop, open(out, 'w') as outtop:
-        for atom_line in iter(intop.readline, '[ atoms ]\n'):
-            outtop.write(atom_line)
-        outtop.write(f'[ atoms ]\n')
-        for atom_line in iter(intop.readline, '\n'):
-            atom_line_list = atom_line.split()
-            if atom_line.startswith(';'):
-                outtop.write(atom_line)
-            elif 0.99 <= float(atom_line_list[7]) <= 1.1:
-                atom_line = regx4mass.sub(new_hydrogen_mass, atom_line)
-                outtop.write(atom_line)
-                massout += float(new_hydrogen_mass)
-            elif atom_line_list[0] in h_connected_heavy.keys():
-                new_heavyatm_mass = float(atom_line_list[7])                            \
-                                    - (mass2remove*h_connected_heavy[atom_line_list[0]])
-                new_heavyatm_mass = f'{new_heavyatm_mass:.4f}'
-                new_heavyatm_mass = f'{new_heavyatm_mass:>11}'
-                atom_line = regx4mass.sub(new_heavyatm_mass, atom_line)
-                outtop.write(atom_line)
-                massout += float(new_heavyatm_mass)
-            else:
-                massout += float(atom_line_list[7])
-                outtop.write(atom_line)
-        outtop.write('\n')
-        for atom_line in iter(intop.readline, ''):
-            outtop.write(atom_line)
+    #merging toplines with atomblock: entire new topology file
+    toplines.update(atomblock_f)
 
-    return massout
+    #To do: make sanity check: all toplines.keys should be different and increasing from 0 to
+    #len(toplines)
+    with open(out, 'w') as outtop:
+        for line_nbr in range(0, len(toplines)):
+            outtop.write(toplines[line_nbr])
 
 
 def main():
-    """This is just the main function of the script executing parser, h_heavyatm_matcher
+    """This is just the main function of the script executing top_parser, atom_block_modifier
     and writer functions, see __doc__ for details"""
 
     parser = argparse.ArgumentParser(description=__doc__,
@@ -238,7 +286,8 @@ def main():
     parser.add_argument('-p',
                         default=glob('./*.top'),
                         help='Give input topology (.top and/or itp), default: ./*.top, '
-                             'if several .top in current dir or given, error will be raised',
+                             'if several .top in current dir or given, error will be raised.'
+                             ' However you can give as many .itp as you want (+max 1 .top)',
                         dest='topol',
                         nargs='*')
     parser.add_argument('-factor',
@@ -258,7 +307,7 @@ def main():
     top = [top for top in args.topol if ".top" in top]
     itp = [itp for itp in args.topol if ".itp" in itp]
 
-    #Manage only one .top/inputs, this simplify the script. If several .top just loop over the
+    #Manage only one .top/inputs, this simplifies the script.
     if len(top) > 1:
         error = ('Several .top files in the current directory or given, please use -p to precise'
                  ' which .top should be used (you can however give as many .itp as you want or even'
@@ -266,26 +315,28 @@ def main():
                  ' just use a bash for loop over your .top using this scripti.')
         raise SystemExit(error)
 
-    #see file_checker function
     topolin_topolout = file_checker(top, itp, args.suff)
 
-    #see top_parser, h_heavyatm_matcher and writer function
-    #variable needed to not modifiy the name of .itp without H in the .top
+    #variable needed to NOT modifiy the name of .itp without H in the .top
     no_hydrogen = []
+
     for items in topolin_topolout.items():
-        print(f"processing {items[0]}...\n")
+        print(f"\nProcessing {items[0]}...\n")
 
         try:
-            
-            nbrchar_b4_mass, nbrchar4mass, hydrogen_mass, hydrogenid, heavyatmid, bondlist, massin = top_parser(items[0])
-            h_connected_heavy = h_heavyatm_matcher(bondlist, hydrogenid)
-            massout = writer(hydrogen_mass, args.massfactor, nbrchar_b4_mass, nbrchar4mass,
-                             items[0], items[1], h_connected_heavy)
+            toplines, atomblock, hydrogen_mass, hydroid2line,   \
+            heavyid2line, bondlist, massin = top_parser(items[0])
+
+            atomblock, massout = atom_block_modifier(hydrogen_mass, args.massfactor, bondlist,
+                                                     hydroid2line, heavyid2line, atomblock)
+
+            writer(toplines, atomblock, items[1])
+
             print(f'Difference between overall mass in input '
-                  f'and overall mass in output is: {massin-massout} (should be 0)'
+                  f'and overall mass in output is: {massin-massout:.4f} (should be 0)'
                   f'\n(massin is: {massin}, massout is: {massout})')
-        #catch IndexEerror raised by top_parser because hydrogen_mass is empty list
-        except IndexError:
+
+        except NoHydroError:
             print(f'***CAREFUL*** No hydrogens were found in: {items[0]}. If you think it makes '
                   f'sens for this molecular entity to not have hydrogens, first make sure that (in '
                   f'case of .itp file) this file is copied in the working directory and then you'
@@ -295,10 +346,11 @@ def main():
                   f'\n2. Because the top formatting is unusual'
                   f', you should review the code in this case too.\n')
             no_hydrogen.append(items[0])
+
     #This replaces the name of the modified .itp in the .top file if .itp contains H
     if top != []:
         #case where .top does not contain H
-        if top[0] not in topolin_topolout:
+        if top[0] in no_hydrogen:
             new_name = top[0].replace('.top', args.suff+'.top')
             with open(top[0], 'r') as intop, open(new_name, 'w') as outtop:
                 for line in intop:
