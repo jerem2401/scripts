@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Author(s): Jeremy Lapierre <jeremy.lapierre@uni-saarland.de>
+Author(s): Jeremy Lapierre <jeremy.lapierre@uni-saarland.de>, 
 \nDescription: This script modifies gromacs topology files to simulate with heavy hydrogens. This
 allows to decrease angular and out-of-plane motions involving hydrogens and therefore allowing to
 increase the time step. To conserve the total mass, the heavy atoms connected to hydrogens will
@@ -18,7 +18,8 @@ with virtual sites. Therefore, using heavy hydrogens allow to double the time st
 gmx mdrun -update gpu and gain further significant speed-up.
 It is atm only possible to use a factor of 4 with pdb2gmx -heavyh thus the need of this script.
 
-If you are simulating proteins, don't forget to constrain all bonds.\n
+If you are simulating proteins, don't forget to constrain all bonds, i.e. "constraints = all-bonds"
+in the .mdp file.\n
 
 Some script launch examples:\n
 1. heavyh_final.py : a .top file is looked in current dir and all .itp files (except *posre*.itp and
@@ -99,7 +100,6 @@ def file_checker(top, itp, suff):
         keep = 0
         with open(i, 'r') as topfile:
             for line in topfile:
-                #atom_line_list = line.split()
                 if regx_atmblock.search(line):
                     keep = 1
         if keep == 0:
@@ -295,7 +295,7 @@ def main():
                         help='Give the factor with which each hydrogen mass should be multiplied by'
                              ' (default: %(default)s)',
                         dest='massfactor',
-                        type=int)
+                        type=float)
     parser.add_argument('-o',
                         default='_heavyH',
                         help=f'Suffix for output topology file name (default: %(default)s)',
@@ -334,7 +334,7 @@ def main():
 
             print(f'Difference between overall mass in input '
                   f'and overall mass in output is: {massin-massout:.4f} (should be 0)'
-                  f'\n(massin is: {massin}, massout is: {massout})')
+                  f'\n(massin is: {massin:.7g}, massout is: {massout:.7g})')
 
         except NoHydroError:
             print(f'***CAREFUL*** No hydrogens were found in: {items[0]}. If you think it makes '
@@ -351,6 +351,15 @@ def main():
     if top != []:
         #case where .top does not contain H
         if top[0] in no_hydrogen:
+            new_name = top[0].replace('.top', args.suff+'.top')
+            with open(top[0], 'r') as intop, open(new_name, 'w') as outtop:
+                for line in intop:
+                    for i in topolin_topolout:
+                        if i not in no_hydrogen and i in line:
+                            line = line.replace(i, topolin_topolout[i])
+                    outtop.write(line)
+        #case where .top does not contain atom block
+        if top[0] not in topolin_topolout:
             new_name = top[0].replace('.top', args.suff+'.top')
             with open(top[0], 'r') as intop, open(new_name, 'w') as outtop:
                 for line in intop:

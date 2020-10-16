@@ -21,6 +21,12 @@ nnoremap <silent> ,<space> :nohlsearch<CR>
 " shortcut for leaving insert mode
 inoremap jj <ESC>
 
+" Move between tab
+nnoremap <C-Left> :tabprevious<CR>
+nnoremap <C-Right> :tabnext<CR>
+nnoremap <C-j> :tabprevious<CR>
+nnoremap <C-k> :tabnext<CR>
+
 " show line numbers and lenght
 set number
 " set tw=79
