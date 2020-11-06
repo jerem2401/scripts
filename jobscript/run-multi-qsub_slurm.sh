@@ -83,12 +83,12 @@ elif [ `hostname` = "smaug" ]; then
     echo "This is on smaug"
     Qsystem=slurm
     if [ $nchain -gt 1 ]; then
-        jobscript="/data/users/jeremy/gitrepo/scripts/jobscript/jobchain_slurm.sh -n $nchain"
+        jobscript="/home/users/jeremy/gitrepo/scripts/jobscript/jobchain_slurm.sh -n $nchain"
         bChain=1
     else
         bChain=0
         #jobscript=/data/users/jeremy/gitrepo/scripts/jobscript/common_jobscript_smaug.sh
-        jobscript=/data/users/jeremy/gitrepo/scripts/jobscript/jobscript_slurm_smaug.sh
+        jobscript=/home/users/jeremy/gitrepo/scripts/jobscript/jobscript_slurm_smaug.sh
     fi
 else
     echo "$0: ERROR. Don't know this machine ($(hostname))"; exit 1

@@ -82,7 +82,7 @@ trap "rm -rf $sbatch_tempfile" EXIT
 case `hostname` in
     smaug|fang?|fang??)
         ppn=6
-        gmxrc=/data/shared/opt/gromacs/2019.6/bin/GMXRC.bash
+        gmxrc=/data/shared/opt/gromacs/2020.3/bin/GMXRC.bash
         queue=deflt
         machine=smaug
         ;;
@@ -371,7 +371,7 @@ if [ "$gpuGeneration" = pascal ]; then
     excludeLine="#SBATCH --exclude=fang[41-50]"
     nGPUsPerNode=1
 elif [ "$gpuGeneration" = turing ]; then
-    excludeLine="#SBATCH --exclude=fang[1-41]"
+    excludeLine="#SBATCH --exclude=fang[1-40]"
     nGPUsPerNode=4
 elif [ "$gpuGeneration" = "" ]; then
     excludeLine=""

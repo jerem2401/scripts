@@ -17,7 +17,7 @@ if ! which jobscript_slurm.sh >& /dev/null; then
     echo jobscript_slurm.sh not in path.
     exit 1
 else
-    script=/data/users/jeremy/gitrepo/scripts/jobscript/jobscript_slurm_smaug.sh
+    script=/home/users/jeremy/gitrepo/scripts/jobscript/jobscript_slurm_smaug.sh
     echo -e "Using this script: $script\n"
 fi
 

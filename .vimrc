@@ -3,8 +3,8 @@ let hostname=system("hostname -s | tr -d '\n'")
 
 " Automate bash script header
 if hostname == 'smaug'
-    autocmd BufNewFile *.sh so /data/users/jeremy/gitrepo/scripts/bash_header
-    autocmd BufNewFile *.py so /data/users/jeremy/gitrepo/scripts/python_header
+    autocmd BufNewFile *.sh so /home/users/jeremy/gitrepo/scripts/bash_header
+    autocmd BufNewFile *.py so /home/users/jeremy/gitrepo/scripts/python_header
 else
     autocmd BufNewFile *.sh so ${HOME}/gitrepo/scripts/bash_header
     autocmd BufNewFile *.py so ${HOME}/gitrepo/scripts/python_header
@@ -154,6 +154,9 @@ if serverdisp == 'wayland'
     xnoremap "+y y:call system("wl-copy", @")<cr>
     nnoremap "+p :let @"=substitute(system("wl-paste --no-newline"), '<C-v><C-m>', '', 'g')<cr>p
     nnoremap "*p :let @"=substitute(system("wl-paste --no-newline --primary"), '<C-v><C-m>', '', 'g')<cr>p
+elseif serverdisp == 'tty'
+    xnoremap "+y y:call system("xclip -sel clip", @")<cr>
+    nnoremap "+p :let @"=substitute(system("xclip -sel clip -o"), '<C-v><C-m>', '', 'g')<cr>p
 endif
 
 

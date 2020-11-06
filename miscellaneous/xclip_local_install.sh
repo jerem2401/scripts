@@ -8,10 +8,10 @@
 set -e
 
 XCLIP_VERSION=0.12
-
+INSTALL=${1?Error: no path given for installation}
 # create our directories
-mkdir -p $HOME/local $HOME/xclip_tmp
-cd $HOME/xclip_tmp
+mkdir -p $INSTALL $INSTALL/xclip_tmp
+cd $INSTALL/xclip_tmp
 
 # download source files for XClip
 wget http://kent.dl.sourceforge.net/project/xclip/xclip/${XCLIP_VERSION}/xclip-${XCLIP_VERSION}.tar.gz
@@ -19,6 +19,6 @@ wget http://kent.dl.sourceforge.net/project/xclip/xclip/${XCLIP_VERSION}/xclip-$
 # extract files, configure, and compile
 tar xvzf xclip-${XCLIP_VERSION}.tar.gz
 cd xclip-${XCLIP_VERSION}
-./configure --prefix=$HOME/local --disable-shared
+./configure --prefix=$INSTALL/xclip_tmp --disable-shared
 make
 make install
