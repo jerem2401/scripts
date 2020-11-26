@@ -145,8 +145,8 @@ endif
 :let plumed_shortcuts=1
 
 " TAB to change the hilighted column
-: map <F3> :PMinus<CR>
-: map <F4> :PPlus<CR>
+: map <F7> :PMinus<CR>
+: map <F8> :PPlus<CR>
 
 " system clipboard for wayland display server, wl-clipboard must be installed first: sudo apt-get update, sudo apt-get install wl-clipboard 
 let serverdisp = $XDG_SESSION_TYPE
