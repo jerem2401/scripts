@@ -26,10 +26,21 @@ fi
 
 echo $3
 
-echo $group | gmx trjconv -f $1/traj_comp.xtc -s $1/md.tpr -o $1/nopbc1.xtc -ur compact -pbc atom -n /data/users/jeremy/simulation/syncsim/pol/meta/index.ndx -skip $skip
+read -p "which index.ndx, 0 (old) or 1(new) ?" ival
+
+if (( "$ival" == 0 )); then
+	index="/data/users/jeremy/simulation/syncsim/pol/meta/index.ndx"
+elif (( "$ival" == 1 )); then
+	index="/data/users/jeremy/simulation/syncsim/pol/ref/cc_ZN_noTFIIS/prep/npt/index.ndx"
+else
+	echo "error: no index file choosen"
+	exit 1
+fi
+
+echo $group | gmx trjconv -f $1/traj_comp.xtc -s $1/md.tpr -o $1/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
 wait
-echo $group | gmx trjconv -f $1/nopbc1.xtc -s $1/md.tpr -o $1/nopbc2.xtc -ur compact -pbc whole -n /data/users/jeremy/simulation/syncsim/pol/meta/index.ndx
+echo $group | gmx trjconv -f $1/nopbc1.xtc -s $1/md.tpr -o $1/nopbc2.xtc -ur compact -pbc whole -n $index
 wait
-echo $group | gmx trjconv -f $1/nopbc2.xtc -s $1/md.tpr -o $1/0.pdb -dump 0 -n /data/users/jeremy/simulation/syncsim/pol/meta/index.ndx
+echo $group | gmx trjconv -f $1/nopbc2.xtc -s $1/md.tpr -o $1/0.pdb -dump 0 -n $index
 
 correct-chainid-and-ter.py $1/0.pdb > $1/0_chains.pdb
