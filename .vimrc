@@ -154,7 +154,7 @@ if serverdisp == 'wayland'
     xnoremap "+y y:call system("wl-copy", @")<cr>
     nnoremap "+p :let @"=substitute(system("wl-paste --no-newline"), '<C-v><C-m>', '', 'g')<cr>p
     nnoremap "*p :let @"=substitute(system("wl-paste --no-newline --primary"), '<C-v><C-m>', '', 'g')<cr>p
-elseif serverdisp == 'tty'
+else
     xnoremap "+y y:call system("xclip -sel clip", @")<cr>
     nnoremap "+p :let @"=substitute(system("xclip -sel clip -o"), '<C-v><C-m>', '', 'g')<cr>p
 endif
