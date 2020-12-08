@@ -24,14 +24,13 @@ def main():
     #        return True
     #    return False
 
-    dataf = plumed_pandas.read_as_pandas(args.f, skiprows=lambda x: x % 100)
+    dataf = plumed_pandas.read_as_pandas(args.f, skiprows=lambda x: x % 8000)
 
-    fig = plt.figure(figsize=[8, 8])
-    axs = fig.gca()
     if args.col is not None:
-        dataf.plot(x='time', y=args.col, ax=axs)
+        ax = dataf.plot(x='time', y=args.col)
+        ax.legend([args.f])
     else:
-        dataf.plot(x='time', y=range(args.start, args.end), ax=axs)
+        ax = dataf.plot(x='time', y=range(args.start, args.end))
     plt.savefig(f'{args.out}.png', format='png')
     plt.close()
     print(f'{args.out}.png has been created')

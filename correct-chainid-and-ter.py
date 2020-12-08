@@ -16,7 +16,7 @@ chainnr=0
 
 for line in f:
     if (not (line[0:6]=='ATOM  ' or line[0:6]=='HETATM')):
-        print(line,end='')
+        print(line, end = '')
     else:
         res     = int(line[22:26])
         # chainID = labels[chainnr]
