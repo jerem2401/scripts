@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 session=$1
 
 #Get width and lenght size of terminal, this is needed in one wants to resize a dettach session/window/pane
@@ -55,6 +56,7 @@ elif [[ $session == gwdg ]]; then
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -h
     tmux send-keys -t $session 'clear' C-m
+    tmux send-keys -t $session 'xdotool key ctrl+b r' C-m
 elif [[ $session == smaug ]]; then
     tmux send-keys -t $session 'cosmaug' C-m
     tmux send-keys -t $session 'clear' C-m
@@ -63,6 +65,7 @@ elif [[ $session == smaug ]]; then
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -h
     tmux send-keys -t $session 'clear' C-m
+    tmux send-keys -t $session 'xdotool key ctrl+b r' C-m
 else
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -v
