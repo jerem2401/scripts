@@ -43,4 +43,5 @@ echo $group | gmx trjconv -f $1/nopbc1.xtc -s $1/md.tpr -o $1/nopbc2.xtc -ur com
 wait
 echo $group | gmx trjconv -f $1/nopbc2.xtc -s $1/md.tpr -o $1/0.pdb -dump 0 -n $index
 
-correct-chainid-and-ter.py $1/0.pdb > $1/0_chains.pdb
+cp $1/0.pdb $1/0c.pdb
+correct-chainid-and-ter.py $1/0c.pdb > $1/0_chains.pdb
