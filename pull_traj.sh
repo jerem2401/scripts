@@ -19,7 +19,7 @@ fi
 echo $2
 
 if [ -z "$3" ]; then
-	group=24
+	group=26
 else
 	group=$3
 fi
@@ -31,7 +31,7 @@ read -p "which index.ndx, 0 (old) or 1(new) ?" ival
 if (( "$ival" == 0 )); then
 	index="/data/users/jeremy/simulation/syncsim/pol/meta/index.ndx"
 elif (( "$ival" == 1 )); then
-	index="/data/users/jeremy/simulation/syncsim/pol/ref/cc_ZN_noTFIIS/prep/npt/index.ndx"
+	index="/data/users/jeremy/simulation/syncsim/pol/ref/cc_ZN_noTFIIS_params/prep/nvt/index.ndx"
 else
 	echo "error: no index file choosen"
 	exit 1
