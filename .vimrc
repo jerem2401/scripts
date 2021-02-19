@@ -27,6 +27,8 @@ nnoremap <C-Right> :tabnext<CR>
 nnoremap <C-j> :tabprevious<CR>
 nnoremap <C-k> :tabnext<CR>
 
+nnoremap <silent> <Leader>gt :YcmCompleter GoTo<CR>
+
 " show line numbers and lenght
 set number
 " set tw=79
@@ -67,6 +69,7 @@ autocmd BufNewFile,BufRead *.py
 \ | set shiftround
 \ | set expandtab
 \ | set fileformat=unix
+\ | set keywordprg=pydoc3.7
 
 " folding codes
 set foldmethod=indent
