@@ -4,6 +4,8 @@ PWD=$(pwd)
 if [ "$HOSTNAME" == smaug ]; then
 	base=$(echo ${PWD%/simulation*})
 else
+	module load conda
+	source activate env1
 	base=$HOME
 fi
 
@@ -64,9 +66,6 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -pbc nojump -n $index
 		wait
 	fi
-
-	#module load conda
-	#source activate env1
 
 	echo $group | gmx trjconv -nice 0 -f $dir/nopbc2.xtc -s $dir/md.tpr -o $dir/0.pdb -dump 0 -n $index
 	correct-chainid-and-ter.py $dir/0.pdb > $dir/0_chains.pdb
