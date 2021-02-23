@@ -504,17 +504,17 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             echo "ERROR, unknown GPU generation: \"$gpuGeneration\". Uset option -gpu-gener or -gpu-generation" >&2; exit 1
     esac
 
-    if [ "$ptile" = "" ]; then
-        spanline="#SBATCH --ntasks-per-node=1"
-    else
-        spanline="#SBATCH --ntasks-per-node=$ptile"
-    fi
+    #if [ "$ptile" = "" ]; then
+        #spanline="#SBATCH --ntasks-per-node=1"
+    #else
+    #    spanline="#SBATCH --ntasks-per-node=$ptile"
+    #fi
 
-    if [ $gpuGeneration = pascal40 ]; then
+    #if [ $gpuGeneration = pascal40 ]; then
         # Jochen, Jun 16, 2017
         # Echo work-around while ptile option on Pascal40 nodes behaves strange
-        spanline="#SBATCH -N 1"
-    fi
+        #spanline="#SBATCH -N 1"
+    #fi
 
     if [ "$gpu_shares" = "" ]; then
         # if GPU shares not given, use the same as number of physical CPU cores requested.
@@ -592,7 +592,7 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH -t $walltime
 #SBATCH --job-name=$jobname$key
 #SBATCH --mail-user=$email
-#SBATCH --ntasks=$mpitask
+##SBATCH --ntasks=$mpitask
 $batchInitLine
 $depline
 $med
@@ -665,8 +665,9 @@ fi
         if [ "$multidirs" = "" ]; then
             [ "$bPin" = 1 ] && pinArgs="-pin on -pinoffset 0 -pinstride 1"
             if [[ "$md" = 1 ]]; then
-                if [[ ( $queue = gpu ) && ( "$gpu_id" != unset ) ]]; then
-                    [ "$gpu_id" = '' ] && gpuID_flag="-gpu_id 0" || gpuID_flag="-gpu_id $gpu_id"
+                if [[  $queue = gpu-hub  ]]; then
+                #if [[ ( $queue = gpu ) && ( "$gpu_id" != unset ) ]]; then
+			[ "$gpu_id" = '' ] && gpuID_flag="-gpu_id 0" || gpuID_flag="-gpu_id $gpu_id"
                 else
                     gpuID_flag=""
                 fi
@@ -697,7 +698,8 @@ fi
                 if [ "$bPin" = 1 ]; then
                     pinArgs="-pin on -pinoffset $[idir*nt] -pinstride 1"
                 fi
-                if [ $queue = gpu ]; then
+                #if [ $queue = gpu ]; then
+		if [[ $queue = gpu-hub ]]; then
                     # Get number of mdruns running per GPU. Round up, important if ndir is an odd number
                     nDirPerGPU=$(= "$ndir/$nGPUsPerNode+0.01" | round_ndig 0)
                     # nDirPerGPU=$[ndir/nGPUsPerNode]

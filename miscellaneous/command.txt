@@ -4,6 +4,7 @@ echo "rep1/eq2ax rep2/eq2ax rep3/eq2ax rep4/eq2ax rep5/eq2ax" | xargs -n 1 cp -v
 
 #awk
 awk '(NR>1) && ( ($7 > 0.190) && ($8 > -0.400) )' colvar_pull_cross.txt > test.txt #take all lines (NR>1), which have values in 7th column greater thatn 0.190 and 8th > -0.4
+awk -v max=0 'FNR > 5 {if($6>max){max=$6}}END{print max}' E_1.000/colvar1.000_0.3.txt #get max of col 6 (skipping first 5 lines)
 
 #pymol
 pair_fit /c7eqf///ALA`1/CB, /c7axf///ALA`1/CB, /c7eqf///ALA`1/CA, /c7axf///ALA`1/CA, /c7eqf///ALA`1/N, /c7axf///ALA`1/N, /c7eqf///ALA`1/C, /c7axf///ALA`1/C #aligning specific atoms

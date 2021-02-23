@@ -68,7 +68,7 @@ if hostname | grep -q gwdu; then
     echo "This is at the GWDG"
     Qsystem=slurm
     if [ $nchain -gt 1 ]; then
-        jobscript="/usr/users/jlapier/gitrepo/scripts/jobscript/jobchain_slurm.sh -n $nchain"
+        jobscript="/usr/users/jlapier/gitrepo/scripts/jobscript/jobchain_slurm_gwdg.sh -n $nchain"
         bChain=1
     else
         bChain=0
