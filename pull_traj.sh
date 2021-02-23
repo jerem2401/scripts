@@ -43,12 +43,12 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 	done
 	echo "dir is: $dir, skip is: $skip, group is: $group, protocol is: $proto"
 
-	if [ "$dir" == '' ]; then
+	if [[ "$dir" == '' ]]; then
 		echo "no dir given, exiting"
 		exit
 	fi
 
-	if (("$proto" = 1)); then
+	if (("$proto" == 1)); then
 		echo $group | gmx trjconv -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
 		wait
 		echo $group | gmx trjconv -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -ur compact -pbc whole -n $index
