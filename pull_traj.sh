@@ -60,10 +60,21 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 		wait
 		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -ur compact -pbc whole -n $index
 		wait
-	else
+	elif [ "$proto" = path ]; then
 		echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc mol -n $index -skip $skip
 		wait
 		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -pbc nojump -n $index
+		wait
+	elif [ "$proto" = ocfree ]; then
+		if [ $dir = rep3 ]; then
+			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans 0 0 3
+		elif [ $dir = rep5 ]; then
+			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans -1 0 1
+		elif [ $dir = rep8 ]; then
+			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans 1 -4 -2
+		fi
+		wait
+		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -pbc whole -n $index
 		wait
 	fi
 
