@@ -4,6 +4,8 @@ PWD=$(pwd)
 if [ "$HOSTNAME" == smaug ]; then
 	base=$(echo ${PWD%/simulation*})
 else
+	module load conda
+	source activate env1
 	base=$HOME
 fi
 
@@ -46,32 +48,50 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 		esac
 		shift
 	done
-	echo "dir is: $dir, skip is: $skip, group is: $group, protocol is: $proto"
+
+	xtc=$(command ls $dir/*.xtc)
+	nxtc=$(echo $xtc | wc -w)
+
+	if (($nxtc > 1)); then
+		echo "more than 1 xtc in $dir, please chose 1 file among: $xtc"
+		read traj
+	else
+		traj=$xtc
+	fi
+
+	echo "dir is: $dir, skip is: $skip, group is: $group, protocol is: $proto, traj is: $traj"
 
 	if [[ "$dir" == '' ]]; then
 		echo "no dir given, exiting"
 		exit
 	fi
 
-<<<<<<< HEAD
 	if (("$proto" == 1)); then
-		echo $group | gmx trjconv -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
+<<<<<<< HEAD
+		echo $group | gmx trjconv -f $traj -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
 =======
-	if (("$proto" = 1)); then
 		echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
->>>>>>> 0b6442a8608b6eb35f18fa110b810f5a5455b2a3
+>>>>>>> b2dd816fa5049dfbc6f1098e90fb3b29f0370da2
 		wait
 		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -ur compact -pbc whole -n $index
 		wait
-	else
-		echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc mol -n $index -skip $skip
+	elif [ "$proto" = path ]; then
+		echo $group | gmx trjconv -nice 0 -f $traj -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc mol -n $index -skip $skip
 		wait
 		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -pbc nojump -n $index
 		wait
+	elif [ "$proto" = ocfree ]; then
+		if [ $dir = rep3 ]; then
+			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans 0 0 3
+		elif [ $dir = rep5 ]; then
+			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans -1 0 1
+		elif [ $dir = rep8 ]; then
+			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans 1 -4 -2
+		fi
+		wait
+		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -pbc whole -n $index
+		wait
 	fi
-
-	#module load conda
-	#source activate env1
 
 	echo $group | gmx trjconv -nice 0 -f $dir/nopbc2.xtc -s $dir/md.tpr -o $dir/0.pdb -dump 0 -n $index
 	correct-chainid-and-ter.py $dir/0.pdb > $dir/0_chains.pdb

@@ -82,7 +82,7 @@ trap "rm -rf $sbatch_tempfile" EXIT
 case `hostname` in
     smaug|fang?|fang??)
         ppn=6
-        gmxrc=/data/shared/opt/gromacs/2020.3/bin/GMXRC.bash
+        gmxrc=/data/shared/opt/gromacs/2020.4/bin/GMXRC.bash
         queue=deflt
         machine=smaug
         ;;
@@ -373,7 +373,7 @@ if [ "$gpuGeneration" = pascal ]; then
 elif [ "$gpuGeneration" = turing ]; then
     excludeLine="#SBATCH --exclude=fang[1-40]"
     nGPUsPerNode=4
-elif [ "$gpuGeneration" = "" ]; then
+elif [[ ( "$gpuGeneration" = "" ) || ( "$gpuGeneration" = any ) ]]; then
     excludeLine=""
 else
     echo "ERROR, invalid GPU generation: $gpuGeneration"; exit 1
@@ -445,6 +445,10 @@ if [ $bMPI = 0 ]; then
     fi
 fi
 
+if [ $bEmpty = 1 ]; then
+    echo "Wrote jobscript without gmx mdrun (empty)"
+    exit 0
+fi
 
 {
 
