@@ -48,7 +48,18 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 		esac
 		shift
 	done
-	echo "dir is: $dir, skip is: $skip, group is: $group, protocol is: $proto"
+
+	xtc=$(command ls $dir/*.xtc)
+	nxtc=$(echo $xtc | wc -w)
+
+	if (($nxtc > 1)); then
+		echo "more than 1 xtc in $dir, please chose 1 file among: $xtc"
+		read traj
+	else
+		traj=$xtc
+	fi
+
+	echo "dir is: $dir, skip is: $skip, group is: $group, protocol is: $proto, traj is: $traj"
 
 	if [[ "$dir" == '' ]]; then
 		echo "no dir given, exiting"
@@ -56,12 +67,12 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 	fi
 
 	if (("$proto" == 1)); then
-		echo $group | gmx trjconv -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
+		echo $group | gmx trjconv -f $traj -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
 		wait
 		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -ur compact -pbc whole -n $index
 		wait
 	elif [ "$proto" = path ]; then
-		echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc mol -n $index -skip $skip
+		echo $group | gmx trjconv -nice 0 -f $traj -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc mol -n $index -skip $skip
 		wait
 		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -pbc nojump -n $index
 		wait
