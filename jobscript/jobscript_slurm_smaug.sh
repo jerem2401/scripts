@@ -68,11 +68,12 @@ ncores=""
 bEmpty=0
 bLatest=0
 excludeNodes=''
-bEnsureFullNode=0  # if you run 8 2-core jobs (with pinning, make sure the node is filled by your jobs): #BSUB -R np16                                                                            
+bEnsureFullNode=0  # if you run 8 2-core jobs (with pinning, make sure the node is filled by your jobs): #BSUB -R np16
 batchInitLine=''
 gmxrcLine=''
 logicalCoresPerPhysical=2
 niceLevel=0
+pbcfix=0
 
 sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
@@ -82,7 +83,7 @@ trap "rm -rf $sbatch_tempfile" EXIT
 case `hostname` in
     smaug|fang?|fang??)
         ppn=6
-        gmxrc=/data/shared/opt/gromacs/2019.6/bin/GMXRC.bash
+        gmxrc=/data/shared/opt/gromacs/2020.4/bin/GMXRC.bash
         queue=deflt
         machine=smaug
         ;;
@@ -215,7 +216,7 @@ while [ $# -gt 0 ]; do
         -rc) shift
              gmxrc=$1
              ;;
-        -mdrun) shift 
+        -mdrun) shift
                 mdrun=$(echo "$1" | sed 's/@/ /g')
                 ;;
         -mdrun_line)
@@ -308,6 +309,8 @@ while [ $# -gt 0 ]; do
 	    update="-update gpu";;
         -ngpu)
             ngpu=$1 ;;
+    	-pbcfix)
+            pbcfix=1 ;;
         *)
             echo -e "\n$0: Error, unknown argument: $1"
             exit 192
@@ -395,7 +398,7 @@ if [ "$gpuGeneration" = pascal ]; then
 elif [ "$gpuGeneration" = turing ]; then
     excludeLine="#SBATCH --exclude=fang[1-40]"
     nGPUsPerNode=4
-elif [ "$gpuGeneration" = "" ]; then
+elif [[ ( "$gpuGeneration" = "" ) || ( "$gpuGeneration" = any ) ]]; then
     excludeLine=""
 else
     echo "ERROR, invalid GPU generation: $gpuGeneration"; exit 1
@@ -406,7 +409,7 @@ fi
 
 if [[ "$Qsystem" = slurm ]]; then
     if [ $bEnsureFullNode = 1 ]; then
-        if [[ ( ($ncores = 12) || ( $ncores = 16 ) || ( $ncores = 20 ) || ( $ncores = 24 ) ) && ( $queue = mpi ) ]]; then        
+        if [[ ( ($ncores = 12) || ( $ncores = 16 ) || ( $ncores = 20 ) || ( $ncores = 24 ) ) && ( $queue = mpi ) ]]; then
             echo "#SBATCH --batch=\"ncpus=${ncores}\"" >> $sbatch_tempfile
             echo "Will make sure that the node is full, using purely nodes with ${ncores} cores"
         fi
@@ -452,7 +455,7 @@ EOF
      #   echo "#BSUB -R \"select[hname!='$i']\"" >> $jobfile
     #done
 
-    #SLURM_JOB_NODELIST for SLURM_HOSTS from https://doc.itc.rwth-aachen.de/display/CC/Slurm+environmental+variables 
+    #SLURM_JOB_NODELIST for SLURM_HOSTS from https://doc.itc.rwth-aachen.de/display/CC/Slurm+environmental+variables
 else
     echo "Unknown queuing system = $Qsystem"
     exit 1
@@ -467,6 +470,10 @@ if [ $bMPI = 0 ]; then
     fi
 fi
 
+if [ $bEmpty = 1 ]; then
+    echo "Wrote jobscript without gmx mdrun (empty)"
+    exit 0
+fi
 
 {
 
@@ -489,8 +496,68 @@ fi
 		gpuID_flag=""
 
                 mdrunCall="$mpirun$mdrun"
-                mdrunArgs="$cpiArg -stepout $stepout $verb -s $tpr $maxh $dd $npme $deffnm $opt $edi $pinArgs $plumed $update"
-                echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& md$key.lis"
+		if ((pbcfix == 1)); then
+		    maxhh=$(echo $maxh | grep -o "[0-9]*")
+		    maxhhm=$(echo $maxhh - 0.05 | bc)
+		    maxh="-maxh $maxhhm"
+		    pldgiven=$(echo $plumed | grep -oP '(?<=\-plumed )plumed_.*\.dat')
+		    if [ "$pldgiven" == plumed_nopbc.dat ]; then
+		        dec="declare -a ref=( plumed_nopbc.dat plumed_pbc.dat plumed_whole.dat )"
+		    elif [ "$pldgiven" == plumed_pbc.dat ]; then
+		        dec="declare -a ref=( plumed_pbc.dat plumed_whole.dat plumed_nopbc.dat )"
+		    else
+		        dec="declare -a ref=( plumed_whole.dat plumed_pbc.dat plumed_nopbc.dat )"
+		    fi
+		    read -r -d '' pbcfixtxt <<EOM
+
+START_TIME=\$(date +%s)
+echo "\$START_TIME" >> pbcfix.log
+
+if [ -f ./md.log ]; then
+	pld=\$(grep -o '\-plumed plumed_.*\.dat' md.log | tail -1)
+else
+	pld='$plumed'
+fi
+
+$mdrunCall $ntFlag $cpiArg -stepout $stepout $verb -s $tpr $maxh $dd $npme $deffnm $opt $edi $pinArgs \$pld $update $gpuID_flag >& md$key.lis
+
+ecode=\$(echo \$?)
+$dec
+iter=1
+
+while (("\$ecode" != 0)) && (("\$iter" <= 5)); do
+	((iter+=1))
+	readarray -t usedpld <<< \$(grep -oP '(?<=\-plumed )plumed_.*\.dat' md.log)
+	lastpld="\${usedpld[-1]}"
+	echo "lastpld was \$lastpld" >> pbcfix.log
+	for idx in "\${!ref[@]}"; do
+		if [ "\$lastpld" == "\${ref[\$idx]}" ]; then
+			nidx=\$((idx+1))
+		fi
+	done
+	if ((\$nidx == 3)); then
+		nidx=0
+	fi
+	nextpld="\${ref[\$nidx]}"
+	echo "nextpld is \$nextpld" >> pbcfix.log
+
+	END_TIME=\$(date +%s)
+	echo "\$END_TIME" >> pbcfix.log
+	ELAPSED=\$(echo "scale=2; (\$END_TIME - \$START_TIME)/60/60" | bc)
+	if [ \$(echo "\$ELAPSED<0.05"| bc) -eq 1 ]; then
+		ELAPSED=0.05
+	fi
+	maxhhm=\$(echo "$maxhhm - \$ELAPSED" | bc)
+	maxh="-maxh \$maxhhm"
+	$mdrunCall $ntFlag $cpiArg -stepout $stepout $verb -s $tpr \$maxh $dd $npme $deffnm $opt $edi $pinArgs -plumed \$nextpld $update $gpuID_flag >& md$key.lis
+	ecode=\$(echo \$?)
+done
+EOM
+		echo "$pbcfixtxt"
+		else
+                    mdrunArgs="$cpiArg -stepout $stepout $verb -s $tpr $maxh $dd $npme $deffnm $opt $edi $pinArgs $plumed $update"
+                    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >& md$key.lis"
+		fi
             else
                 echo "$mpirun" "$exe"
             fi
