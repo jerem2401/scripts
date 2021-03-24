@@ -4,7 +4,7 @@ PWD=$(pwd)
 if [ "$HOSTNAME" == smaug ]; then
 	base=$(echo ${PWD%/simulation*})
 else
-	module load conda
+	module load anaconda3/2020.07
 	source activate env1
 	base=$HOME
 fi
