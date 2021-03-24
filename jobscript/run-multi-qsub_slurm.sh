@@ -83,7 +83,7 @@ elif [ `hostname` = "smaug" ]; then
     echo "This is on smaug"
     Qsystem=slurm
     if [ $nchain -gt 1 ]; then
-        jobscript="/home/users/jeremy/gitrepo/scripts/jobscript/jobchain_slurm.sh -n $nchain"
+        jobscript="/home/users/jeremy/gitrepo/scripts/jobscript/jobchain_slurm_smaug.sh -n $nchain"
         bChain=1
     else
         bChain=0

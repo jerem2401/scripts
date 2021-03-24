@@ -20,7 +20,7 @@ wkappa=$(echo "$dir" | grep -oP '(?<=_wk).*(?=_wcnt)')
 temp_mdp='../temp/temp.mdp'
 top=$(echo ../temp/*.top)
 plumed_tmp='../temp/plumed_tmp.dat'
-index='../temp/index.ndx'
+index='/data/users/jeremy/simulation/syncsim/pol/ref/cc_ZN_noTFIIS_params/prep/nvt/index.ndx'
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -134,14 +134,14 @@ for ksi in $(seq -f "%.3f" "$winmin" "$winStep" "$winmax"); do
 	closestksi=${ADDR[0]}
 	value=${ADDR[1]}
 	echo "given: $ksi, found: $closestksi"
-	#b=$(echo "$value - 1" | bc -l)
-        #gmx trjconv -s "$tmd_tpr" -f "$tmd_traj" -b "$b" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" -n "$index" <<EOF
-	#$group
-#EOF
-	#gmx grompp -f md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1 -n "$index"
-	#sed "s=_POSI_=${ksi}=g;s=_KAPPA_=${kappa}=g;s=_wKAPPA_=${wkappa}=g;s=_OFFSET_=${wof}=g;s=_wPOSI_=${wcnt}=g;s=_PATH_=${path}=g;s=_LAMBDA_=${lam}=g;" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
-	#echo -e "\nused tmd directory: ${tmd_plum_out}" >> mdout.mdp
-	#echo 'done'
+	b=$(echo "$value - 2" | bc -l)
+        gmx trjconv -nice 0 -s "$tmd_tpr" -f "$tmd_traj" -b "$b" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" -n "$index" <<EOF
+	$group
+EOF
+	gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1 -n "$index"
+	sed "s=_POSI_=${ksi}=g;s=_KAPPA_=${kappa}=g;s=_wKAPPA_=${wkappa}=g;s=_OFFSET_=${wof}=g;s=_wPOSI_=${wcnt}=g;s=_PATH_=${path}=g;s=_LAMBDA_=${lam}=g;" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
+	echo -e "\nused tmd directory: ${tmd_plum_out}" >> mdout.mdp
+	echo 'done'
    else
 	echo "window already exists"
    fi
