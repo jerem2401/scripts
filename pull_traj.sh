@@ -26,6 +26,7 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 	group=26
 	index="$base/simulation/syncsim/pol/ref/cc_ZN_noTFIIS_params/prep/nvt/index.ndx"
 	proto=1
+	traj='traj_comp.xtc'
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -45,19 +46,11 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 			  shift
 			  proto=$1
 			  ;;
+			-traj) shift
+			  traj=$1;;
 		esac
 		shift
 	done
-
-	xtc=$(command ls $dir/*.xtc)
-	nxtc=$(echo $xtc | wc -w)
-
-	if (($nxtc > 1)); then
-		echo "more than 1 xtc in $dir, please chose 1 file among: $xtc"
-		read traj
-	else
-		traj=$xtc
-	fi
 
 	echo "dir is: $dir, skip is: $skip, group is: $group, protocol is: $proto, traj is: $traj"
 
