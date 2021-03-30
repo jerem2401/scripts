@@ -10,7 +10,7 @@ set -o pipefail  # dont hide errors within pipes
 
 pym=0
 itraj="../nopbc2.xtc"
-ndx="~/simulation/syncsim/pol/heavy_h/transfer/index_notwholedna.ndx"
+ndx="/usr/users/jlapier/simulation/syncsim/pol/heavy_h/transfer/index_notwholedna.ndx"
 rndx="/usr/users/jlapier/simulation/syncsim/pol/heavy_h/ref/idx_notwhole.txt"
 check_path=''
 
@@ -25,6 +25,8 @@ while [ $# -gt 0 ]; do
 	    ndx=$1;;
 	-rndx) shift
 	    rndx=$1;;
+	-lmd) shift
+	    lmd=$1;;
 	*) echo -e "\n$0: Error, unknown argument: $1"
 	   exit 192;;
     esac
@@ -80,9 +82,9 @@ if [ -z "$check_path" ]; then
     echo "PRINT ARG=* STRIDE=1 FILE=colvar_RMSDs.txt" >> plumed.dat
     plumed driver --plumed plumed.dat --mf_xtc ../nopbc2.xtc
 
-    awk '(NR < 7) {print $1 $2 $3 $4 $5 $6}' colvar_RMSDs.txt
+    awk '(NR < 7) {print $1" "$2" "$3" "$4" "$5" "$6}' colvar_RMSDs.txt
 else
-    bck=$(command ls path_${check_path%.txt}.pdb)
+    bck=$(command ls path_${check_path%.txt}.pdb &>/dev/null || unset)
     nbck=$(echo $bck | wc -w)
 
     if [ ! -z "$bck" ]; then
@@ -93,13 +95,13 @@ else
 
     while read line; do
         for i in $line; do
-	    cat "../xx${i#RMSD}.pdb" >> $path
+	    cat "xx${i#RMSD}.pdb" >> $path
 	    echo "END" >> $path
 	done
     done <"$check_path"
 
-    echo "p: PATHMSD REFERENCE=$check_path LAMBDA=$lmd  NOPBC\nPRINT ARG=* STRIDE=1 FILE=colv_${path%.pdb}${lmd}.txt" >> plumed_${path%.pdb}${lmd}.dat
-    plumed driver --plumed plumed_${path%.pdb}${lmd}.dat --mf_xtc ../nopbc2.xtc
+    echo -e "p: PATHMSD REFERENCE=$path LAMBDA=$lmd  NOPBC\nPRINT ARG=* STRIDE=1 FILE=colv_${path%.pdb}${lmd}.txt" >> plumed_${path%.pdb}${lmd}.dat
+    plumed driver --plumed "plumed_${path%.pdb}${lmd}.dat" --mf_xtc ../nopbc2.xtc
 fi
 
 #sed '/TER/d;/MODEL/d;/^END$/d' test.pdb > ref_clean.pdb

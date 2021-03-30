@@ -111,6 +111,7 @@ scratch=0
 bReqScratch=0
 gpuGeneration='pascal40'
 plumed=""
+pbcfix=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -260,9 +261,8 @@ while [ $# -gt 0 ]; do
         -email)
             shift
             email="$1" ;;
-	-batch_line)
-	    shift
-	    batchInitLine="$1";;
+	-batch_line) shift
+            batchInitLine=$(echo "$1" | sed 's/@/ /g');;
         -feature)
             shift
             feature=$1 ;;
@@ -300,6 +300,8 @@ while [ $# -gt 0 ]; do
             shift
             nGPUsAsked=$1
             ;;
+	-pbcfix)
+	    pbcfix=1;;
         *)
             echo -e "\n$0: Error, unknown argument: $1"
             exit 192
@@ -396,9 +398,6 @@ ldPath=""
 initMPI=""
 spanline=""
 #batchInitLine=""
-if [ "$np" = "" ]; then
-    np=$[nnodes*ppn]
-fi
 
 
 ldPath=''
@@ -408,9 +407,9 @@ case $machine in
         #[ $ptile = unset ] && ptile=$ppn
         #spanline="#SBATCH --tasks-per-node=[$ptile]"
         if [ $bMPI = 1 ]; then
-            mpirun="mpirun  -np $np "
+            mpirun="mpirun -np $np "
             ldPath="$ldPath:"
-            mdrun="${mdrun}_mpi"
+            mdrun="${mdrun}"
         else
             mpirun=""
         fi
@@ -529,7 +528,9 @@ fi
 
 if [ "$multidirs" = "" ] ;then
     jobfile=job${key}.sh
-    mpitask=1
+    if [ $bMPI = 0 ] ;then
+	np=1
+    fi
 else
     jobfile=job.${jobname}${key}.sh
     # Check if the node is really full
@@ -538,7 +539,7 @@ else
     ndir=$(echo $multidirs | wc -w | awk '{print $1}')
     npNeeded=$[nt*ndir/logicalCoresPerPhysical]
     echo "Multiple mdrun per node: ndir = $ndir, need $npNeeded phys. cores"
-    mpitask=$ndir
+    np=$ndir
     # Note: np       = number of physical cores available/requested by command line
     #       npNeeded = number of physical cores needed
 
@@ -588,12 +589,12 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH -p $queue$qExtension
 #SBATCH -o $dir/myjob${key}.out
 #SBATCH -e $dir/myjob${key}.err
-#SBATCH -c $(echo "($logicalCoresPerPhysical*$ppn)/$mpitask" | bc)
+#SBATCH -c $(echo "($logicalCoresPerPhysical*$ppn)/$np" | bc)
 #SBATCH -t $walltime
 #SBATCH --job-name=$jobname$key
 #SBATCH --mail-user=$email
-##SBATCH --ntasks=$mpitask
-$batchInitLine
+##SBATCH --ntasks=$np
+$(echo -e $batchInitLine)
 $depline
 $med
 
@@ -665,19 +666,89 @@ fi
         if [ "$multidirs" = "" ]; then
             [ "$bPin" = 1 ] && pinArgs="-pin on -pinoffset 0 -pinstride 1"
             if [[ "$md" = 1 ]]; then
-                if [[  $queue = gpu-hub  ]]; then
+                if [[  $queue = gpu-hub  ]] && [ $bMPI = 0 ]; then
                 #if [[ ( $queue = gpu ) && ( "$gpu_id" != unset ) ]]; then
-			[ "$gpu_id" = '' ] && gpuID_flag="-gpu_id 0" || gpuID_flag="-gpu_id $gpu_id"
+		    [ "$gpu_id" = '' ] && gpuID_flag="-gpu_id 0" || gpuID_flag="-gpu_id $gpu_id"
                 else
                     gpuID_flag=""
                 fi
                 
                 mdrunCall="$mpirun$mdrun"
                 mdrunArgs="$cpiArg -stepout $stepout $verb -s ${dir}/${tpr} -maxh $maxh $dd $npme $deffnm $opt $edi $pinArgs $plumed"
-		if [ "$loc" = 0 ]; then
-                    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >> md${key}.lis 2>&1"
-		else
+		if [ "$loc" = 1 ]; then
 		    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >> /local/${USER}_\$SLURM_JOB_ID/md${key}.lis 2>&1"
+		elif ((pbcfix == 1)); then
+		    maxhh=$(echo $maxh | grep -o "[0-9]*")
+		    maxhhm=$(echo $maxhh - 0.05 | bc)
+		    maxh="-maxh $maxhhm"
+		    pldgiven=$(echo $plumed | grep -oP '(?<=\-plumed )plumed_.*\.dat')
+		    if [ "$pldgiven" == plumed_nopbc.dat ]; then
+		        dec="declare -a ref=( plumed_nopbc.dat plumed_pbc.dat plumed_whole.dat )"
+		    elif [ "$pldgiven" == plumed_pbc.dat ]; then
+		        dec="declare -a ref=( plumed_pbc.dat plumed_whole.dat plumed_nopbc.dat )"
+		    else
+		        dec="declare -a ref=( plumed_whole.dat plumed_pbc.dat plumed_nopbc.dat )"
+		    fi
+		    read -r -d '' pbcfixtxt <<EOM
+
+START_TIME=\$(date +%s)
+t2date=\$(date -d @\$START_TIME)
+echo "\$t2date" >> pbcfix.log
+
+if [ -f ./md.log ]; then
+	lstec=\$(grep -oP '(?<=gmx was: ).*' pbcfix.log | tail -1)
+	if (("\$lstec" == 0)); then
+		pld=\$(grep -o '\-plumed plumed_.*\.dat' md.log | tail -1)
+	else
+		pld='$plumed'
+	fi
+else
+	pld='$plumed'
+fi
+
+echo "1st pld used in chain is: \$pld" >> pbcfix.log
+
+$mdrunCall $ntFlag $cpiArg -stepout $stepout $verb -s $tpr $maxh $dd $npme $deffnm $opt $edi $pinArgs \$pld $gpuID_flag >& md$key.lis
+
+ecode=\$(echo \$?)
+echo "exit code of 1st gmx was: \$ecode" >> pbcfix.log
+$dec
+iter=1
+
+while (("\$ecode" != 0)) && (("\$iter" <= 5)); do
+	((iter+=1))
+	readarray -t usedpld <<< \$(grep -oP '(?<=\-plumed )plumed_.*\.dat' md.log)
+	lastpld="\${usedpld[-1]}"
+	echo "lastpld was \$lastpld" >> pbcfix.log
+	for idx in "\${!ref[@]}"; do
+		if [ "\$lastpld" == "\${ref[\$idx]}" ]; then
+			nidx=\$((idx+1))
+		fi
+	done
+	if ((\$nidx == 3)); then
+		nidx=0
+	fi
+	nextpld="\${ref[\$nidx]}"
+	echo "nextpld is \$nextpld" >> pbcfix.log
+
+	END_TIME=\$(date +%s)
+	t2date=\$(date -d @\$END_TIME)
+	echo "\$t2date" >> pbcfix.log
+	ELAPSED=\$(echo "scale=2; (\$END_TIME - \$START_TIME)/60/60" | bc)
+	if [ \$(echo "\$ELAPSED<0.05"| bc) -eq 1 ]; then
+		ELAPSED=0.05
+	fi
+	maxhhm=\$(echo "$maxhhm - \$ELAPSED" | bc)
+	maxh="-maxh \$maxhhm"
+	wait
+	$mdrunCall $ntFlag $cpiArg -stepout $stepout $verb -s $tpr \$maxh $dd $npme $deffnm $opt $edi $pinArgs -plumed \$nextpld $gpuID_flag >& md$key.lis
+	ecode=\$(echo \$?)
+	echo "exit code of \${iter}th gmx was: \$ecode" >> pbcfix.log
+done
+EOM
+		echo "$pbcfixtxt"
+		else
+                    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >> md${key}.lis 2>&1"
 		fi
             else
                 echo "$mpirun" "$exe"
