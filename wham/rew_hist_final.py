@@ -20,12 +20,14 @@ def main():
     parser.add_argument('-rew', help='if present, allows to reweight histo by the value of the guide_restraint.bias', action='store_true', dest='rew')
     parser.add_argument('-col', help='from which column of the colvar file do you want to do an histogram, deflt= %(default)s', default='nCV', action='store', dest='col', type=str)
     parser.add_argument('--o', help='name of hist file', action='store', dest='o', type=str)
+    parser.add_argument('-pos', help='center of haromic potential', action='store', dest='pos')
     args = parser.parse_args()
 
     print('careful: put the -rew option added in the last maj for reweighting !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     print(args.f, args.o)
     if args.plot == None:
-        pos=re.search('(-|[0-9]|\.)+(?=_)', args.f).group()
+        pos=args.pos
+        #pos=re.search('(-|[0-9]|\.)+(?=_)', args.f).group()
 
         if os.path.exists('./histo_'+str(pos)+'_.txt'):
             print('./histo_'+str(pos)+'_.txt exists !')
@@ -93,6 +95,7 @@ def main():
         fig = plt.figure(figsize=(15,8))
         fig, axs = plt.subplots(figsize=(15,8))
         n = 1
+        allz = []
         for i in  histo_files:
             label = str(n)
             x = float(i.split('_')[1])
@@ -101,7 +104,9 @@ def main():
             axs.plot(z, thishist)
             axs.annotate(s=label,xy=(x,y))
             n+=1
-        plt.xlim(min(z), max(z))
+            print(z,type(z))
+            allz = np.concatenate((allz, z), axis=None)
+        plt.xlim(np.amin(allz), np.amax(allz))
         plt.savefig('hist_all1.jpeg')
         plt.close()
 

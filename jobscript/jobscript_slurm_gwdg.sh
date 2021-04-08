@@ -496,6 +496,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             logicalCoresPerPhysical=2
             {
                 echo "#SBATCH --gres=gpu:gtx1070:$nGPUsAsked"
+		echo "#SBATCH --exclude=gwdo[161,180],dge022,dge024"
                 queue=gpu-hub
             } >> $sbatch_tempfile
             ;;
@@ -717,7 +718,7 @@ iter=1
 
 while (("\$ecode" != 0)) && (("\$iter" <= 5)); do
 	((iter+=1))
-	readarray -t usedpld <<< \$(grep -oP '(?<=\-plumed )plumed_.*\.dat' md.log)
+	read -r -a usedpld <<< \$(grep -oP '(?<=\-plumed )plumed_.*\.dat' md.log)
 	lastpld="\${usedpld[-1]}"
 	echo "lastpld was \$lastpld" >> pbcfix.log
 	for idx in "\${!ref[@]}"; do

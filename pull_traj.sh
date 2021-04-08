@@ -26,7 +26,6 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 	group=26
 	index="$base/simulation/syncsim/pol/ref/cc_ZN_noTFIIS_params/prep/nvt/index.ndx"
 	proto=1
-	traj='traj_comp.xtc'
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -48,11 +47,20 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 			  ;;
 			-traj) shift
 			  traj=$1;;
+			-tpr) shift
+			  tpr=$1;;
 		esac
 		shift
 	done
 
-	echo "dir is: $dir, skip is: $skip, group is: $group, protocol is: $proto, traj is: $traj"
+	if [ -z "$traj" ]; then
+		traj="$dir/traj_comp.xtc"
+	fi
+	if [ -z "$tpr" ]; then
+		tpr="$tpr"
+	fi
+
+	echo "dir is: $dir, skip is: $skip, group is: $group, protocol is: $proto, traj is: $traj, tpr is: $tpr"
 
 	if [[ "$dir" == '' ]]; then
 		echo "no dir given, exiting"
@@ -60,28 +68,28 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 	fi
 
 	if (("$proto" == 1)); then
-		echo $group | gmx trjconv -nice 0 -f $traj -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
+		echo $group | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
 		wait
-		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -ur compact -pbc whole -n $index
+		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $tpr -o $dir/nopbc2.xtc -ur compact -pbc whole -n $index
 		wait
 	elif [ "$proto" = path ]; then
-		echo $group | gmx trjconv -nice 0 -f $traj -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc mol -n $index -skip $skip
+		echo $group | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc mol -n $index -skip $skip
 		wait
-		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -pbc nojump -n $index
+		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $tpr -o $dir/nopbc2.xtc -pbc nojump -n $index
 		wait
 	elif [ "$proto" = ocfree ]; then
 		if [ $dir = rep3 ]; then
-			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans 0 0 3
+			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans 0 0 3
 		elif [ $dir = rep5 ]; then
-			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans -1 0 1
+			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans -1 0 1
 		elif [ $dir = rep8 ]; then
-			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $dir/md.tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans 1 -4 -2
+			echo $group | gmx trjconv -nice 0 -f $dir/traj_comp.xtc -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -trans 1 -4 -2
 		fi
 		wait
-		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/md.tpr -o $dir/nopbc2.xtc -pbc whole -n $index
+		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $tpr -o $dir/nopbc2.xtc -pbc whole -n $index
 		wait
 	fi
 
-	echo $group | gmx trjconv -nice 0 -f $dir/nopbc2.xtc -s $dir/md.tpr -o $dir/0.pdb -dump 0 -n $index
+	echo $group | gmx trjconv -nice 0 -f $dir/nopbc2.xtc -s $tpr -o $dir/0.pdb -dump 0 -n $index
 	correct-chainid-and-ter.py $dir/0.pdb > $dir/0_chains.pdb
 fi

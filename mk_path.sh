@@ -43,7 +43,7 @@ if [ -z "$check_path" ]; then
         gmx trjconv -nice 0 -f $itraj -o testnotrn.pdb -n $ndx -s ../md.tpr
         plumed pdbrenumber --ipdb testnotrn.pdb --opdb test.pdb --atomnumbers $rndx
         sed '/TER/d;/MODEL/d;/^END$/d;/REMARK/d;/TITLE/d;/CRYST/d' test.pdb > ref_clean.pdb
-    
+
         gawk '{
     pdb[NR]=$0
     split(pdb[FNR],flds,FS,seps)
