@@ -57,7 +57,7 @@ if [[ "$PWD" =~ .*pol.* ]]; then
 		traj="$dir/traj_comp.xtc"
 	fi
 	if [ -z "$tpr" ]; then
-		tpr="$tpr"
+		tpr="$dir/md.tpr"
 	fi
 
 	echo "dir is: $dir, skip is: $skip, group is: $group, protocol is: $proto, traj is: $traj, tpr is: $tpr"

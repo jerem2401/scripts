@@ -104,7 +104,6 @@ def main():
             axs.plot(z, thishist)
             axs.annotate(s=label,xy=(x,y))
             n+=1
-            print(z,type(z))
             allz = np.concatenate((allz, z), axis=None)
         plt.xlim(np.amin(allz), np.amax(allz))
         plt.savefig('hist_all1.jpeg')
