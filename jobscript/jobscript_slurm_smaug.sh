@@ -511,17 +511,26 @@ fi
 		    read -r -d '' pbcfixtxt <<EOM
 
 START_TIME=\$(date +%s)
-echo "\$START_TIME" >> pbcfix.log
+t2date=\$(date -d @\$START_TIME)
+echo "\$t2date" >> pbcfix.log
 
 if [ -f ./md.log ]; then
-	pld=\$(grep -o '\-plumed plumed_.*\.dat' md.log | tail -1)
+	lstec=\$(grep -oP '(?<=gmx was: ).*' pbcfix.log | tail -1)
+	if (("\$lstec" == 0)); then
+		pld=\$(grep -o '\-plumed plumed_.*\.dat' md.log | tail -1)
+	else
+		pld='$plumed'
+	fi
 else
 	pld='$plumed'
 fi
 
+echo "1st pld used in chain is: \$pld" >> pbcfix.log
+
 $mdrunCall $ntFlag $cpiArg -stepout $stepout $verb -s $tpr $maxh $dd $npme $deffnm $opt $edi $pinArgs \$pld $update $gpuID_flag >& md$key.lis
 
 ecode=\$(echo \$?)
+echo "exit code of 1st gmx was: \$ecode" >> pbcfix.log
 $dec
 iter=1
 
@@ -542,15 +551,18 @@ while (("\$ecode" != 0)) && (("\$iter" <= 5)); do
 	echo "nextpld is \$nextpld" >> pbcfix.log
 
 	END_TIME=\$(date +%s)
-	echo "\$END_TIME" >> pbcfix.log
+	t2date=\$(date -d @\$END_TIME)
+	echo "\$t2date" >> pbcfix.log
 	ELAPSED=\$(echo "scale=2; (\$END_TIME - \$START_TIME)/60/60" | bc)
 	if [ \$(echo "\$ELAPSED<0.05"| bc) -eq 1 ]; then
 		ELAPSED=0.05
 	fi
 	maxhhm=\$(echo "$maxhhm - \$ELAPSED" | bc)
 	maxh="-maxh \$maxhhm"
+	wait
 	$mdrunCall $ntFlag $cpiArg -stepout $stepout $verb -s $tpr \$maxh $dd $npme $deffnm $opt $edi $pinArgs -plumed \$nextpld $update $gpuID_flag >& md$key.lis
 	ecode=\$(echo \$?)
+	echo "exit code of \${iter}th gmx was: \$ecode" >> pbcfix.log
 done
 EOM
 		echo "$pbcfixtxt"
