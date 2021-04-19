@@ -10,7 +10,7 @@ set -o pipefail  # dont hide errors within pipes
 
 pym=0
 itraj="../nopbc2.xtc"
-if [ $HOSTNAME == gwdu* ]; then
+if [[ $HOSTNAME == gwdu* ]]; then
     ndx="/usr/users/jlapier/simulation/syncsim/pol/heavy_h/transfer/index_notwholedna.ndx"
     rndx="/usr/users/jlapier/simulation/syncsim/pol/heavy_h/ref/idx_notwhole.txt"
 else
