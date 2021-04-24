@@ -500,6 +500,13 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
                 queue=gpu-hub
             } >> $sbatch_tempfile
             ;;
+	rtx)
+	    nGPUsPerNode=4
+	    logicalCoresPerPhysical=1
+	    {
+	        echo "#SBATCH --gres=gpu:rtx5000:$nGPUsAsked"
+	    } >> $sbatch_tempfile
+	    ;;
         *)
             echo "ERROR, unknown GPU generation: \"$gpuGeneration\". Uset option -gpu-gener or -gpu-generation" >&2; exit 1
     esac

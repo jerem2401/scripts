@@ -34,6 +34,8 @@ while [ $# -gt 0 ]; do
 		  traj=$1;;
 		-tpr) shift
 		  tpr=$1;;
+		-n) shift
+		  index=$1;;
 	esac
 	shift
 done
@@ -63,7 +65,7 @@ fi
 
 #TODO put -dump and correct-chainid-and-ter.py lines in function as it is used several times
 if [[ $mol == 'pol' ]]; then
-	index="$base/simulation/syncsim/pol/ref/cc_ZN_noTFIIS_params/prep/nvt/index.ndx"
+	[ -z "$index" ] && index="$base/simulation/syncsim/pol/ref/cc_ZN_noTFIIS_params/prep/nvt/index.ndx"
 	[ -z "$group" ] && group=26
 	[ -z "$skip" ] && skip=4
 	[ -z "$proto" ] && proto=1
@@ -103,11 +105,21 @@ if [[ $mol == 'pol' ]]; then
 		rm -f $dir/umb1.xtc
 		echo 0 | gmx trjconv -nice 0 -f $dir/umb2.xtc -s $dir/subset.tpr -o $dir/0umb.pdb -ur compact -dump 0; wait
 		correct-chainid-and-ter.py $dir/0umb.pdb > $dir/0umb_chains.pdb
+	elif [ "$proto" = test  ]; then
+		index="$base/simulation/syncsim/pol/heavy_h/ref/master_index.ndx"
+		echo $group | gmx trjconv -f $traj -s $tpr -ur compact -pbc atom -skip $skip -o gold1.xtc -n $index -trans 5.5 7 -4
+		echo $group | gmx convert-tpr -s $tpr -n $index -o $dir/subset.tpr
+		echo 0 | gmx trjconv -nice 0 -f $dir/gold1.xtc -s $dir/subset.tpr -o $dir/0.pdb -ur compact -dump 0
+		correct-chainid-and-ter.py $dir/0.pdb > $dir/0_chains.pdb
+		#echo "13 31" | gmx trjconv -f $traj -s $tpr -ur compact -pbc atom -skip $skip -o $dir/gold1.xtc -n ./E_87.870/test/master_index.ndx -center
+		#echo 31 | gmx convert-tpr -s $tpr -n ./E_87.870/test/master_index.ndx -o $dir/subset.tpr
+		#echo 0 | gmx trjconv -f $dir/gold1.xtc -s $dir/subset.tpr -ur compact -pbc whole -o $dir/gold2.xtc
+
 	fi
 
 fi
 
 if [[ $mol == 'opro' ]]; then
-	echo "1 $group" | gmx trjconv -nice 0 -s $tpr -f $traj -o $dir/nopbc.xtc -pbc mol -center
+	echo "1 $group" | gmx trjconv -nice 0 -s $tpr -f $traj -o $dir/nopbc.xtc -pbc mol -center -skip $skip
 	echo $group | gmx trjconv -nice 0 -f $dir/nopbc.xtc -s $tpr -o $dir/0.pdb -dump 0
 fi

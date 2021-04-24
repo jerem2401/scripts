@@ -101,10 +101,11 @@ def main():
             x = float(i.split('_')[1])
             z, thishist = np.loadtxt(i, unpack=True)
             y = max(thishist)
-            axs.plot(z, thishist)
-            axs.annotate(s=label,xy=(x,y))
+            axs.plot(z, thishist, label=label+": x")
+            axs.annotate(s=label, xy=(x, y), fontsize=8)
             n+=1
             allz = np.concatenate((allz, z), axis=None)
+        plt.legend()
         plt.xlim(np.amin(allz), np.amax(allz))
         plt.savefig('hist_all1.jpeg')
         plt.close()
