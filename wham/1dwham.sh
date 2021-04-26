@@ -20,6 +20,7 @@ prep2dwham() {
 
         time5ns=$(awk '$1~/^5000.*/{print NR;exit}' "${coll[0]}")
         echo "time5ns = $time5ns"
+	echo "column chosen: $column"
 
         for index in $(seq 0 4 "$colllen"); do
             for i in "${coll[@]:${index}:4}"; do
@@ -30,7 +31,7 @@ prep2dwham() {
                     continue
                 fi
         	echo "preparing colvar: $var2"
-                (awk -v var=$time5ns '(NR>=var) {print $1,$6}' $i > ./$var2) &
+                (awk -v var=$time5ns -v col=$column '(NR>=var) {print $1,$col}' $i > ./$var2) &
                 PID+=( "$!" )
             done
             for pid in ${PID[*]}; do
@@ -91,11 +92,14 @@ mk_chunk() {
 #args needed: -c
 mk_metd() {
    for k in `seq 1 $c`; do
-      [ -e "c${c}/c_${k}/metd.txt" ] && echo "c${c}/c_${k}/metd.txt exists, removing file first"
+      [ -e "c${c}/c_${k}/metd.txt" ] \
+      && echo "c${c}/c_${k}/metd.txt exists, removing file first" \
+      && rm -f "c${c}/c_${k}/metd.txt"
+
       echo "making metd.txt for c_${k}"
       for i in c$c/c_$k/colv*; do
-         cnt=$(echo "$i" | grep -oP '(?<=colvar)[^_]*')
-	 read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=).*(?= )' ../../E_$cnt/plumed_* | tr "\n" " ")
+         cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=_)')
+	 read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ../../E_$cnt/plumed_* | tail -1)
          echo "$(basename $i)   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
       done
    done

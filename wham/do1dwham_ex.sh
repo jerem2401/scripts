@@ -23,19 +23,19 @@ while [ $# -gt 0 ]; do
             ;;
         -bin)
             shift;
-            bin="$1"
-            ;;
+            bin="$1";;
+	-column) shift
+	    column="$1";;
     esac
     shift
 done
 
-module load conda
-source activate env1
+module load anaconda3/2020.07 && source activate env1
 
 source 1dwham.sh
 
 prep2dwham 2>&1 | tee -a prep1dwham.log
 mk_chunk 2>&1 | tee -a mk_chunk.log
 mk_metd 2>&1 | tee -a mk_metd.log
-do_wham2d | tee -a do_wham1d.log
-clean_wham2d | tee -a clean_wham2d.log
+#do_wham2d | tee -a do_wham1d.log
+#clean_wham2d | tee -a clean_wham2d.log
