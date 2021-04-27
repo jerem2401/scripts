@@ -31,7 +31,7 @@ prep2dwham() {
                     continue
                 fi
         	echo "preparing colvar: $var2"
-                (awk -v var=$time5ns -v col=$column '(NR>=var) {print $1,$col}' $i > ./$var2) &
+                (awk -v var=$time5ns -v col=$column '(NR>=var) && ($0 !~ /^#.*/) {print $1,$col}' $i > ./$var2) &
                 PID+=( "$!" )
             done
             for pid in ${PID[*]}; do
