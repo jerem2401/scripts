@@ -4,14 +4,15 @@
 #Option description:
 #
 ###############################################################################
-set -o errexit   # abort on nonzero exitstatus
-set -o nounset   # abort on unbound variable
-set -o pipefail  # dont hide errors within pipes
+#set -o errexit   # abort on nonzero exitstatus
+#set -o nounset   # abort on unbound variable
+#set -o pipefail  # dont hide errors within pipes
 
 PWD=$(pwd)
 if [ "$HOSTNAME" == smaug ]; then
 	base=$(echo ${PWD%/simulation*})
 else
+	module load anaconda3/2020.07 && source activate env1
 	base=$HOME
 fi
 
@@ -135,9 +136,8 @@ else
 		atnb=$(echo $atn | sed 's/ /_/g')
 		ksi=$(echo $dir | grep -oP 'E_.*(?=\/)')
 		name="${ksi}_t${temp}_nt${ntemp}_${atnb}"
-		echo "$i $i" | gmx hbond -nthreads 1 -f $dir/nopbc2.xtc -s $tpr -n $index -num ${dir}/${name}.xvg
-		wait
-		sleep 3
+		echo "$i $i" | gmx hbond -nthreads 1 -f "$dir/nopbc2.xtc" -s "$tpr" -n "$index"  \
+		-num "${dir}/${name}.xvg" &
 	done
 
 	tot=0
