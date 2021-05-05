@@ -97,11 +97,13 @@ autocmd vimenter * colorscheme gruvbox
 execute pathogen#infect()
 
 " installing and set up syntastic following: https://github.com/vim-syntastic/syntastic
+" to add the syntastic doc do : ':helptags ~/.vim/bundle/syntastic/doc'
 set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
 set statusline+=%*
 
-let g:syntastic_python_checkers = ["python", "flake8", "pylint"]
+" don't forget to download and put flake8 to $PATH (conda or pip)
+let g:syntastic_python_checkers = ["flake8"]
 let g:syntastic_sh_checkers = ["sh", "ShellCheck"]
 
 let g:syntastic_always_populate_loc_list = 1
