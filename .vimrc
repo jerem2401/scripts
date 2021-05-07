@@ -105,6 +105,7 @@ set statusline+=%*
 " don't forget to download and put flake8 to $PATH (conda or pip)
 let g:syntastic_python_checkers = ["flake8"]
 let g:syntastic_sh_checkers = ["sh", "ShellCheck"]
+let g:syntastic_python_flake8_args = "--max-line-length=100"
 
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 1

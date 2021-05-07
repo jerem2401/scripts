@@ -19,6 +19,8 @@ fi
 traj=''
 dir=''
 mknd=0
+traj_hb=1
+ana=''
 index="$base/simulation/syncsim/pol/heavy_h/ref/hbond.ndx"
 
 while [ $# -gt 0 ]; do
@@ -36,15 +38,18 @@ while [ $# -gt 0 ]; do
 		-tpr) shift
 		  tpr=$1;;
 		-mknd)
-		  mknd=1;;
+		  mknd=1
+		  traj_hb=0;;
 		-ndx) shift
 		  index=$1;;
+		-ana) shift
+		  ana=$1
+		  traj_hb=0;;
 	esac
 	shift
 done
 
 
-#############used to generate proper index to use with gmx hbond####################################
 if (($mknd == 1)); then
 	while read line; do
 		f=$(echo $line | awk '{print $1}')
@@ -93,8 +98,8 @@ if (($mknd == 1)); then
 	done < $base/simulation/syncsim/pol/heavy_h/ref/pairs2.txt
 
 	gmx select -sf selection.dat -s md.tpr -n $base/simulation/syncsim/pol/heavy_h/ref/index_dna.ndx -on hbindex.ndx
-###################################################################################################
-else
+
+elif (($traj_hb == 1)); then
 	if [ -z $dir ]; then
 		echo "you should give target dir, exiting"
 		exit
@@ -126,6 +131,7 @@ else
 	echo 0 | gmx trjconv -nice 0 -f $dir/nopbc2.xtc -s $tpr -o $dir/0.pdb -dump 0
 	correct-chainid-and-ter.py $dir/0.pdb > $dir/0_chains.pdb
 
+	echo "trajconv of $dir is done" >> hbout.txt
 
 	for i in $(seq 77 1 118); do
 		line=$(($i + 1))
@@ -137,18 +143,13 @@ else
 		ksi=$(echo $dir | grep -oP 'E_.*(?=\/)')
 		name="${ksi}_t${temp}_nt${ntemp}_${atnb}"
 		echo "$i $i" | gmx hbond -nthreads 1 -f "$dir/nopbc2.xtc" -s "$tpr" -n "$index"  \
-		-num "${dir}/${name}.xvg" &
+		-num "${dir}/${name}.xvg" -r 0.358 &
 	done
 
-	tot=0
-	for i in $(seq 49 1 64); do
-		a=0
-		for j in $dir/${ksi}_t${i}*; do
-			b=$(tail -n 1 $j | awk '{print $2}')
-			a=$(( a + b ))
-		done
-		echo "total Hb for res $i: $a" >> $dir/analyzehb.txt
-		tot=$(( tot + a ))
-	done
-	echo "total Hb for transcribtion bubble: $tot" >> $dir/analyzehb.txt
+	echo "hbond of traj of $dir is done" >> hbout.txt
+
+elif [[ ! -z $ana ]]; then
+	set -o noglob
+	stats.py -f $ana
+	set +o noglob
 fi

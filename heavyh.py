@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Author(s): Jeremy Lapierre <jeremy.lapierre@uni-saarland.de>, 
+Author(s): Jeremy Lapierre <jeremy.lapierre@uni-saarland.de>,
 \nDescription: This script modifies gromacs topology files to simulate with heavy hydrogens. This
 allows to decrease angular and out-of-plane motions involving hydrogens and therefore allowing to
 increase the time step. To conserve the total mass, the heavy atoms connected to hydrogens will
@@ -66,7 +66,6 @@ def file_checker(top, itp, suff):
     Check if .itp/.top files have an [ atoms ] block to modifiy, else remove it from input files.\n
     Finally, builds output names for the topologies"""
 
-
     if top != []:
         print(f'Working on following .top file: {top}\n')
         regxitp = re.compile(r'(?<=#include ")(?!.*(\b\/\b|posre)).*(?=")')
@@ -76,7 +75,7 @@ def file_checker(top, itp, suff):
                     if regxitp.search(line).group() not in itp:
                         itp.append(regxitp.search(line).group())
 
-        #Check if those .itp are in current directory or in the dirname of .top given by -p
+        # Check if those .itp are in current directory or in the dirname of .top given by -p
         for i in itp:
             if not path.isfile(i):
                 dirname_of_top = path.dirname(top[0])
@@ -112,13 +111,14 @@ def file_checker(top, itp, suff):
           f'\n{topols}\n')
 
     topolout = [re.sub(r'(\.itp|\.top)', '', path.basename(name))
-                +suff
-                +'.'
-                +name.split('.')[-1] for name in topols]
+                + suff
+                + '.'
+                + name.split('.')[-1] for name in topols]
 
     topolin_topolout = {topols[i]: topolout[i] for i in range(len(topols))}
 
     return topolin_topolout
+
 
 def top_parser(topol):
     """This function is parsing the topol file and creates 2 main dictionaries: toplines and

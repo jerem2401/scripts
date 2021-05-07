@@ -27,18 +27,18 @@ def rew_chunk(f,c,k):
             print('dflen='+str(dflen))
             chlen=round(dflen/c)
             print('chlen='+str(chlen))
-    
+
             for n,j in enumerate(range(0,dflen,chlen)):
                 chunk=df[['nCV','guide_restraint.bias']][j:j+chlen]
-    
+
                 print('head of chunk '+str(n)+' from '+str(j)+' to '+str(j+chlen)+' :', chunk.head(), chunk.tail(), sep='\n')
-    
+
                 #Put next lines as a function in rew_histo, to make it versatile
                 hist2, bin_edges = np.histogram(chunk['nCV'], bins=[i for i in np.around(np.arange(-1.25,1.25,0.01), decimals=3)], weights=[np.exp(i/2.49434) for i in chunk['guide_restraint.bias']],density=True)
                 hist2 = hist2 / hist2.sum()
                 d = {'z': bin_edges[0:-1],'hist': hist2}
                 hdf=pd.DataFrame(d)
-                
+
                 # /!\ saved in working directory
                 np.savetxt(r'./histo_'+str(pos)+'_c'+str(n)+'.dat', hdf.values, header="col1=z col2=hist\n#1 #2 "+str(pos)+"\n#1 #2 "+str(k), fmt='%.6f')
                 print('./histo_'+str(pos)+'_c'+str(n)+'.dat is done')
