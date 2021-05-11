@@ -153,3 +153,6 @@ elif [[ ! -z $ana ]]; then
 	stats.py -f $ana
 	set +o noglob
 fi
+
+#for i in E*/colv*; do dir=$(dirname $i); echo ${dir:2}; mk_bp_ndx.sh -d $dir -skip 5 -tpr "${dir}/conf_${dir:2}.tpr" -ndx /data/users/jeremy/simulation/syncsim/pol/heavy_h/ref/hbond_dnaonly.ndx; done
+#for i in E*/hbond/analyzehb.txt; do a=$(dirname $i); E=$(echo ${a:0:-6}); hb=$(tail -n1 $i ); real=$(awk '{ total += $2 } END { print total/NR }' $E/colvar_${E:2}.txt); printf "%-8s %20s %20s \n" $E $real $hb >> hbout.txt; done
