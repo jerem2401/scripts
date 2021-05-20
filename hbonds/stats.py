@@ -6,10 +6,9 @@ Description:
 '''
 
 import argparse
-import numpy as np
-from scipy import stats
 import glob
 import uncertainties as u
+import numpy as np
 
 
 def bywin(tdir):
@@ -21,17 +20,21 @@ def bywin(tdir):
     out.write(f"[ induvidual H bond for nuc in bubble ]\n")
     out.write(f"#nuc_and_atm_name hbond\n")
 
-    for xvg in glob.glob(f"{tdir}/*.xvg"):
-        hbond = []
+    for xvg in glob.glob(f"{tdir}/E_*.xvg"):
         with open(xvg, 'r') as reader:
+            hmean = 0
+            hsem = 0
             for line in reader:
-                if ("#" in line or "@" in line):
-                    continue
+                if "#@ s0" in line:
+                    hmean = round(float(line.split('"')[1].split()[-1]), 2)
+                elif "#@ s1" in line:
+                    hsem = round(float(line.split('"')[1].split()[-1]), 2)
+                elif "#std" in line:
+                    if hsem > 10:
+                        std = round(float(line.split()[1]))
+                        hsem = std/np.sqrt(2)
                 else:
-                    hbond.append(int(line.split()[1]))
-        hbond = np.array(hbond)
-        hmean = round(np.mean(hbond), 2)
-        hsem = round(stats.sem(hbond), 2)
+                    break
 
         hunc = u.ufloat(hmean, hsem)
         toth.append(hunc)

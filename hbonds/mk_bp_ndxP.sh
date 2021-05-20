@@ -118,8 +118,7 @@ if (($mknd == 1)); then
 		atominrange=$(egrep -c -v '(\[|^$)' $i/hbindex.ndx)
 		if (($atominrange == 0)); then
 			echo "no atom in range for $i"
-			echo -e "         0           0           0\n         0           0           0" \
-			> "${i}/hbond.xvg"
+			echo -e "#@ s0 legend \"av 0.0\"\n#@ s1 legend \"ee  0.0\"" > "${i}/hbond.xvg"
 		else
 			nbndx=$(grep -c '\[' $i/hbindex.ndx)
 			nbndxf=$(($nbndx-1))
@@ -135,7 +134,16 @@ if (($mknd == 1)); then
 
 			cat ${i}/hbindexm.ndx ${i}/hbindexdna.ndx > ${i}/final.ndx
 			echo "0 1" | gmx hbond -nthreads 1 -f ${dirumb}/umb2.xtc \
-			-s ${dirumb}/subset.tpr -n ${i}/final.ndx -num "${i}/hbond.xvg" -r 0.358 &
+			-s ${dirumb}/subset.tpr -n ${i}/final.ndx -num "${i}/hbond.xvg"
+			wait
+			gmx analyze -f ${i}/hbond.xvg -ee ${i}/err_hbond.xvg &> ${i}/out.txt
+			wait
+			av=$(grep "\@ s0" "${i}/err_hbond.xvg")
+			std=$(cat ${i}/out.txt | grep SS1 | awk '{print $3}')
+			err=$(grep "\@ s1" "${i}/err_hbond.xvg")
+			sed  -i "1i \#std $std" "${i}/hbond.xvg"
+			sed  -i "1i \#$err" "${i}/hbond.xvg"
+			sed  -i "1i \#$av " "${i}/hbond.xvg"
 		fi
 	done
 elif [[ ! -z $ana ]]; then

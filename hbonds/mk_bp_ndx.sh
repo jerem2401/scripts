@@ -109,16 +109,7 @@ elif (($traj_hb == 1)); then
 		traj="$dir/traj_comp.xtc"
 	fi
 
-	bck=$(find $dir -type d -name "hbond*")
-	nbck=$(echo $bck | wc -w)
-
-	if [ ! -z "$bck" ]; then
-		mkdir "${dir}/hbond_${nbck}"
-		dir="${dir}/hbond_${nbck}"
-	else
-		mkdir "${dir}/hbond"
-		dir="${dir}/hbond"
-	fi
+	[[ -d ${dir}/hbond ]] && echo "${dir}/hbond already exists, exiting" && exit || mkdir ${dir}/hbond
 
 	index_1="$base/simulation/syncsim/pol/heavy_h/ref/index.ndx"
 	echo DNA | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc mol \
@@ -142,8 +133,19 @@ elif (($traj_hb == 1)); then
 		atnb=$(echo $atn | sed 's/ /_/g')
 		ksi=$(echo $dir | grep -oP 'E_.*(?=\/)')
 		name="${ksi}_t${temp}_nt${ntemp}_${atnb}"
+		#echo "$i $i" | gmx hbond -nthreads 1 -f "$dir/nopbc2.xtc" -s "$tpr" -n "$index"  \
+		#-num "${dir}/${name}.xvg" -r 0.358 &
 		echo "$i $i" | gmx hbond -nthreads 1 -f "$dir/nopbc2.xtc" -s "$tpr" -n "$index"  \
-		-num "${dir}/${name}.xvg" -r 0.358 &
+		-num "${dir}/${name}.xvg"
+		wait
+		gmx analyze -f "${dir}/${name}.xvg" -ee "${dir}/err_${name}.xvg" &> "${dir}/out.txt"
+		wait
+		av=$(grep "\@ s0" "${dir}/err_${name}.xvg")
+		std=$(cat "${dir}/out.txt" | grep SS1 | awk '{print $3}')
+		err=$(grep "\@ s1" "${dir}/err_${name}.xvg")
+		sed  -i "1i \#std $std" "${dir}/${name}.xvg"
+		sed  -i "1i \#$err" "${dir}/${name}.xvg"
+		sed  -i "1i \#$av " "${dir}/${name}.xvg"
 	done
 
 	echo "hbond of traj of $dir is done" >> hbout.txt
