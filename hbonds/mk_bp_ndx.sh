@@ -110,6 +110,7 @@ elif (($traj_hb == 1)); then
 	fi
 
 	[[ -d ${dir}/hbond ]] && echo "${dir}/hbond already exists, exiting" && exit || mkdir ${dir}/hbond
+	dir=${dir}/hbond
 
 	index_1="$base/simulation/syncsim/pol/heavy_h/ref/index.ndx"
 	echo DNA | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc mol \
