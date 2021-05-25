@@ -116,9 +116,9 @@ if [[ $mol == 'pol' ]]; then
 		#echo 0 | gmx trjconv -f $dir/gold1.xtc -s $dir/subset.tpr -ur compact -pbc whole -o $dir/gold2.xtc
 	elif [ "$proto" = ions ]; then
 		index="$base/simulation/syncsim/pol/heavy_h/ref/index_ions.ndx"
-		echo "29 0" | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip -center
-		echo 0 | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $tpr -o $dir/nopbc2.xtc -ur compact -pbc whole -n $index
-		echo 0 | gmx trjconv -nice 0 -f $dir/nopbc2.xtc -s $tpr -o $dir/0.pdb -dump 0 -n $index
+		echo "29 0" | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/solvant.xtc -ur compact -pbc atom -n $index -skip $skip -center
+		echo 0 | gmx trjconv -nice 0 -f $dir/solvant.xtc -s $tpr -o $dir/solvant2.xtc -ur compact -pbc whole -n $index
+		echo 0 | gmx trjconv -nice 0 -f $dir/solvant2.xtc -s $tpr -o $dir/solvant.pdb -dump 0 -n $index
 	fi
 
 fi
