@@ -20,7 +20,7 @@ traj=''
 dir=''
 mknd=1
 ana=''
-index="$base/simulation/syncsim/pol/heavy_h/ref/hbondP.ndx"
+basic=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -28,8 +28,8 @@ while [ $# -gt 0 ]; do
 		  shift
 		  dirumb=$1
 		  ;;
-		-ndx) shift
-		  index=$1;;
+		-basic)
+		  basic=1;;
 		-ana) shift
 		  ana=$1
 		  mknd=0;;
@@ -37,7 +37,16 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-dir="${dirumb}/contact"
+if (($basic == 1)); then
+	dir="${dirumb}/contact_basic"
+	grp1=0
+	grp2=1
+else
+	dir="${dirumb}/contact"
+	grp1=1
+	grp2=12
+fi
+
 traj='umb2.xtc'
 tpr='subset.tpr'
 
@@ -47,9 +56,17 @@ if (($mknd == 1)); then
 	[[ -d $dir ]] && echo "$dir already exists, exiting" && exit || mkdir $dir
 
 	for i in ${dir}; do
-		echo "1 12" | gmx mindist -nice 0 -f ${dirumb}/${traj} -s ${dirumb}/${tpr} -d 0.5 \
-		-on "${i}/numcount.xvg" -od "${i}/mindist.xvg"
-		gmx analyze -nice 0 -f ${i}/numcount.xvg -ee ${i}/err_numcount.xvg &> ${i}/out.txt
+		if (($basic==1)); then
+			gmx select -select "resname ARG or resname LYS or resname HISi; group DNA" \
+			-f ${dirumb}/${traj} -s ${dirumb}/${tpr} -on ${i}/basic.ndx
+			ndx="-n ${i}/basic.ndx"
+		else
+			ndx=""
+		fi
+
+		echo "$grp1 $grp2" | gmx mindist -f ${dirumb}/${traj} -s ${dirumb}/${tpr} -d 0.5 \
+		-on "${i}/numcount.xvg" -od "${i}/mindist.xvg" $ndx
+		gmx analyze -f ${i}/numcount.xvg -ee ${i}/err_numcount.xvg &> ${i}/out.txt
 		wait
 		av=$(grep "\@ s0" "${i}/err_numcount.xvg")
 		std=$(cat ${i}/out.txt | grep SS1 | awk '{print $3}')
