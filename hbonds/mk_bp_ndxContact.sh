@@ -57,7 +57,8 @@ if (($mknd == 1)); then
 
 	for i in ${dir}; do
 		if (($basic==1)); then
-			gmx select -select "resname ARG or resname LYS or resname HISi; group DNA" \
+			gmx select -nice 0 -select \
+			"resname ARG or resname LYS or resname HIS; group DNA" \
 			-f ${dirumb}/${traj} -s ${dirumb}/${tpr} -on ${i}/basic.ndx
 			ndx="-n ${i}/basic.ndx"
 		else
@@ -66,7 +67,7 @@ if (($mknd == 1)); then
 
 		echo "$grp1 $grp2" | gmx mindist -f ${dirumb}/${traj} -s ${dirumb}/${tpr} -d 0.5 \
 		-on "${i}/numcount.xvg" -od "${i}/mindist.xvg" $ndx
-		gmx analyze -f ${i}/numcount.xvg -ee ${i}/err_numcount.xvg &> ${i}/out.txt
+		gmx analyze -nice 0 -f ${i}/numcount.xvg -ee ${i}/err_numcount.xvg &> ${i}/out.txt
 		wait
 		av=$(grep "\@ s0" "${i}/err_numcount.xvg")
 		std=$(cat ${i}/out.txt | grep SS1 | awk '{print $3}')
