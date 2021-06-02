@@ -47,9 +47,9 @@ if (($mknd == 1)); then
 	[[ -d $dir ]] && echo "$dir already exists, exiting" && exit || mkdir $dir
 
 	for i in ${dir}; do
-		echo "1 12" | gmx mindist -f ${dirumb}/${traj} -s ${dirumb}/${tpr} -d 0.5 \
+		echo "1 12" | gmx mindist -nice 0 -f ${dirumb}/${traj} -s ${dirumb}/${tpr} -d 0.5 \
 		-on "${i}/numcount.xvg" -od "${i}/mindist.xvg"
-		gmx analyze -f ${i}/numcount.xvg -ee ${i}/err_numcount.xvg &> ${i}/out.txt
+		gmx analyze -nice 0 -f ${i}/numcount.xvg -ee ${i}/err_numcount.xvg &> ${i}/out.txt
 		wait
 		av=$(grep "\@ s0" "${i}/err_numcount.xvg")
 		std=$(cat ${i}/out.txt | grep SS1 | awk '{print $3}')

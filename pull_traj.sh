@@ -114,6 +114,12 @@ if [[ $mol == 'pol' ]]; then
 		#echo "13 31" | gmx trjconv -f $traj -s $tpr -ur compact -pbc atom -skip $skip -o $dir/gold1.xtc -n ./E_87.870/test/master_index.ndx -center
 		#echo 31 | gmx convert-tpr -s $tpr -n ./E_87.870/test/master_index.ndx -o $dir/subset.tpr
 		#echo 0 | gmx trjconv -f $dir/gold1.xtc -s $dir/subset.tpr -ur compact -pbc whole -o $dir/gold2.xtc
+	elif [ "$proto" = test2 ]; then
+		index="$base/simulation/syncsim/pol/heavy_h/ref/index_ions.ndx"
+		echo "29 27" | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/test2.xtc -ur compact -pbc atom -n $index -skip $skip -center
+		echo 27 | gmx convert-tpr -s $tpr -n $index -o $dir/test2.tpr
+		echo 0 | gmx trjconv -nice 0 -f $dir/test2.xtc -s $dir/test2.tpr -o $dir/test2_2.xtc -ur compact -pbc whole
+		echo 0 | gmx trjconv -nice 0 -f $dir/test2_2.xtc -s $dir/test2.tpr -o $dir/test2.pdb -dump 0
 	elif [ "$proto" = ions ]; then
 		index="$base/simulation/syncsim/pol/heavy_h/ref/index_ions.ndx"
 		echo "29 0" | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/solvant.xtc -ur compact -pbc atom -n $index -skip $skip -center
