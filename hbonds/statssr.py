@@ -48,7 +48,7 @@ def bywin(tdir):
         out.write(f"{coul}     {lj}\n")
         out.write(f"\n[ {tag} Coul+LJ ]\n")
         sr_sum = coul+lj
-        out.write(f"{sr_sum}\n")
+        out.write(f"{sr_sum}\n\n")
 
     out.close()
 
