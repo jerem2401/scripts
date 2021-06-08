@@ -12,12 +12,16 @@ PWD=$(pwd)
 if [ "$HOSTNAME" == smaug ]; then
 	base=$(echo ${PWD%/simulation*})
 	GMX='gmx'
+	run=''
+	nt='-nt 12'
 else
 	module load anaconda3/2020.07 && source activate env1
 	base=$HOME
 	source /usr/users/cmb/shared/spack/shared.bash
 	module load gromacs@2021.1-mpi
 	GMX='gmx_mpi'
+	run='mpirun -np 12'
+	nt=''
 fi
 
 traj=''
@@ -34,11 +38,18 @@ while [ $# -gt 0 ]; do
 		-ana) shift
 		  ana=$1
 		  mknd=0;;
+		-rtx)
+		  module unload gromacs@2021.1-mpi
+		  module load gromacs@2021.1
+		  GMX='gmx'
+		  run=''
+		  nt='-nt 12'
+		  ;;
 	esac
 	shift
 done
 
-dir="${dirumb}/short_range"
+dir="${dirumb}/short_range_2"
 
 
 if (($mknd == 1)); then
@@ -56,7 +67,7 @@ if (($mknd == 1)); then
 		nstvout                 = 0         ; 0 for output frequency of nstxout,
 		nstfout                 = 0         ; nstvout, and nstfout
 		nstenergy               = 5000
-		energygrps              = Protein DNA
+		energygrps              = Protein DNA Water
 		nstlog                  = 500000      ; update log file every 10.0 ps
 		;nstxout-compressed      = 120000    ; save compressed coordinates every 10 ps
 		nstxout-compressed      = 12500     ; save compressed coordinates every 10 ps
@@ -104,12 +115,16 @@ if (($mknd == 1)); then
 		$base/simulation/syncsim/pol/heavy_h/ref/index.ndx -o ${i}/srint.tpr -maxwarn 1
 		wait
 
-		$GMX mdrun -nice 19 -rerun ${dirumb}/traj_comp.xtc -nt 12 -g ${i}/srint.log \
+		$run $GMX mdrun -nice 19 -rerun ${dirumb}/traj_comp.xtc $nt -g ${i}/srint.log \
 		-e ${i}/srint.edr -x ${i}/srint.xtc -s ${i}/srint.tpr
 		wait
 
-		echo 21 22 | $GMX energy -nice 0 -f ${i}/srint.edr -o ${i}/srint.xvg \
-		&> ${i}/outnrg.txt
+		echo 21 22 | $GMX energy -nice 0 -f ${i}/srint.edr -o ${i}/srint_prot-dna.xvg \
+		&> ${i}/outnrg_prot-dna.txt
+		echo 33 34 | $GMX energy -nice 0 -f ${i}/srint.edr -o ${i}/srint_dna-dna.xvg \
+		&> ${i}/outnrg_dna-dna.txt
+		echo 37 38 | $GMX energy -nice 0 -f ${i}/srint.edr -o ${i}/srint_dna-water.xvg \
+		&> ${i}/outnrg_dna-water.txt
 	done
 
 elif [[ ! -z $ana ]]; then
