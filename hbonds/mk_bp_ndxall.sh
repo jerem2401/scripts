@@ -49,8 +49,8 @@ if (($mknd == 1)); then
 
 
 	for i in ${dir}; do
-		echo "1 12" | gmx hbond -nthreads 1 -f ${dirumb}/${traj} \
-		-s ${dirumb}/${tpr} -num "${i}/hbond.xvg"
+		echo "1 2" | gmx hbond -nthreads 1 -f ${dirumb}/${traj} \
+		-s ${dirumb}/${tpr} -num "${i}/hbond.xvg" -n  $base/simulation/syncsim/pol/heavy_h/ref/moreindex/umb_dnabubble_protein.ndx
 		gmx analyze -f ${i}/hbond.xvg -ee ${i}/err_hbond.xvg &> ${i}/out.txt
 		wait
 		av=$(grep "\@ s0" "${i}/err_hbond.xvg")

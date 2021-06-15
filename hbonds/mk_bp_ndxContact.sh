@@ -30,6 +30,8 @@ while [ $# -gt 0 ]; do
 		  ;;
 		-basic)
 		  basic=1;;
+		-acidic)
+		  acidic=1;;
 		-ana) shift
 		  ana=$1
 		  mknd=0;;
@@ -61,6 +63,9 @@ if (($mknd == 1)); then
 			"resname ARG or resname LYS or resname HIS; group DNA" \
 			-f ${dirumb}/${traj} -s ${dirumb}/${tpr} -on ${i}/basic.ndx
 			ndx="-n ${i}/basic.ndx"
+		elif ($acidic==1)); then
+			gmx select -nice 0 -select \
+			"resname ASP or resname GLU"
 		else
 			ndx=""
 		fi
