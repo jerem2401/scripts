@@ -21,6 +21,10 @@ dir=''
 mknd=1
 ana=''
 basic=0
+acidic=0
+hydrophob=0
+hydrophil=0
+ndx="-n ${base}/simulation/syncsim/pol/heavy_h/ref/moreindex/umb_dnabubble_protein.ndx"
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -32,6 +36,10 @@ while [ $# -gt 0 ]; do
 		  basic=1;;
 		-acidic)
 		  acidic=1;;
+		-hydrophob)
+		  hydrophob=1;;
+		-hydrophil)
+		  hydrophil=1;;
 		-ana) shift
 		  ana=$1
 		  mknd=0;;
@@ -40,13 +48,25 @@ while [ $# -gt 0 ]; do
 done
 
 if (($basic == 1)); then
-	dir="${dirumb}/contact_basic"
+	dir="${dirumb}/contact2_basic"
+	grp1=0
+	grp2=1
+elif (($acidic == 1)); then
+	dir="${dirumb}/contact2_acidic"
+	grp1=0
+	grp2=1
+elif (($hydrophob == 1)); then
+	dir="${dirumb}/contact2_hydrophob"
+	grp1=0
+	grp2=1
+elif (($hydrophil == 1)); then
+	dir="${dirumb}/contact2_hydrophil"
 	grp1=0
 	grp2=1
 else
-	dir="${dirumb}/contact"
+	dir="${dirumb}/contact2"
 	grp1=1
-	grp2=12
+	grp2=2
 fi
 
 traj='umb2.xtc'
@@ -60,14 +80,24 @@ if (($mknd == 1)); then
 	for i in ${dir}; do
 		if (($basic==1)); then
 			gmx select -nice 0 -select \
-			"resname ARG or resname LYS or resname HIS; group DNA" \
-			-f ${dirumb}/${traj} -s ${dirumb}/${tpr} -on ${i}/basic.ndx
+			"resname ARG or resname LYS or resname HIS; group DNA_bubble" \
+			-f ${dirumb}/${traj} -s ${dirumb}/${tpr} -on ${i}/basic.ndx $ndx
 			ndx="-n ${i}/basic.ndx"
-		elif ($acidic==1)); then
+		elif (($acidic==1)); then
 			gmx select -nice 0 -select \
-			"resname ASP or resname GLU"
-		else
-			ndx=""
+			"resname ASP or resname GLU; group DNA_bubble" \
+			-f ${dirumb}/${traj} -s ${dirumb}/${tpr} -on ${i}/acidic.ndx $ndx
+			ndx="-n ${i}/acidic.ndx"
+		elif (($hydrophob == 1)); then
+			gmx select -nice 0 -select \
+			"resname GLY or resname PRO or resname ALA or resname ILE or resname LEU or resname MET or resname PHE or resname TRP or resname TYR or resname VAL; group DNA_bubble" \
+			-f ${dirumb}/${traj} -s ${dirumb}/${tpr} -on ${i}/hydrophob.ndx $ndx
+			ndx="-n ${i}/hydrophob.ndx"
+		elif (($hydrophil == 1)); then
+			gmx select -nice 0 -select \
+			"resname SER or resname THR or resname ASN or resname GLN or resname CYS; group DNA_bubble" \
+			-f ${dirumb}/${traj} -s ${dirumb}/${tpr} -on ${i}/hydrophil.ndx $ndx
+			ndx="-n ${i}/hydrophil.ndx"
 		fi
 
 		echo "$grp1 $grp2" | gmx mindist -f ${dirumb}/${traj} -s ${dirumb}/${tpr} -d 0.5 \
