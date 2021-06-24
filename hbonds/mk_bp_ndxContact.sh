@@ -48,23 +48,23 @@ while [ $# -gt 0 ]; do
 done
 
 if (($basic == 1)); then
-	dir="${dirumb}/contact2_basic"
+	dir="${dirumb}/contact3_basic"
 	grp1=0
 	grp2=1
 elif (($acidic == 1)); then
-	dir="${dirumb}/contact2_acidic"
+	dir="${dirumb}/contact3_acidic"
 	grp1=0
 	grp2=1
 elif (($hydrophob == 1)); then
-	dir="${dirumb}/contact2_hydrophob"
+	dir="${dirumb}/contact3_hydrophob"
 	grp1=0
 	grp2=1
 elif (($hydrophil == 1)); then
-	dir="${dirumb}/contact2_hydrophil"
+	dir="${dirumb}/contact3_hydrophil"
 	grp1=0
 	grp2=1
 else
-	dir="${dirumb}/contact2"
+	dir="${dirumb}/contact3"
 	grp1=1
 	grp2=2
 fi
@@ -100,7 +100,7 @@ if (($mknd == 1)); then
 			ndx="-n ${i}/hydrophil.ndx"
 		fi
 
-		echo "$grp1 $grp2" | gmx mindist -f ${dirumb}/${traj} -s ${dirumb}/${tpr} -d 0.5 \
+		echo "$grp1 $grp2" | gmx mindist -f ${dirumb}/${traj} -s ${dirumb}/${tpr} -d 0.3 \
 		-on "${i}/numcount.xvg" -od "${i}/mindist.xvg" $ndx
 		gmx analyze -nice 0 -f ${i}/numcount.xvg -ee ${i}/err_numcount.xvg &> ${i}/out.txt
 		wait
