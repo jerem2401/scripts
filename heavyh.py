@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Author(s): Jeremy Lapierre <jeremy.lapierre@uni-saarland.de>,
+Author(s): Jeremy Lapierre <jeremy.lapierre@uni-saarland.de>, 
 \nDescription: This script modifies gromacs topology files to simulate with heavy hydrogens. This
 allows to decrease angular and out-of-plane motions involving hydrogens and therefore allowing to
 increase the time step. To conserve the total mass, the heavy atoms connected to hydrogens will
@@ -18,14 +18,14 @@ with virtual sites. Therefore, using heavy hydrogens allow to double the time st
 gmx mdrun -update gpu and gain further significant speed-up.
 It is atm only possible to use a factor of 4 with pdb2gmx -heavyh thus the need of this script.
 
-If you are simulating proteins, don't forget to constrain all bonds, i.e. "constraints = all-bonds"
-in the .mdp file.\n
+If you are simulating proteins, you can try to constrain all bonds: "constraints = all-bonds" in
+the .mdp file. But if the system is too big you won't be able to do the updates on the gpus.\n
 
 Some script launch examples:\n
 1. heavyh_final.py : a .top file is looked in current dir and all .itp files (except *posre*.itp and
-forcefield.itp) included in the .top will be processed as well (if in current directory). All
-hydrogen masses are multiply by default factor (i.e. 3).
-2. heavyh_final.py -p topol.top : same as 1. but .itp also looked in directory of the .top file.
+itp files containing "/" (usually forcefield.itp)) included in the .top will be processed as well
+(if in current directory). All hydrogen masses are multiply by default factor (i.e. 3).
+2. heavyh_final.py -p topol.top : same as 1. but -p needed if several .top in directory.
 3. heavyh_final.py -p topol1.itp topol2.itp: only processes the .itp files given, does not look
 for .top.
 4. heavyh_final.py -p topol.top -factor 4 : same as 2. but all hydrogen masses are multiply by a
@@ -58,13 +58,15 @@ import itertools
 
 class NoHydroError(Exception):
     """Customized exception"""
-
+class SeveralHydroMass(Exception):
+    """Customized exception"""
 
 def file_checker(top, itp, suff):
     """This function checks for .itp (not containing 'posre' or '/') included in .top and try to
     look for them in the current directory or in the directory name of the .top file given by -p.\n
     Check if .itp/.top files have an [ atoms ] block to modifiy, else remove it from input files.\n
     Finally, builds output names for the topologies"""
+
 
     if top != []:
         print(f'Working on following .top file: {top}\n')
@@ -75,7 +77,7 @@ def file_checker(top, itp, suff):
                     if regxitp.search(line).group() not in itp:
                         itp.append(regxitp.search(line).group())
 
-        # Check if those .itp are in current directory or in the dirname of .top given by -p
+        #Check if those .itp are in current directory or in the dirname of .top given by -p
         for i in itp:
             if not path.isfile(i):
                 dirname_of_top = path.dirname(top[0])
@@ -111,24 +113,19 @@ def file_checker(top, itp, suff):
           f'\n{topols}\n')
 
     topolout = [re.sub(r'(\.itp|\.top)', '', path.basename(name))
-                + suff
-                + '.'
-                + name.split('.')[-1] for name in topols]
+                +suff
+                +'.'
+                +name.split('.')[-1] for name in topols]
 
     topolin_topolout = {topols[i]: topolout[i] for i in range(len(topols))}
 
     return topolin_topolout
 
-
 def top_parser(topol):
     """This function is parsing the topol file and creates 2 main dictionaries: toplines and
     atomblock. The file is read line by line such that everything that is not [ atoms ] is put
     in toplines associted to their line index. All [ atoms ] lines are put in atomblock with
-    associated line index.
-    2. Check format of [ atoms ] block,
-    3.Read the atom block (but skip commments) until it is finished to create hydrogen and
-    heavy atom sets (based on hydrogen_mass), 4. Read the bond block and make a list of col 1 and 2.
-    Also get the hydrogen mass of the topology."""
+    associated line index. Bondlist is the lists of bonds."""
 
     toplines = {}
     atomblock = {}
@@ -171,6 +168,10 @@ def top_parser(topol):
         #Sanity check
         if hydrogen_mass == set():
             raise NoHydroError
+        if len(hydrogen_mass) > 1:
+            error = (f'Hydrogens with different masses where found in {topol}, this is not'
+                     f' supported yet. Please remove outputs and improve the script.')
+            raise SystemExit(error)
         #End of sanity check
 
         toplines[max(toplines.keys())+1] = '[ bonds ]\n'
