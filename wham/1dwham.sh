@@ -99,7 +99,7 @@ mk_metd() {
       echo "making metd.txt for c_${k}"
       for i in c$c/c_$k/colv*; do
          cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=_)')
-	 read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ../../E_$cnt/plumed_* | tail -1)
+	 cntkappa=$(grep -oPh '(?<=KAPPA=)[0-9]*' ../../E_$cnt/plumed_* | tail -1)
          echo "$(basename $i)   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
       done
    done
@@ -111,8 +111,10 @@ do_wham2d() {
    echo "starting do_wham2d"
    if [ $(hostname) = dema9 ]; then
       wham='/localdisk/bin/wham/wham-2d/wham-2d'
-   else
+   elif [[ $(hostname) == gwdu* ]]; then
       wham='/usr/users/jlapier/bin/wham/wham/wham'
+   elif [[ $(hostname) == fullmetal ]]; then
+      wham='/home/jeremy/opt/wham/wham/wham'
    fi
 
    for i in `seq 0 4 $c`; do

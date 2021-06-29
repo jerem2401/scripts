@@ -67,7 +67,9 @@ else
    fi
 fi
 ########################################################Sanity check#####################################################################
-
+#scp bash history to back this up
+echo "scp-ing smaug bash history" >> "${harddrive}/backup_history.log"
+scp jeremy@alef.lusi.uni-sb.de:/home/users/jeremy/.bash_history /home/jeremy/mnt/smaug/
 
 #go to your external hard drive
 cd /media/jeremy/jerem_backup/

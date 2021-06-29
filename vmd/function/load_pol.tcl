@@ -27,21 +27,30 @@ proc load_pol {args} {
         mol selection nucleic
         mol addrep $mol
         mol modcolor 1 $mol ResID
+
+        mol selection (protein within 30 of nucleic)
+        mol addrep $mol
+	mol selupdate 1 $mol on
+        mol modcolor 2 $mol Molecule
+
 	mol selection (chain A and resid 320 to 338 or chain B and resid 450 to 466 or chain B and resid 476 to 500)
 	mol addrep $mol
-	mol modcolor 2 $mol ColorID 1
+	mol modcolor 3 $mol ColorID 1
 	#align first frame to ref
 	set reference_sel  [atomselect 0 "((chain A and resid 695 to 760) or (chain A and resid 831 to 870)) and backbone"]
-	set comparison_sel [atomselect $mol "((chain A and resid 695 to 760) or (chain A and resid 831 to 870)) and backbone" frame 0]
+	set comparison_sel [atomselect $mol "((chain A and resid 695 to 760) or (chain A and resid 831 to 870)) and backbone" frame last]
 	set transformation_mat [measure fit $comparison_sel $reference_sel]
-	set move_sel [atomselect $mol "all" frame 0]
+	set move_sel [atomselect $mol "all" frame last]
 	$move_sel move $transformation_mat
-	#align all frames to frame 0
+	#align all frames to last frame
 	fitframes $mol "protein"
 	#smoothing
 	mol smoothrep $mol 0 2
 	mol smoothrep $mol 1 2
 	mol smoothrep $mol 2 2
+	mol smoothrep $mol 3 2
+	mol showrep $mol 0 off
 	incr mol
+    display resetview
      }
 }

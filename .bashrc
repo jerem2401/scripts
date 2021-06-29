@@ -9,9 +9,9 @@ case $- in
 esac
 
 #History
-export HISTSIZE=1000000000000000000000
-export HISTFILESIZE=100000000000000000
-export HISTCONTROL=erasedups:ignoredups
+export HISTSIZE=1000000000000000000000000000000000000000000000000000000000000000000000
+export HISTFILESIZE=100000000000000000000000000000000000000000000000000000000000000000
+export HISTCONTROL=ignoredups:erasedups
 shopt -s histappend
 PROMPT_COMMAND="history -n; history -w; history -c; history -r; $PROMPT_COMMAND"
 
@@ -78,7 +78,6 @@ if [ -x /usr/bin/dircolors ]; then
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
-    alias tmuxx='bash ~/gitrepo/scripts/starttmux.sh'
 fi
 
 # colored GCC warnings and errors
@@ -113,40 +112,72 @@ if ! shopt -oq posix; then
   fi
 fi
 
-# added by Anaconda3 installer
-export PATH="/home/lapierre/anaconda3/bin:$PATH"
-
-#locale
-export LC_ALL="en_US.UTF-8"
-export LANG="en_US.UTF-8"
-export LANGUAGE="en_US.UTF-8"
+#####
+export PATH="$HOME/opt/vim/bin:$PATH"
+export PATH="$HOME/opt/vmd/bin:$PATH"
 
 #Python path
-export PYTHONPATH="/home/lapierre/gitrepo/scripts:$PYTHONPATH"
-export PYTHONPATH="/home/lapierre/gitrepo/scripts/wham:$PYTHONPATH"
-export PYTHONPATH="/home/lapierre/gitrepo/scripts/miscellaneous:$PYTHONPATH"
+export PYTHONPATH="/home/jeremy/gitrepo/scripts:$PYTHONPATH"
+export PYTHONPATH="/home/jeremy/gitrepo/scripts/wham:$PYTHONPATH"
+export PYTHONPATH="/home/jeremy/gitrepo/scripts/miscellaneous:$PYTHONPATH"
 
-export PATH="/home/lapierre/gitrepo/scripts:$PATH"
-export PATH="/home/lapierre/gitrepo/scripts/wham:$PATH"
+export PATH="/home/jeremy/gitrepo/scripts:$PATH"
+export PATH="/home/jeremy/gitrepo/scripts/wham:$PATH"
 
 #alias
-alias unmount-gwdg='fusermount -uz ~/mnt/gwdg'
-alias mount-gwdg='sshfs jlapier@transfer.gwdg.de:/usr/users/jlapier/simulation ~/mnt/gwdg -o auto_cache,reconnect,ServerAliveInterval=500,ServerAliveCountMax=2'
-alias unmount-smaug='fusermount -uz ~/mnt/smaug'
-alias mount-smaug="sshfs smaug:/data/users/jeremy/simulation /home/lapierre/mnt/smaug/ -o ssh_command='ssh jeremy@alef.lusi.uni-sb.de -t ssh'"
-alias ls='ls -ltr --color=auto'
-alias sos='cat ~/Documents/command.txt'
-alias cosmaug='ssh -t jeremy@alef.lusi.uni-sb.de "ssh -t smaug \"cd /data/users/jeremy || exit 192; exec /bin/bash -login \""'
-alias cogwdg='ssh -t -A jlapier@login.gwdg.de ssh -t gwdu103'
+alias cp='cp -i'
+alias mv='mv -i'
+alias cosmaug='ssh -tY jeremy@alef.lusi.uni-sb.de "ssh -tY smaug \"cd /data/users/jeremy || exit 192; exec /bin/bash -login \""'
+alias cogwdg='ssh -tY -A jlapier@login.gwdg.de ssh -tY gwdu103'
 alias codema='ssh -t -A jeremy@alef.lusi.uni-sb.de ssh -t dema9'
-alias smaug='cd /home/lapierre/mnt/smaug'
+alias smaug='cd /home/jeremy/mnt/smaug'
 alias gwdg='cd ~/mnt/gwdg'
 alias cippool='ssh -t -A -XC jela004@gordon.cip.physik.uni-saarland.de "ssh -t -XC 134.96.87.205"'
 alias mount-cip='sshfs jela004@134.96.87.194:/home/jela004/tuto ~/mnt/cip -o auto_cache,reconnect'
 alias unmount-cip='fusermount -uz ~/mnt/cip'
+alias unmount-gwdg='fusermount -uz ~/mnt/gwdg'
+alias mount-gwdg='sshfs jlapier@transfer.gwdg.de:/usr/users/jlapier/simulation ~/mnt/gwdg -o auto_cache,reconnect,ServerAliveInterval=500,ServerAliveCountMax=2'
+alias unmount-smaug='fusermount -uz ~/mnt/smaug'
+alias mount-smaug="sshfs smaug:/data/users/jeremy/simulation /home/jeremy/mnt/smaug/ -o auto_cache,reconnect,ServerAliveInterval=500,ServerAliveCountMax=2 -o ssh_command='ssh jeremy@alef.lusi.uni-sb.de -t ssh' && scp jeremy@alef.lusi.uni-sb.de:/home/users/jeremy/.bash_history /home/jeremy/mnt/smaug/"
+alias ls='ls -ltr --color=auto'
+alias lsn='command ls -l --color=auto'
+alias tmuxx='bash ~/gitrepo/scripts/starttmux.sh'
+alias sos='cat /home/jeremy/gitrepo/scripts/miscellaneous/command.txt'
+alias spol='cd /home/jeremy/mnt/smaug/syncsim/pol/heavy_h'
+alias gpol='cd /home/jeremy/mnt/gwdg/syncsim/pol/heavy_h'
 
-#plumed
-export PATH="~/bin/bin/:$PATH"
-export LD_LIBRARY_PATH='~/bin/lib/':$LD_LIBRARY_PATH
-export INCLUDE='~/bin/include':$INCLUDE
-export plumedir='~/bin/bin/plumed'
+function vmdpol () {
+    echo $1
+    vmd -e ~/gitrepo/scripts/vmd/run_function/run_load_pol.tcl -args $1
+}
+
+#get older directories that just the previous one with cd-
+source ~/gitrepo/scripts/miscellaneous/acd_func.sh
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/home/jeremy/anaconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/home/jeremy/anaconda3/etc/profile.d/conda.sh" ]; then
+        . "/home/jeremy/anaconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/home/jeremy/anaconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+
+export PATH="/home/jeremy/opt/plumed/bin/:$PATH"
+export LD_LIBRARY_PATH='/home/jeremy/opt/plumed/lib/':$LD_LIBRARY_PATH
+export INCLUDE='/home/jeremy/opt/plumed/include/':$INCLUDE
+export plumedir='/home/jeremy/opt/plumed'
+
+#cycling over choices given by complete
+bind "TAB:menu-complete"
+bind "set show-all-if-ambiguous on"
+
+#disabling highlight when pasting in terminal (default is 'on' now from bash 5.1)
+bind 'set enable-bracketed-paste off'
