@@ -22,14 +22,17 @@ If you are simulating proteins, you can try to constrain all bonds: "constraints
 the .mdp file. But if the system is too big you won't be able to do the updates on the gpus.\n
 
 Some script launch examples:\n
-1. heavyh_final.py : a .top file is looked in current dir and all .itp files (except *posre*.itp and
-itp files containing "/" (usually forcefield.itp)) included in the .top will be processed as well
-(if in current directory). All hydrogen masses are multiply by default factor (i.e. 3).
+1. heavyh_final.py : a .top file is looked in current dir and all .itp files in current directory
+and included in the .top will be processed as well. Files in the *posre*.itp form and itp files
+containing "/" will be ignored. This has been done like this to avoid processing files like
+"amber99sb-ildn.ff/forcefield.itp", files in the root force field directory and more generally to
+have better controlled of what is processed where. All hydrogen masses are multiply by default
+factor (i.e. 3).
 2. heavyh_final.py -p topol.top : same as 1. but -p needed if several .top in directory.
 3. heavyh_final.py -p topol1.itp topol2.itp: only processes the .itp files given, does not look
 for .top.
-4. heavyh_final.py -p topol.top -factor 4 : same as 2. but all hydrogen masses are multiply by a
-factor of 4.
+4. heavyh_final.py -p topol.top -factor 2.5 : same as 2. but all hydrogen masses are multiply by a
+factor of 2.5.
 
 Ref:
 1. K Anton Feenstra, Berk Hess and Herman J C Berendsen. Improving Efficiency of Large Time-Scale
@@ -121,7 +124,7 @@ def file_checker(top, itp, suff):
 
     return topolin_topolout
 
-def top_parser(topol):
+def top_parser(topol, revert):
     """This function is parsing the topol file and creates 2 main dictionaries: toplines and
     atomblock. The file is read line by line such that everything that is not [ atoms ] is put
     in toplines associted to their line index. All [ atoms ] lines are put in atomblock with
@@ -155,15 +158,26 @@ def top_parser(topol):
             if atom_line_list[0] == ";":
                 toplines[index] = atom_line
             elif len(atom_line_list) >= 8:
-                if 0.99 <= float(atom_line_list[7]) <= 1.1:
-                    hydrogen_mass.add(atom_line_list[7])
-                    hydroid2line[atom_line_list[0]] = index
-                    atomblock[index] = atom_line_list
-                    massin += float(atom_line_list[7])
+                if revert != 0:
+                    if float(atom_line_list[7]) == revert:
+                        hydrogen_mass.add(atom_line_list[7])
+                        hydroid2line[atom_line_list[0]] = index
+                        atomblock[index] = atom_line_list
+                        massin += float(atom_line_list[7])
+                    else:
+                        heavyid2line[atom_line_list[0]] = index
+                        atomblock[index] = atom_line_list
+                        massin += float(atom_line_list[7])
                 else:
-                    heavyid2line[atom_line_list[0]] = index
-                    atomblock[index] = atom_line_list
-                    massin += float((atom_line_list[7]))
+                    if 0.99 <= float(atom_line_list[7]) <= 1.1:
+                        hydrogen_mass.add(atom_line_list[7])
+                        hydroid2line[atom_line_list[0]] = index
+                        atomblock[index] = atom_line_list
+                        massin += float(atom_line_list[7])
+                    else:
+                        heavyid2line[atom_line_list[0]] = index
+                        atomblock[index] = atom_line_list
+                        massin += float(atom_line_list[7])
 
         #Sanity check
         if hydrogen_mass == set():
@@ -210,7 +224,7 @@ def atom_block_modifier(hydrogen_mass, massfactor, bondlist, hydroid2line, heavy
        objects makes sure to do this really fast in contrast to lists (O(n) vs O(1))."""
 
     new_hydrogen_mass = hydrogen_mass*massfactor
-    mass2remove = new_hydrogen_mass-hydrogen_mass
+    massdelta = hydrogen_mass - new_hydrogen_mass
 
     #Sanity check variable
     hbond_nbr = 0
@@ -220,7 +234,7 @@ def atom_block_modifier(hydrogen_mass, massfactor, bondlist, hydroid2line, heavy
             #changing heavy atm mass
             line2modify = heavyid2line[col1col2[0]]
             former_mass = float(atomblock[line2modify][7])
-            new_mass = former_mass - mass2remove
+            new_mass = former_mass + massdelta
             atomblock[line2modify][7] = str(new_mass)
             #changing hydrogen mass
             line2modify = hydroid2line[col1col2[1]]
@@ -230,7 +244,7 @@ def atom_block_modifier(hydrogen_mass, massfactor, bondlist, hydroid2line, heavy
             line2modify = heavyid2line[col1col2[1]]
             #atom mass is in 8th column
             former_mass = float(atomblock[line2modify][7])
-            new_mass = former_mass - mass2remove
+            new_mass = former_mass + massdelta
             atomblock[line2modify][7] = str(new_mass)
             #changing hydrogen mass
             line2modify = hydroid2line[col1col2[0]]
@@ -260,7 +274,7 @@ def writer(toplines, atomblock, out):
                                     f'{f"{float(atmline_list[6]):.11g}":>12}'
                                     f'{f"{float(atmline_list[7]):.11g}":>12}\n')
         else:
-            junk = ' '.join([str(elem) for elem in atmline_list[8::]])
+            junk = ' '+' '.join([str(elem) for elem in atmline_list[8::]])
             atomblock_f[linenbr] = (f'{atmline_list[0]:>7}{atmline_list[1]:>12}'
                                     f'{atmline_list[2]:>8}{atmline_list[3]:>8}'
                                     f'{atmline_list[4]:>8}{atmline_list[5]:>8}'
@@ -297,6 +311,12 @@ def main():
                              ' (default: %(default)s)',
                         dest='massfactor',
                         type=float)
+    parser.add_argument('-revert',
+                        default=0,
+                        help='Used if you want to decrease H mass instead, you should give the H'
+                             ' mass in your topology as argument for this flag',
+                        dest='revert',
+                        type=float)
     parser.add_argument('-o',
                         default='_heavyH',
                         help=f'Suffix for output topology file name (default: %(default)s)',
@@ -316,6 +336,9 @@ def main():
                  ' just use a bash for loop over your .top using this scripti.')
         raise SystemExit(error)
 
+    if args.revert != 0:
+        args.massfactor = 1/args.massfactor
+
     topolin_topolout = file_checker(top, itp, args.suff)
 
     #variable needed to NOT modifiy the name of .itp without H in the .top
@@ -326,7 +349,7 @@ def main():
 
         try:
             toplines, atomblock, hydrogen_mass, hydroid2line,   \
-            heavyid2line, bondlist, massin = top_parser(items[0])
+            heavyid2line, bondlist, massin = top_parser(items[0], args.revert)
 
             atomblock, massout = atom_block_modifier(hydrogen_mass, args.massfactor, bondlist,
                                                      hydroid2line, heavyid2line, atomblock)
