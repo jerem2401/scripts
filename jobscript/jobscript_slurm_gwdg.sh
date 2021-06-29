@@ -496,7 +496,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             logicalCoresPerPhysical=2
             {
                 echo "#SBATCH --gres=gpu:gtx1070:$nGPUsAsked"
-		echo "#SBATCH --exclude=gwdo[161,180],dge022,dge024,dge025"
+		echo "#SBATCH --exclude=gwdo[161,180]"
                 queue=gpu-hub
             } >> $sbatch_tempfile
             ;;

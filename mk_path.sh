@@ -89,7 +89,7 @@ if [ -z "$check_path" ]; then
 
     awk '(NR < 7) {print $1" "$2" "$3" "$4" "$5" "$6}' colvar_RMSDs.txt
 else
-    bck=$(command ls path_${check_path%.txt}.pdb &>/dev/null || unset)
+    bck=$(find -type f -name path_${check_path%.txt}.pdb)
     nbck=$(echo $bck | wc -w)
 
     if [ ! -z "$bck" ]; then
@@ -105,8 +105,9 @@ else
 	done
     done <"$check_path"
 
-    echo -e "p: PATHMSD REFERENCE=$path LAMBDA=$lmd  NOPBC\nPRINT ARG=* STRIDE=1 FILE=colv_${path%.pdb}${lmd}.txt" >> plumed_${path%.pdb}${lmd}.dat
-    plumed driver --plumed "plumed_${path%.pdb}${lmd}.dat" --mf_xtc ../nopbc2.xtc
+    echo -e "p: PATHMSD REFERENCE=$path LAMBDA=$lmd  NOPBC\nPRINT ARG=* STRIDE=1 FILE=colv_${path%.pdb}_${lmd}.txt" >> plumed_${path%.pdb}_${lmd}.dat
+    #plumed driver --plumed "plumed_${path%.pdb}${lmd}.dat" --mf_xtc ../nopbc2.xtc --timestep 0.004 --trajectory-stride 20000
+    plumed driver --plumed "plumed_${path%.pdb}_${lmd}.dat" --mf_xtc ../nopbc2.xtc
 fi
 
 #sed '/TER/d;/MODEL/d;/^END$/d' test.pdb > ref_clean.pdb

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-import re
 import sys
 import os
 import numpy as np
@@ -98,14 +97,16 @@ def main():
         allz = []
         for i in  histo_files:
             label = str(n)
-            x = float(i.split('_')[1])
+            xs = i.split('_')[1]
+            x = float(xs)
+            k = os.popen(f"grep -oP '(?<=KAPPA=)[0-9]*$' ../E_{xs}/plumed_{xs}.dat").read()
             z, thishist = np.loadtxt(i, unpack=True)
             y = max(thishist)
-            axs.plot(z, thishist, label=label+": x")
+            axs.plot(z, thishist, label=label+":"+str(x)+':'+k)
             axs.annotate(s=label, xy=(x, y), fontsize=8)
             n+=1
             allz = np.concatenate((allz, z), axis=None)
-        plt.legend()
+        axs.legend(loc='upper left', ncol=7, fontsize=7, handlelength=0.4)
         plt.xlim(np.amin(allz), np.amax(allz))
         plt.savefig('hist_all1.jpeg')
         plt.close()

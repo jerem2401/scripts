@@ -1,10 +1,12 @@
 find dest* -maxdepth 0 -exec cp file_pat* {} \; #copy several files with file_pat* to to several destinations dest*
 tail -n +7 colvar_pull.txt | awk 'NR == 1 || $4 < min {line = $0; min = $4}END{print line}' # find min in column 4 (+skip first 6 lines)
-echo "rep1/eq2ax rep2/eq2ax rep3/eq2ax rep4/eq2ax rep5/eq2ax" | xargs -n 1 cp -v ../t20_mvAT_k10000_a0.2_deq0.05/eq2ax/c7eq* #cp in several dir
 
 #awk
 awk '(NR>1) && ( ($7 > 0.190) && ($8 > -0.400) )' colvar_pull_cross.txt > test.txt #take all lines (NR>1), which have values in 7th column greater thatn 0.190 and 8th > -0.4
 awk -v max=0 'FNR > 5 {if($6>max){max=$6}}END{print max}' E_1.000/colvar1.000_0.3.txt #get max of col 6 (skipping first 5 lines)
+
+#sed
+sed 413's/\S\+/1.00/10' temp_phe.pdb, substitute filed in line 413 and column 10 by '1.00'
 
 #pymol
 pair_fit /c7eqf///ALA`1/CB, /c7axf///ALA`1/CB, /c7eqf///ALA`1/CA, /c7axf///ALA`1/CA, /c7eqf///ALA`1/N, /c7axf///ALA`1/N, /c7eqf///ALA`1/C, /c7axf///ALA`1/C #aligning specific atoms
