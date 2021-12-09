@@ -58,6 +58,7 @@ bEnsureFullNode=0  # if you run 8 2-core jobs (with pinning, make sure the node 
 batchInitLine=''
 med=''
 nGPUsAsked=1
+spack=''
 
 sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
@@ -146,6 +147,7 @@ while [ $# -gt 0 ]; do
 	    copyt=$1 ;;
 	--time|-t)
 	    shift
+	    maxh=$(echo "$1*0.95" | bc)
 	    intime=$1
 	    d=$(= "int(($intime)/24)")
 	    h=$(= "int(($intime)%24)")
@@ -213,6 +215,10 @@ while [ $# -gt 0 ]; do
              ;;
         -mdrun) shift 
                 mdrun=$(echo "$1" | sed 's/@/ /g')
+		;;
+	-spack) shift
+		spack=$1
+		mdrun='gmx_mpi mdrun'
                 ;;
         -mdrun_line) shift
                      mdrun_line=$(echo "$1" | sed 's/@/ /g')
@@ -354,6 +360,10 @@ fi
 
 if echo $mdrun | grep -q run_mdrun.sh; then
     gmxrcLine=""
+elif [[ ! -z $spack ]]; then
+    a="source /usr/users/cmb/shared/spack/shared.bash"
+    b="module load $spack"
+    gmxrcLine=$(echo -e "${a}\n${b}")
 else
     gmxrcLine="source gmxrc_and_modules.sh"
 fi
@@ -496,7 +506,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             logicalCoresPerPhysical=2
             {
                 echo "#SBATCH --gres=gpu:gtx1070:$nGPUsAsked"
-		echo "#SBATCH --exclude=gwdo[161,180]"
+		echo "#SBATCH --exclude=gwdo[161-180]"
                 queue=gpu-hub
             } >> $sbatch_tempfile
             ;;
@@ -597,7 +607,7 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH -p $queue$qExtension
 #SBATCH -o $dir/myjob${key}.out
 #SBATCH -e $dir/myjob${key}.err
-#SBATCH -c $(echo "($logicalCoresPerPhysical*$ppn)/$np" | bc)
+#SBATCH -c $(echo "($logicalCoresPerPhysical*$ppn*$nnodes)/$np" | bc)
 #SBATCH -t $walltime
 #SBATCH --job-name=$jobname$key
 #SBATCH --mail-user=$email
@@ -682,7 +692,8 @@ fi
                 fi
                 
                 mdrunCall="$mpirun$mdrun"
-                mdrunArgs="$cpiArg -stepout $stepout $verb -s ${dir}/${tpr} -maxh $maxh $dd $npme $deffnm $opt $edi $pinArgs $plumed"
+                #mdrunArgs="$cpiArg -stepout $stepout $verb -s ${dir}/${tpr} -maxh $maxh $dd $npme $deffnm $opt $edi $pinArgs $plumed"
+                mdrunArgs="$cpiArg -stepout $stepout $verb -s ${tpr} -maxh $maxh $dd $npme $deffnm $opt $edi $pinArgs $plumed"
 		if [ "$loc" = 1 ]; then
 		    echo "$mdrunCall $ntFlag $mdrunArgs $gpuID_flag >> /local/${USER}_\$SLURM_JOB_ID/md${key}.lis 2>&1"
 		elif ((pbcfix == 1)); then
