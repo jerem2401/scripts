@@ -2,7 +2,7 @@
 shopt -s -o nounset
 
 sbatch2id(){
-    awk '{print $4}' | sed 's/[<,>]//g'
+    tail -n1 | awk '{print $4}' | sed 's/[<,>]//g'
 }
 
 nChain=1
