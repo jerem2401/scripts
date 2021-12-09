@@ -3,13 +3,13 @@ let hostname=system("hostname -s | tr -d '\n'")
 
 " Automate bash script header
 if hostname == 'smaug'
-    autocmd BufNewFile *.sh so /home/users/jeremy/gitrepo/scripts/bash_header
-    autocmd BufNewFile *.py so /home/users/jeremy/gitrepo/scripts/python_header
+    autocmd BufNewFile *.sh so /home/users/jeremy/gitrepo/scripts/vim/bash_header
+    autocmd BufNewFile *.py so /home/users/jeremy/gitrepo/scripts/vim/python_header
     set backupdir=~/.vim/tmp/backup
     set directory=$HOME/.vim/swap//
 else
-    autocmd BufNewFile *.sh so ${HOME}/gitrepo/scripts/bash_header
-    autocmd BufNewFile *.py so ${HOME}/gitrepo/scripts/python_header
+    autocmd BufNewFile *.sh so ${HOME}/gitrepo/scripts/vim/bash_header
+    autocmd BufNewFile *.py so ${HOME}/gitrepo/scripts/vim/python_header
 endif
 
 " Enable syntax
