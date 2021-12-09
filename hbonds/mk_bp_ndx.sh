@@ -13,6 +13,9 @@ if [ "$HOSTNAME" == smaug ]; then
 	base=$(echo ${PWD%/simulation*})
 else
 	module load anaconda3/2020.07 && source activate env1
+	#module load anaconda3/2020.07
+	#source /opt/sw/rev/20.12/haswell/gcc-9.3.0/anaconda3-2020.07-slbv7z/etc/profile.d/conda.sh
+	#conda activate env1
 	base=$HOME
 fi
 
@@ -152,6 +155,8 @@ elif (($traj_hb == 1)); then
 	echo "hbond of traj of $dir is done" >> hbout.txt
 
 elif [[ ! -z $ana ]]; then
+	echo $(which conda)
+	echo $(which python)
 	set -o noglob
 	stats.py -f $ana
 	set +o noglob
