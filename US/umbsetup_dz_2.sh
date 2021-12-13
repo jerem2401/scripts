@@ -144,40 +144,44 @@ else
 	ksis=$(seq -f "%.3f" "$winmin" "$winStep" "$winmax")
 fi
 
-for ksi in $ksis; do
-    echo "ksisi $ksi"
-    tmp=$(find ./bench* -type d -name "E_${ksi}")
-    echo "tmp $tmp"
-    if [[ ! -z ${tmp} ]]; then
-	copy=$(echo $tmp | awk '{print $1;}')
-        cp -r ${copy} ./
-	echo "${ksi} in ${tmp}, copying."
-    elif mkdir "E_${ksi}"; then
-        values=$(start4umb_dz.py -f $tmd_plum_out -v $ksi)
-        read -ra ADDR <<< $(echo "${values//[\(\)\,]}")
-        closestksi=${ADDR[0]}
-        value=${ADDR[1]}
-        echo "given: $ksi, found: $closestksi"
-        b=$(echo "$value - 2" | bc -l)
-        echo 0 | gmx trjconv -nice 0 -s "$tmd_tpr" -f "$tmd_traj" -b "$b" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" -n "$index"
-        if [[ ! -z $lbd ]]; then
-            for i in $lbd; do
-                mkdir "E_${ksi}/${i}"
-                gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" \
-                -p ../temp/topol_${i}.top -o "./E_${ksi}/${i}/md.tpr" \
-                -maxwarn 1 -n "$index"
-            done
-	    index_in_plumed='../index.ndx'
+ksis=($ksis)
+l=${#ksis[@]}
+for k in $(seq 0 10 $l); do
+    for ksi in "${ksis[@]:$k:10}"; do
+        echo "ksisi $ksi"
+        tmp=$(find ./bench* -type d -name "E_${ksi}")
+        echo "tmp $tmp"
+        if [[ ! -z ${tmp} ]]; then
+    	copy=$(echo $tmp | awk '{print $1;}')
+            cp -r ${copy} ./
+    	echo "${ksi} in ${tmp}, copying."
+        elif mkdir "E_${ksi}"; then
+            values=$(start4umb_dz.py -f $tmd_plum_out -v $ksi)
+            read -ra ADDR <<< $(echo "${values//[\(\)\,]}")
+            closestksi=${ADDR[0]}
+            value=${ADDR[1]}
+            echo "given: $ksi, found: $closestksi"
+            b=$(echo "$value - 2" | bc -l)
+            echo 0 | gmx trjconv -nice 0 -s "$tmd_tpr" -f "$tmd_traj" -b "$b" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" -n "$index"
+            if [[ ! -z $lbd ]]; then
+                for i in $lbd; do
+                    mkdir "E_${ksi}/${i}"
+                    gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" \
+                    -p ../temp/topol_${i}.top -o "./E_${ksi}/${i}/md.tpr" \
+                    -maxwarn 1 -n "$index"
+                done
+    	    index_in_plumed='../index.ndx'
+            else
+                (gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1 -n "$index") &
+    	    index_in_plumed='index.ndx'
+    	fi
+    
+            sed "s=_POSI_=${ksi}=g;s=_KAPPA_=${kappa}=g;s=_wKAPPA_=${wkappa}=g;s=index.ndx=${index_in_plumed}=g" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
+            cp "$index" "./E_${ksi}/"
+            echo 'done'
         else
-            gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1 -n "$index"
-	    index_in_plumed='index.ndx'
-	fi
-
-        sed "s=_POSI_=${ksi}=g;s=_KAPPA_=${kappa}=g;s=_wKAPPA_=${wkappa}=g;s=index.ndx=${index_in_plumed}=g" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
-        echo -e "\nused tmd directory: ${tmd_plum_out}" >> mdout.mdp
-        cp "$index" "./E_${ksi}/"
-        echo 'done'
-    else
-        echo "window already exists"
-    fi
+            echo "window already exists"
+        fi
+    done
+    wait
 done
