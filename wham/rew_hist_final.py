@@ -20,6 +20,8 @@ def main():
     parser.add_argument('-col', help='from which column of the colvar file do you want to do an histogram, deflt= %(default)s', default='nCV', action='store', dest='col', type=str)
     parser.add_argument('--o', help='name of hist file', action='store', dest='o', type=str)
     parser.add_argument('-pos', help='center of haromic potential', action='store', dest='pos')
+    parser.add_argument('-nopld', help='tell taht file are not in plumed format',
+                        action='store_true', dest='nopld')
     args = parser.parse_args()
 
     print('careful: put the -rew option added in the last maj for reweighting !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
@@ -35,15 +37,19 @@ def main():
             print(args.o+' exists !')
             sys.exit()
         else:
-            df=plumed_pandas.read_as_pandas(args.f)
+            if not args.nopld:
+                df=plumed_pandas.read_as_pandas(args.f)
+            else:
+                df=pd.read_csv(args.f, sep=' ', header=None)
+                df.rename(columns={ df.columns[1]: "d.z" }, inplace = True)
 
             if not args.rew:
                 df = df[args.col]
                 hist2, bin_edges = np.histogram(df, bins=[i for i in np.around(np.arange(args.min,args.max,args.s), decimals=3)],density=True)
                 hist2 = hist2 / hist2.sum()
             else:
-                df = df[['nCV', 'guide_restraint.bias']]
-                hist2, bin_edges = np.histogram(df['nCV'], bins=[i for i in np.around(np.arange(args.min,args.max,args.s), decimals=3)], weights=[np.exp(i/2.49434) for i in df['guide_restraint.bias']],density=True)
+                df = df[['dz', 'zrest.bias']]
+                hist2, bin_edges = np.histogram(df['dz'], bins=[i for i in np.around(np.arange(args.min,args.max,args.s), decimals=3)], weights=[np.exp(i/2.49434) for i in df['zrest.bias']],density=True)
                 hist2 = hist2 / hist2.sum()
 
             d = {'z': bin_edges[0:-1],'hist': hist2}

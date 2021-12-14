@@ -13,7 +13,7 @@ prep2dwham() {
         unset PID
         declare -a PID
 
-        for i in ../../E*/colv*; do
+	for i in ${rpath}/E*/colv*; do
             coll+=( "$i" )
         done
         colllen=$(echo "${#coll[@]}")
@@ -53,7 +53,7 @@ mk_chunk() {
    cd "c${c}"
    seq -f "c_%.0f" 1 $c | xargs mkdir
 
-   for i in ${files}; do
+   for i in ../colv*; do
        collen=$(wc -l < $i)
        chlen=$(($collen / $c))
        echo "colvar len = ${collen} and chunk lenght = ${chlen}"
@@ -99,7 +99,10 @@ mk_metd() {
       echo "making metd.txt for c_${k}"
       for i in c$c/c_$k/colv*; do
          cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=_)')
-	 cntkappa=$(grep -oPh '(?<=KAPPA=)[0-9]*' ../../E_$cnt/plumed_* | tail -1)
+	 #cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=\.0_[0-9]\.txt)')
+	 #read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ../../E_$cnt/plumed_* | tail -1)
+	 ########################
+	 read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ${rpath}/E_$cnt/plumed_* | head -1)
          echo "$(basename $i)   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
       done
    done
@@ -111,10 +114,8 @@ do_wham2d() {
    echo "starting do_wham2d"
    if [ $(hostname) = dema9 ]; then
       wham='/localdisk/bin/wham/wham-2d/wham-2d'
-   elif [[ $(hostname) == gwdu* ]]; then
+   else
       wham='/usr/users/jlapier/bin/wham/wham/wham'
-   elif [[ $(hostname) == fullmetal ]]; then
-      wham='/home/jeremy/opt/wham/wham/wham'
    fi
 
    for i in `seq 0 4 $c`; do

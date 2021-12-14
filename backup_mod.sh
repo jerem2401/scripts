@@ -11,7 +11,7 @@ day_difference (){
 new_backup=$(date '+%Y-%m-%d')
 
 #echoing start date for log
-echo -e "\nBeginning of backup on $new_backup" >> /media/jeremy/jerem_backup/backup_history.log
+echo -e "\nBeginning of backup on $new_backup" >> /media/jeremy/jerem_backup_2/backup_history.log
 
 
 ########################################################Sanity check#####################################################################
@@ -21,9 +21,9 @@ echo -e "\nBeginning of backup on $new_backup" >> /media/jeremy/jerem_backup/bac
 #USER SPECIFIC VARIABLES
 #path to backup hardrive
 myemail='jeremy.lapierre@uni-saarland.de'
-harddrive='/media/jeremy/jerem_backup/'
+harddrive='/media/jeremy/jerem_backup_2/'
 #Set file name to test for in the backup hard drive. Just create an empty file "is_mounted" in hard drive so we can check if it exists.
-harddrivetestfile='/media/jeremy/jerem_backup/is_mounted'
+harddrivetestfile='/media/jeremy/jerem_backup_2/is_mounted'
 
 #Set file name to test for in the smaug mouted directory. Just create an empty file "is_mounted" IN THE DIRECTORY YOU MOUNT  so we can check if it exists.
 remotemounttestfile="/home/jeremy/mnt/smaug/is_mounted"
@@ -72,17 +72,17 @@ echo "scp-ing smaug bash history" >> "${harddrive}/backup_history.log"
 scp jeremy@alef.lusi.uni-sb.de:/home/users/jeremy/.bash_history /home/jeremy/mnt/smaug/
 
 #go to your external hard drive
-cd /media/jeremy/jerem_backup/
+cd /media/jeremy/jerem_backup_2/
 
 #get the latest backup folder by look for pattern XXXX-XX-XX
 latest_backup=$(ls | grep -e "[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]" | tail -n 1)
 
 
 #write a log entry for your new backup
-echo -e "Used ${latest_backup} as template for ${new_backup}" >> /media/jeremy/jerem_backup/backup_history.log
+echo -e "Used ${latest_backup} as template for ${new_backup}" >> /media/jeremy/jerem_backup_2/backup_history.log
 
 #create a new backup with hard links of your latest backup
-rsync -avzHP --exclude ".*" --exclude anaconda3 --exclude Desktop --exclude Downloads --exclude opt --exclude Pictures --exclude mnt/gwdg --exclude mnt/cip --exclude src --exclude Videos --exclude Music --exclude Public --exclude snap --exclude Templates --delete --link-dest=$PWD/${latest_backup} /home/jeremy/ /media/jeremy/jerem_backup/${new_backup} >> /media/jeremy/jerem_backup/backup_history.log 2>&1
+rsync -avzHP --exclude ".*" --exclude anaconda3 --exclude Desktop --exclude Downloads --exclude opt --exclude Pictures --exclude mnt/gwdg --exclude mnt/cip --exclude src --exclude Videos --exclude Music --exclude Public --exclude snap --exclude Templates --delete --link-dest=$PWD/${latest_backup} /home/jeremy/ /media/jeremy/jerem_backup_2/${new_backup} >> /media/jeremy/jerem_backup_2/backup_history.log 2>&1
 
 #save exit code of rsync
 EC=$?
@@ -98,7 +98,7 @@ fi
 wait
 
 #echoing for log file
-echo "Beginning of clean part of backup script" >> /media/jeremy/jerem_backup/backup_history.log
+echo "Beginning of clean part of backup script" >> /media/jeremy/jerem_backup_2/backup_history.log
 
 #change variable name for comprehension
 today=$new_backup
@@ -153,36 +153,36 @@ len1year=${#year_days[@]}
 #Thus: rm folder from index 0 to lenght of age-range array minus one
 #first line is sanity check
 
-echo "one_week_days are: ${one_week_days[@]}, two_week_days are: ${two_week_days[@]}, month_days are ${month_days[@]}, half_year_days are: ${half_year_days[@]}, year_days are: ${year_days[@]}" >> /media/jeremy/jerem_backup/backup_history.log
+echo "one_week_days are: ${one_week_days[@]}, two_week_days are: ${two_week_days[@]}, month_days are ${month_days[@]}, half_year_days are: ${half_year_days[@]}, year_days are: ${year_days[@]}" >> /media/jeremy/jerem_backup_2/backup_history.log
 
 for i in "${one_week_days[@]:1:$len1week-1}"
 do
-    echo "removing: $i" >> /media/jeremy/jerem_backup/backup_history.log
+    echo "removing: $i" >> /media/jeremy/jerem_backup_2/backup_history.log
     rm -r $i
 done
 
 for j in "${two_week_days[@]:1:$len2week-1}"
 do
-    echo "removing: $j" >> /media/jeremy/jerem_backup/backup_history.log
+    echo "removing: $j" >> /media/jeremy/jerem_backup_2/backup_history.log
     rm -r $j
 done
 
 for k in "${month_days[@]:1:$len1month-1}"
 do
-    echo "removing: $k" >> /media/jeremy/jerem_backup/backup_history.log
+    echo "removing: $k" >> /media/jeremy/jerem_backup_2/backup_history.log
     rm -r $k
 done
 
 for l in "${half_year_days[@]:1:$len6month-1}"
 do
-    echo "removing: $l" >> /media/jeremy/jerem_backup/backup_history.log
+    echo "removing: $l" >> /media/jeremy/jerem_backup_2/backup_history.log
     rm -r $l
 done
 
 for m in "${year_days[@]:1:$len1year-1}"
 do
-    echo "removing: $m" >> /media/jeremy/jerem_backup/backup_history.log
+    echo "removing: $m" >> /media/jeremy/jerem_backup_2/backup_history.log
     rm -r $m
 done
 
-echo "End of cleaning part and end of backup of date: $today" >> /media/jeremy/jerem_backup/backup_history.log
+echo "End of cleaning part and end of backup of date: $today" >> /media/jeremy/jerem_backup_2/backup_history.log
