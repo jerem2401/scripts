@@ -112,10 +112,10 @@ mk_metd() {
 #args needed: -c, E1min,E1max,bin,E2min,E2max
 do_wham2d() {
    echo "starting do_wham2d"
-   if [ $(hostname) = dema9 ]; then
-      wham='/localdisk/bin/wham/wham-2d/wham-2d'
-   else
+   if [ $(hostname) = gwdu* ]; then
       wham='/usr/users/jlapier/bin/wham/wham/wham'
+   elif [[ $(hostname) == fullmetal ]]; then
+      wham='/home/jeremy/opt/wham/wham/wham'
    fi
 
    for i in `seq 0 4 $c`; do
