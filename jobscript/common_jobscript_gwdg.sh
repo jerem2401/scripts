@@ -58,6 +58,7 @@ bEnsureFullNode=0  # if you run 8 2-core jobs (with pinning, make sure the node 
 batchInitLine=''
 med=''
 nGPUsAsked=1
+spack=''
 
 sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
@@ -118,7 +119,7 @@ while [ $# -gt 0 ]; do
 	-go) bGo=1;;
 	-p) shift
             queue=$1
-	    if [ $queue == 'medium' ] || [ $queue == 'gpu' ]; then
+	    if [ $queue == 'medium' ]; then
 		med='#SBATCH -A all'
 	    else
 		med=''
@@ -145,6 +146,7 @@ while [ $# -gt 0 ]; do
 	    copyt=$1 ;;
 	--time|-t)
 	    shift
+	    maxh=$1
 	    intime=$1
 	    d=$(= "int(($intime)/24)")
 	    h=$(= "int(($intime)%24)")
@@ -212,6 +214,10 @@ while [ $# -gt 0 ]; do
              ;;
         -mdrun) shift 
                 mdrun=$(echo "$1" | sed 's/@/ /g')
+		;;
+	-spack) shift
+		spack=$1
+		mdrun='gmx mdrun'
                 ;;
         -mdrun_line) shift
                      mdrun_line=$(echo "$1" | sed 's/@/ /g')
@@ -336,6 +342,10 @@ fi
 
 if echo $mdrun | grep -q run_mdrun.sh; then
     gmxrcLine=""
+elif [[ ! -z $spack ]]; then
+    a="source /usr/users/cmb/shared/spack/shared.bash"
+    b="module load $spack"
+    gmxrcLine=$(echo -e "${a}\n${b}")
 else
     gmxrcLine="source gmxrc_and_modules.sh"
 fi
@@ -388,34 +398,16 @@ fi
 ldPath=''
 
 case $machine in
-    broadwell|sandybridge)                                                
+    broadwell|sandybridge)
         #[ $ptile = unset ] && ptile=$ppn
         #spanline="#SBATCH --tasks-per-node=[$ptile]"
         if [ $bMPI = 1 ]; then
-            mpirun="mpirun  -np $np "
+            mpirun="mpirun -np $np "
             ldPath="$ldPath:"
             mdrun="${mdrun}_mpi"
         else
             mpirun=""
         fi
-        ;;
-    interlagos)
-        [ $ptile = unset ] && ptile=$ppn
-        spanline="#SBATCH --tasks-per-node=[$ptile]"
-        ldPath=""
-        if [ $bMPI = 1 ]; then
-            mpirun="mpirun.slurm -np $np "
-	        # next line commented out, because apparently its not needed in slurm
-            # echo "#SBATCH -a intelmpi" >>$sbatch_tempfile
-            # ldPath="$ldPath:/cm/shared/apps/openmpi/gcc/64/1.6.4/lib64"                                                    
-            ldPath=""
-            mdrun="${mdrun}_mpi"
-        else
-            mpirun=""
-        fi
-        # make sure we pin the threads if running multiple mdrun on one node
-        # However, if the node is not full, we should not pin. Otherwise, different                                                       
-        # mdrun may use the same nodes (fixed below)                                                                                      
         ;;
     *)
         echo -e "\nError: Unknown machine $machine"; exit 1
@@ -447,6 +439,7 @@ if [ $queue = gpu ] || [ $queue = gpu-hub ]; then
             nGPUsPerNode=2
             {
                 echo "#SBATCH --gres=gpu:gtx980:$nGPUsAsked"
+		echo '#SBATCH --exclude=gpu-hub' # Exclude the our own Pascal nodes
             } >> $sbatch_tempfile
             ;;
 	maxwell4)
@@ -511,7 +504,6 @@ fi
 
 if [ "$multidirs" = "" ] ;then
     jobfile=job${key}.sh
-    mpitask=1
 else
     jobfile=job.${jobname}${key}.sh
     # Check if the node is really full
@@ -520,7 +512,7 @@ else
     ndir=$(echo $multidirs | wc -w | awk '{print $1}')
     npNeeded=$[nt*ndir/logicalCoresPerPhysical]
     echo "Multiple mdrun per node: ndir = $ndir, need $npNeeded phys. cores"
-    mpitask=$ndir
+
     # Note: np       = number of physical cores available/requested by command line
     #       npNeeded = number of physical cores needed
 
@@ -528,13 +520,14 @@ else
         echo -e "\nError, your job will need $npNeeded physical cores per node (nt=$nt, dir=$ndir), but you requested only $np physical cores."; exit 1
     fi
 
-    if [ $npNeeded -lt $np ]; then
-        echo -e "\nNOTE: Running $ndir jobs (nt=$nt) on $np cores would wastes recources. Reducing # of allocated cores and ptile to $npNeeded" >&2
-        echo -e "NOTE: Will not pin mdrun threads to cores." >&2
-        np=$npNeeded
-        spanline="#BSUB -N $npNeeded"
-        bPin=0
-    fi
+# This was broken, Jochen 30.1.2021
+#    if [ $npNeeded -lt $np ]; then
+#        echo -e "\nNOTE: Running $ndir jobs (nt=$nt) on $np cores would wastes recources. Reducing # of allocated cores and ptile to $npNeeded" >&2
+#        echo -e "NOTE: Will not pin mdrun threads to cores." >&2
+#        np=$npNeeded
+#        spanline="#SBATCH -N $npNeeded"
+#        bPin=0
+#    fi
 fi
 
 
@@ -570,16 +563,21 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH -p $queue$qExtension
 #SBATCH -o $dir/myjob${key}.out
 #SBATCH -e $dir/myjob${key}.err
-#SBATCH -c $(echo "($logicalCoresPerPhysical*$ppn)/$mpitask" | bc)
+#SBATCH -c $[logicalCoresPerPhysical*ppn]
 #SBATCH -t $walltime
 #SBATCH --job-name=$jobname$key
 #SBATCH --mail-user=$email
-#SBATCH --ntasks=$mpitask
+#  #SBATCH --ntasks=1   # Jochen/Jeremy: comment out to avoid strange spread of threads over sockets, (Slurm bug), Feb 2021
 $batchInitLine
 $depline
 $med
 
 EOF
+        # exclude certain nodes (e.g. if they are known to cause trouble)
+for i in $excludeNodes; 
+do
+    echo "#SBATCH --exclude=$i" >> $jobfile
+done
 
 	cat $sbatch_tempfile
 
@@ -591,7 +589,7 @@ echo Jobname \$SLURM_JOB_NAME
 echo Subcwd \$SLURM_SUBMIT_DIR
 
 EOF
-    } > $jobfile
+    } >> $jobfile
 
 if [ $loc = 1 ]; then
     {
@@ -615,7 +613,7 @@ EOF
 
         # exclude certain nodes (e.g. if they are known to cause trouble)
     #for i in $excludeNodes; do
-     #   echo "#BSUB -R \"select[hname!='$i']\"" >> $jobfile
+    #    echo "#SBATCH --exclude='$i'" >> $jobfile
     #done
 
     #SLURM_JOB_NODELIST for SLURM_HOSTS from https://doc.itc.rwth-aachen.de/display/CC/Slurm+environmental+variables 
@@ -647,7 +645,7 @@ fi
         if [ "$multidirs" = "" ]; then
             [ "$bPin" = 1 ] && pinArgs="-pin on -pinoffset 0 -pinstride 1"
             if [[ "$md" = 1 ]]; then
-                if [[ ( $queue = gpu ) && ( "$gpu_id" != unset ) ]]; then
+                if [[  $queue = gpu-hub  ]]; then
                     [ "$gpu_id" = '' ] && gpuID_flag="-gpu_id 0" || gpuID_flag="-gpu_id $gpu_id"
                 else
                     gpuID_flag=""
@@ -679,7 +677,11 @@ fi
                 if [ "$bPin" = 1 ]; then
                     pinArgs="-pin on -pinoffset $[idir*nt] -pinstride 1"
                 fi
-                if [ $queue = gpu ]; then
+
+		#
+		# Jochen, Jan 2021: Now, each job sees only one GPU. So we don't need gpu_id any more.
+		#
+                if [[ $queue = gpu-hub ]]; then
                     # Get number of mdruns running per GPU. Round up, important if ndir is an odd number
                     nDirPerGPU=$(= "$ndir/$nGPUsPerNode+0.01" | round_ndig 0)
                     # nDirPerGPU=$[ndir/nGPUsPerNode]
