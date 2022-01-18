@@ -66,7 +66,7 @@ elif (($hydrophil == 1)); then
 else
 	dir="${dirumb}/contact4"
 	grp1=1
-	grp2=2
+	grp2=3
 fi
 
 traj='umb2.xtc'
