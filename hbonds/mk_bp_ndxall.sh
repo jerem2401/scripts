@@ -37,7 +37,7 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-dir="${dirumb}/hbond_all"
+dir="${dirumb}/hbond_all_12bp"
 traj='umb2.xtc'
 tpr='subset.tpr'
 
@@ -49,8 +49,8 @@ if (($mknd == 1)); then
 
 
 	for i in ${dir}; do
-		echo "1 2" | gmx hbond -nthreads 1 -f ${dirumb}/${traj} \
-		-s ${dirumb}/${tpr} -num "${i}/hbond.xvg" -n  $base/simulation/syncsim/pol/heavy_h/ref/moreindex/umb_dnabubble_protein.ndx
+		echo "1 3" | gmx hbond -nthreads 1 -f ${dirumb}/${traj} \
+		-s ${dirumb}/${tpr} -num "${i}/hbond.xvg" -n  $base/simulation/syncsim/pol/heavy_h/ref/moreindex/umb_dnabubble_protein_2.ndx
 		gmx analyze -f ${i}/hbond.xvg -ee ${i}/err_hbond.xvg &> ${i}/out.txt
 		wait
 		av=$(grep "\@ s0" "${i}/err_hbond.xvg")
