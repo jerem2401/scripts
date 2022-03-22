@@ -26,7 +26,7 @@ def bywin(tdir):
                 elif "#@ s1" in line:
                     hsem = round(float(line.split('"')[1].split()[-1]), 2)
                 elif "#std" in line:
-                    if hsem > 10000:
+                    if hsem > 1000:
                         std = round(float(line.split()[1]))
                         hsem = std/np.sqrt(2)
                 else:
