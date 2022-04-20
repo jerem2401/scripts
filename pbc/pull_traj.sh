@@ -9,6 +9,8 @@ else
 	base=$HOME
 fi
 
+nstep=''
+
 while [ $# -gt 0 ]; do
 	case "$1" in
 		-d)
@@ -36,6 +38,8 @@ while [ $# -gt 0 ]; do
 		  tpr=$1;;
 		-n) shift
 		  index=$1;;
+		-nstep) shift
+		  nstep=' -nsteps 1';;
 	esac
 	shift
 done
@@ -100,7 +104,7 @@ if [[ $mol == 'pol' ]]; then
 	elif [ "$proto" = umb ]; then
 		index="$base/simulation/syncsim/pol/heavy_h/ref/protwithin3ofdna_dna_protref.ndx"
 		echo $group | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/umb1.xtc -ur compact -pbc mol -n $index -skip $skip ; wait
-		echo $group | gmx convert-tpr -s $tpr -n $index -o $dir/subset.tpr
+		echo $group | gmx convert-tpr $nstep -s $tpr -n $index -o $dir/subset.tpr
 		echo 0 | gmx trjconv -nice 0 -f $dir/umb1.xtc -s $dir/subset.tpr -o $dir/umb2.xtc -pbc nojump -ur compact; wait
 		rm -f $dir/umb1.xtc
 		echo 0 | gmx trjconv -nice 0 -f $dir/umb2.xtc -s $dir/subset.tpr -o $dir/0umb.pdb -ur compact -dump 0; wait
@@ -108,16 +112,16 @@ if [[ $mol == 'pol' ]]; then
 	elif [ "$proto" = test  ]; then
 		index="$base/simulation/syncsim/pol/heavy_h/ref/master_index.ndx"
 		echo $group | gmx trjconv -f $traj -s $tpr -ur compact -pbc atom -skip $skip -o gold1.xtc -n $index -trans 5.5 7 -4
-		echo $group | gmx convert-tpr -s $tpr -n $index -o $dir/subset.tpr
+		echo $group | gmx convert-tpr $nstep -s $tpr -n $index -o $dir/subset.tpr
 		echo 0 | gmx trjconv -nice 0 -f $dir/gold1.xtc -s $dir/subset.tpr -o $dir/0.pdb -ur compact -dump 0
 		correct-chainid-and-ter.py $dir/0.pdb > $dir/0_chains.pdb
 		#echo "13 31" | gmx trjconv -f $traj -s $tpr -ur compact -pbc atom -skip $skip -o $dir/gold1.xtc -n ./E_87.870/test/master_index.ndx -center
-		#echo 31 | gmx convert-tpr -s $tpr -n ./E_87.870/test/master_index.ndx -o $dir/subset.tpr
+		#echo 31 | gmx convert-tpr $nstep -s $tpr -n ./E_87.870/test/master_index.ndx -o $dir/subset.tpr
 		#echo 0 | gmx trjconv -f $dir/gold1.xtc -s $dir/subset.tpr -ur compact -pbc whole -o $dir/gold2.xtc
 	elif [ "$proto" = test2 ]; then
 		index="$base/simulation/syncsim/pol/heavy_h/ref/index_ions.ndx"
 		echo "29 27" | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/test2.xtc -ur compact -pbc atom -n $index -skip $skip -center
-		echo 27 | gmx convert-tpr -s $tpr -n $index -o $dir/test2.tpr
+		echo 27 | gmx convert-tpr $nstep -s $tpr -n $index -o $dir/test2.tpr
 		echo 0 | gmx trjconv -nice 0 -f $dir/test2.xtc -s $dir/test2.tpr -o $dir/test2_2.xtc -ur compact -pbc whole
 		echo 0 | gmx trjconv -nice 0 -f $dir/test2_2.xtc -s $dir/test2.tpr -o $dir/test2.pdb -dump 0
 	elif [ "$proto" = ions ]; then
@@ -130,6 +134,7 @@ if [[ $mol == 'pol' ]]; then
 fi
 
 if [[ $mol == 'opro' ]]; then
-	echo "1 $group" | gmx trjconv -nice 0 -s $tpr -f $traj -o $dir/nopbc.xtc -pbc mol -center -skip $skip
-	echo $group | gmx trjconv -nice 0 -f $dir/nopbc.xtc -s $tpr -o $dir/0.pdb -dump 0
+	echo "1 $group" | gmx trjconv -nice 0 -s $tpr -f $traj -o $dir/nopbc.xtc -pbc mol -center -skip $skip -n $index
+	echo $group | gmx convert-tpr -s $tpr -n $index -o $dir/convert.tpr
+	echo 0 | gmx trjconv -nice 0 -f $dir/nopbc.xtc -s $dir/convert.tpr -o $dir/0.gro -dump 0
 fi
