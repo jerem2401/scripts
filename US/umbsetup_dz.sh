@@ -20,7 +20,7 @@ plumed_tmp='../temp/plumed_tmp.dat'
 index='../temp/index.ndx'
 
 lbd=''
-scale=2
+scale=5
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -141,20 +141,19 @@ if [[ ! -z $listwin ]]; then
 	ksis=$(echo $listwin | sed 's/tmp_//g')
 	echo -e "\nksis are:\n$ksis"
 else
-	ksis=$(seq -f "%.3f" "$winmin" "$winStep" "$winmax")
+	ksis=$(seq -f "%.5f" "$winmin" "$winStep" "$winmax")
 fi
 
 ksis=($ksis)
 l=${#ksis[@]}
 for k in $(seq 0 10 $l); do
     for ksi in "${ksis[@]:$k:10}"; do
-        echo "ksisi $ksi"
-        tmp=$(find ./bench* -type d -name "E_${ksi}")
-        echo "tmp $tmp"
+        echo "ksi is $ksi"
+        tmp=$(find ./bench* -type d -name "E_${ksi}" > /dev/null)
         if [[ ! -z ${tmp} ]]; then
-    	copy=$(echo $tmp | awk '{print $1;}')
+	    echo "E_${ksi} found in bench dir, copying instead of creating new dir"
+    	    copy=$(echo $tmp | awk '{print $1;}')
             cp -r ${copy} ./
-    	echo "${ksi} in ${tmp}, copying."
         elif mkdir "E_${ksi}"; then
             values=$(start4umb_dz.py -f $tmd_plum_out -v $ksi)
             read -ra ADDR <<< $(echo "${values//[\(\)\,]}")
@@ -169,14 +168,13 @@ for k in $(seq 0 10 $l); do
                     gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" \
                     -p ../temp/topol_${i}.top -o "./E_${ksi}/${i}/md.tpr" \
                     -maxwarn 1 -n "$index"
+		    index_in_plumed='../index.ndx'
                 done
-    	    index_in_plumed='../index.ndx'
             else
-                (gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/conf_${ksi}.tpr" -maxwarn 1 -n "$index") &
-    	    index_in_plumed='index.ndx'
+                (gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/md.tpr" -maxwarn 1 -n "$index") &
+		index_in_plumed='index.ndx'
     	fi
-    
-            sed "s=_POSI_=${ksi}=g;s=_KAPPA_=${kappa}=g;s=_wKAPPA_=${wkappa}=g;s=index.ndx=${index_in_plumed}=g" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat"
+            sed "s=_POSI_=${ksi}=g;s=_KAPPA_=${kappa}=g;s=_wKAPPA_=${wkappa}=g;s=index.ndx=${index_in_plumed}=g" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat" && cp "./E_${ksi}/plumed_${ksi}.dat" "./E_${ksi}/plumed.dat"
             cp "$index" "./E_${ksi}/"
             echo 'done'
         else

@@ -13,9 +13,12 @@ prep2dwham() {
         unset PID
         declare -a PID
 
-	for i in ${rpath}/E*/colv*; do
-            coll+=( "$i" )
-        done
+	#for i in "${rpath}/E*/colv*"; do
+	#echo "first element of rpath is: ${rpath[0]} ###################"
+	#for i in "$rpath"; do
+        #    coll+=( "$i" )
+        #done
+	read -r -a coll <<< "$rpath"
         colllen=$(echo "${#coll[@]}")
 
         time5ns=$(awk '$1~/^5000.*/{print NR;exit}' "${coll[0]}")
@@ -38,6 +41,11 @@ prep2dwham() {
                 wait $pid
             done
         done
+
+	for i in ./colv*; do
+		awk '!seen[$1]++' $i > tmp && mv tmp $i
+	done
+
         echo "prep2dwham done"
 
     else
@@ -97,13 +105,25 @@ mk_metd() {
       && rm -f "c${c}/c_${k}/metd.txt"
 
       echo "making metd.txt for c_${k}"
-      for i in c$c/c_$k/colv*; do
-         cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=_)')
-	 #cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=\.0_[0-9]\.txt)')
-	 #read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ../../E_$cnt/plumed_* | tail -1)
-	 ########################
-	 read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ${rpath}/E_$cnt/plumed_* | head -1)
-         echo "$(basename $i)   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
+      #for i in c$c/c_$k/colv*; do
+      #   cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=_)')
+      #   #cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=\.0_[0-9]\.txt)')
+      #   #read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ../../E_$cnt/plumed_* | tail -1)
+      #   ########################
+      #   #read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ${rpath}/E_$cnt/plumed_* | head -1)
+      #   read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ${rpath}/plumed_files/E_$cnt/plumed_* | head -1)
+      #   echo "$(basename $i)   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
+      #done
+      read -r -a coll <<< "$rpath"
+      for i in c$c/c_$k; do
+          for i in "${coll[@]}"; do
+              cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=\.[0-9]*.txt)')
+              tmp=$(dirname $i)
+              tmp2=$(basename $i)
+	      plumed="$tmp/plumed.dat"
+	      read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' $plumed | head -1)
+              echo "${tmp2%.txt}_${k}.txt   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
+          done
       done
    done
    echo "mk_metd done"
@@ -112,7 +132,7 @@ mk_metd() {
 #args needed: -c, E1min,E1max,bin,E2min,E2max
 do_wham2d() {
    echo "starting do_wham2d"
-   if [ $(hostname) = gwdu* ]; then
+   if [[ $(hostname) = gwdu* ]]; then
       wham='/usr/users/jlapier/bin/wham/wham/wham'
    elif [[ $(hostname) == fullmetal ]]; then
       wham='/home/jeremy/opt/wham/wham/wham'
