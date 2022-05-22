@@ -28,6 +28,10 @@ while [ $# -gt 0 ]; do
 		  shift
 		  group=$1
 		  ;;
+		-group2)
+		  shift
+		  group2=$1
+		  ;;
 		-protocol)
 		  shift
 		  proto=$1
@@ -134,7 +138,18 @@ if [[ $mol == 'pol' ]]; then
 fi
 
 if [[ $mol == 'opro' ]]; then
-	echo "1 $group" | gmx trjconv -nice 0 -s $tpr -f $traj -o $dir/nopbc.xtc -pbc mol -center -skip $skip -n $index
-	echo $group | gmx convert-tpr -s $tpr -n $index -o $dir/convert.tpr
-	echo 0 | gmx trjconv -nice 0 -f $dir/nopbc.xtc -s $dir/convert.tpr -o $dir/0.gro -dump 0
+	[ -z "$group" ] && group='Protein'
+	[ -z "$proto" ] && proto=1
+
+	if (("$proto" == 1)); then
+		echo "$group 18" | gmx trjconv -nice 0 -s $tpr -f $traj -o $dir/nopbc.xtc -pbc mol -center -skip $skip -n $index
+		echo 18 | gmx convert-tpr -s $tpr -n $index -o $dir/convert.tpr
+		echo 0 | gmx trjconv -nice 0 -f $dir/nopbc.xtc -s $dir/convert.tpr -o $dir/0.gro -dump 0
+	elif [ "$proto" = rot ]; then
+		index="/usr/users/jlapier/simulation/syncsim/opro/finalsetup/umb_wrex/po3/ref/index_prot-fom.ndx"
+		[ -z "$group2" ] && group2='FOM'
+		echo "$group" "$group2" | gmx trjconv -nice 0 -s $tpr -f $traj -o $dir/fom_nopbc.xtc -pbc mol -center -skip $skip -n $index
+		echo $group2 | gmx convert-tpr -s $tpr -n $index -o $dir/convert.tpr
+		echo 0 | gmx trjconv -nice 0 -f $dir/fom_nopbc.xtc -s $dir/convert.tpr -o $dir/fom.gro -dump 0
+	fi
 fi
