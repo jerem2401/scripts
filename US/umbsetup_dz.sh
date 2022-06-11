@@ -149,7 +149,7 @@ l=${#ksis[@]}
 for k in $(seq 0 10 $l); do
     for ksi in "${ksis[@]:$k:10}"; do
         echo "ksi is $ksi"
-        tmp=$(find ./bench* -type d -name "E_${ksi}" > /dev/null)
+        tmp=$(find ./bench* -type d -name "E_${ksi}")
         if [[ ! -z ${tmp} ]]; then
 	    echo "E_${ksi} found in bench dir, copying instead of creating new dir"
     	    copy=$(echo $tmp | awk '{print $1;}')
@@ -171,7 +171,7 @@ for k in $(seq 0 10 $l); do
 		    index_in_plumed='../index.ndx'
                 done
             else
-                (gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/md.tpr" -maxwarn 1 -n "$index") &
+                (gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/md.tpr" -maxwarn 1 -n "$index" -r "./E_${ksi}/conf_${value}.gro") &
 		index_in_plumed='index.ndx'
     	fi
             sed "s=_POSI_=${ksi}=g;s=_KAPPA_=${kappa}=g;s=_wKAPPA_=${wkappa}=g;s=index.ndx=${index_in_plumed}=g" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat" && cp "./E_${ksi}/plumed_${ksi}.dat" "./E_${ksi}/plumed.dat"
