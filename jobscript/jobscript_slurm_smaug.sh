@@ -74,6 +74,7 @@ gmxrcLine=''
 logicalCoresPerPhysical=2
 niceLevel=0
 pbcfix=0
+spack=''
 
 sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
@@ -218,6 +219,10 @@ while [ $# -gt 0 ]; do
              ;;
         -mdrun) shift
                 mdrun=$(echo "$1" | sed 's/@/ /g')
+		;;
+	-spack) shift
+		spack=$1
+		mdrun='gmx mdrun'
                 ;;
         -mdrun_line)
 	    shift
@@ -324,8 +329,6 @@ if [ "$np" = "" ]; then
 fi
 
 echo verb="$verb"
-gmxrcLine="source $gmxrc"
-echo "Using GROMACS: $gmxrc"
 # pick tpr file
 if [ "$multidirs" = "" ]; then
     if [[ "$tpr" = "" && "$exe" = "" && $bEmpty = 0 && "$mdrun_line" = "" ]]; then
@@ -350,6 +353,15 @@ if [ "$multidirs" = "" ] && [ "$plumed" = "-plumed on" ]; then
             plumed="-plumed $(ls *.dat)"
         fi
     fi
+fi
+
+if [[ ! -z $spack ]]; then
+    a="source /data/shared/spack/shared.bash"
+    b="module load $spack"
+    gmxrcLine=$(echo -e "${a}\n${b}")
+else
+    gmxrcLine="source $gmxrc"
+    echo "Using GROMACS: $gmxrc"
 fi
 
 nedi=$(ls *edi 2>/dev/null | wc -l)

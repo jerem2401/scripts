@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+st=0
+
 while [ $# -gt 0 ]; do
     case "$1" in
         -f)
@@ -27,6 +29,8 @@ while [ $# -gt 0 ]; do
             bin="$1";;
 	-column) shift
 	    column="$1";;
+	-st)
+	    st=1
     esac
     shift
 done
