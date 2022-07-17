@@ -13,6 +13,9 @@ prep2dwham() {
         unset PID
         declare -a PID
 
+	unset tosed
+	declare -a tosed
+
 	#for i in "${rpath}/E*/colv*"; do
 	#echo "first element of rpath is: ${rpath[0]} ###################"
 	#for i in "$rpath"; do
@@ -25,8 +28,8 @@ prep2dwham() {
         echo "time5ns = $time5ns"
 	echo "column chosen: $column"
 
-        for index in $(seq 0 4 "$colllen"); do
-            for i in "${coll[@]:${index}:4}"; do
+        for index in $(seq 0 8 "$colllen"); do
+            for i in "${coll[@]:${index}:8}"; do
                 var2=$(basename "$i")
                 if [ -e "$var2" ]; then
                     echo "colvar file $var2 exists, skipping this file"
@@ -34,17 +37,31 @@ prep2dwham() {
                     continue
                 fi
         	echo "preparing colvar: $var2"
-                (awk -v var=$time5ns -v col=$column '(NR>=var) && ($0 !~ /^#.*/) {print $1,$col}' $i > ./$var2) &
+                (awk -v var=$time5ns -v col=$column '(NR>=var) {print $1,$col}' $i > ./$var2 \
+        	 && TMPFILE=$(mktemp ./foo-XXXXX) \
+        	 && awk '!seen[$1]++' $var2 > $TMPFILE \
+        	 && mv $TMPFILE $var2 \
+		 && TMPFILE2=$(mktemp ./foo-XXXXX) \
+        	 && grep -vi '[a-z]' $var2 | grep -vi '\#' > $TMPFILE2 \
+		 && mv $TMPFILE2 $var2 \
+		 && echo "removing [a-z]|\# from $var2") &
                 PID+=( "$!" )
             done
             for pid in ${PID[*]}; do
                 wait $pid
             done
         done
-
-	for i in ./colv*; do
-		awk '!seen[$1]++' $i > tmp && mv tmp $i
-	done
+	#readarray -t tosed < $TMPFILE2
+	#echo "${tosed[@]} is tosed"
+	#if (( $(echo ${#tosed[@]}) != 0 )); then
+	#	for i in ${tosed[@]}; do
+	#		(echo "removing [a-z]|\# from $i" && sed -iE '/[a-z]|\#/Id' $i) &
+	#	done
+	#fi
+	#for i in ./colv*; do
+	#	awk '!seen[$1]++' $i > tmp && mv tmp $i
+	#	sed -i '/[a-z]/Id' $i
+	#done
 
         echo "prep2dwham done"
 

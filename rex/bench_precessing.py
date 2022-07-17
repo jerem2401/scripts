@@ -29,7 +29,7 @@ matplotlib.rcParams.update({'font.size': 25})
 
 fig = plt.figure(figsize=(12, 8))
 ax1 = fig.add_subplot(1, 1, 1)
-ax1.errorbar(range(0,len(avg)), avg, yerr=std, marker='o', ls='none')
+ax1.errorbar(range(0, len(avg)), avg, yerr=std, marker='o', ls='none')
 ax1.plot(range(0, len(avg)), [0.5]*(len(avg)))
 ax1.plot(range(0, len(avg)), [0.18]*(len(avg)))
 
