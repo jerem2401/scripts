@@ -1,4 +1,3 @@
-find dest* -maxdepth 0 -exec cp file_pat* {} \; #copy several files with file_pat* to to several destinations dest*
 tail -n +7 colvar_pull.txt | awk 'NR == 1 || $4 < min {line = $0; min = $4}END{print line}' # find min in column 4 (+skip first 6 lines)
 
 #awk
@@ -51,29 +50,15 @@ git config branch.branch_name.description "description" #adding description to b
 git config branch.<branch name>.description #displaying branch description
 git checkout branch_name #change branch, "-b" create and change branch
 git push origin [name_of_your_new_branch]
-git fetch
 
 #SLURM
 srun -N 1 -n 4 hostname && echo "Program finished with exit code $? at: `date`" #testing interactive job
 sacct -j JOBID (see also --format option or -l)
-scontrol show job JOBID (seems not to work when old jobs)
-scontrol show partition PARTNAME
-scontrol show nodes
-scontrol show node fang20
-scontrol show node fang[10-13]
 sacct -u jlapier (list my jobs)
-squeue --format="%.18i%.20S%.12P%.25j%.8u%.3t%.12M%.6D%R" (see format)
-squeue --format="%.18i%.20S%.12P%.25j%.8u%.3t%.12M%.8D%R%.10Q%.30V" -S Q
 
-scontrol show config
-scontrol show config | grep ^Priority
-squeue -o %Q -j jobid
 sprio -w
 sprio -j 8374 -l
 sshare
-
-#SSH
-ssh -A -t jeremy@alef.lusi.uni-sb.de ssh -A -t dema9
 
 #Unison
 unison -fastcheck true /localdisk/mnt/smaug/syncsim /localdisk/mnt/gwdg/simulation/syncsim/

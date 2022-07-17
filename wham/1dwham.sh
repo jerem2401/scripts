@@ -24,7 +24,12 @@ prep2dwham() {
 	read -r -a coll <<< "$rpath"
         colllen=$(echo "${#coll[@]}")
 
-        time5ns=$(awk '$1~/^5000.*/{print NR;exit}' "${coll[0]}")
+	if ((st==0)); then
+            time5ns=$(awk '$1~/^5000.*/{print NR;exit}' "${coll[0]}")
+	else
+	    time5ns=0
+	fi
+
         echo "time5ns = $time5ns"
 	echo "column chosen: $column"
 
@@ -51,17 +56,24 @@ prep2dwham() {
                 wait $pid
             done
         done
-	#readarray -t tosed < $TMPFILE2
-	#echo "${tosed[@]} is tosed"
-	#if (( $(echo ${#tosed[@]}) != 0 )); then
-	#	for i in ${tosed[@]}; do
-	#		(echo "removing [a-z]|\# from $i" && sed -iE '/[a-z]|\#/Id' $i) &
-	#	done
-	#fi
-	#for i in ./colv*; do
-	#	awk '!seen[$1]++' $i > tmp && mv tmp $i
-	#	sed -i '/[a-z]/Id' $i
-	#done
+
+	if (($st==1)); then
+	    for index in $(seq 0 8 "$colllen"); do
+	        for i in "${coll[@]:${index}:8}"; do
+		    var2=$(basename "$i")
+		    echo "preparing colvar for umbST: $var2"
+		    tmp=$(dirname $i)
+		    cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=.txt)')
+		    (awk '($0 !~ /^#.*/) && ($0 !~ /^@.*/)' $tmp/dhdl.xvg > ./dhdl_${cnt}.txt && awk 'NR % 2 == 1' ./dhdl_${cnt}.txt > ./dhdl_${cnt}_every2nd.txt && awk '($4 == '0.0000000') {print NR}' ./dhdl_${cnt}_every2nd.txt > linenumber_${cnt}.txt && awk 'NR==FNR{linesToPrint[$0];next} FNR in linesToPrint' linenumber_${cnt}.txt ./$var2 > out_${cnt}.txt && mv out_${cnt}.txt ./$var2) &
+		    PID+=( "$!" )
+		done
+		for pid in ${PID[*]}; do
+		    wait $pid
+		done
+	    done
+	    mkdir cleaning_st
+	    mv dhdl* linenumber_* cleaning_st
+	fi
 
         echo "prep2dwham done"
 
@@ -153,6 +165,8 @@ do_wham2d() {
       wham='/usr/users/jlapier/bin/wham/wham/wham'
    elif [[ $(hostname) == fullmetal ]]; then
       wham='/home/jeremy/opt/wham/wham/wham'
+   elif [[ $(hostname) == smaug ]]; then
+      wham='/home/users/jeremy/bin/wham/wham/wham'
    fi
 
    for i in `seq 0 4 $c`; do
