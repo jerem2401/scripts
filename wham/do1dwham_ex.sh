@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 
 st=0
+timeinit=5000
+timefinal=400000
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -12,10 +14,18 @@ while [ $# -gt 0 ]; do
         -c)
             shift
             c="$1"
-	        ;;
+	    ;;
         -h)
             echo "TODO: fill up the help message"
              ;;
+        -timeinit)
+            shift
+            timeinit="$1"
+            ;;
+        -timefinal)
+            shift
+            timefinal="$1"
+            ;;
         -E1min)
             shift
             E1min="$1"

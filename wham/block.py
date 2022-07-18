@@ -71,17 +71,18 @@ def block_avg(f2):
     ref=files[round(lf/2)]
     ksir, pror, freer = np.loadtxt(ref, unpack=True, delimiter=' ')
 
-    min_freer=np.amin(freer)
+    #min_freer=np.amin(freer)
 
     allf=[]
     for i in files:
         ksi, pro, free = np.loadtxt(i, unpack=True, delimiter=' ')
-        #delta=min_freer-free[np.where(freer == min_freer)]
-        #shift every pmf to the ref (min of middle block)
-        #free=free+delta
-        #shift ervery pmf so the ref free nrg point is shifted to 0
-        #free=free-min_freer
-        free=free-free[np.where(freer == min_freer)]
+        ##delta=min_freer-free[np.where(freer == min_freer)]
+        ##shift every pmf to the ref (min of middle block)
+        ##free=free+delta
+        ##shift ervery pmf so the ref free nrg point is shifted to 0
+        ##free=free-min_freer
+        #free=free-free[np.where(freer == min_freer)]
+        free=free-free[0]
         allf.append(free)
 
     arr=np.vstack(allf)

@@ -24,13 +24,10 @@ prep2dwham() {
 	read -r -a coll <<< "$rpath"
         colllen=$(echo "${#coll[@]}")
 
-	if ((st==0)); then
-            time5ns=$(awk '$1~/^5000.*/{print NR;exit}' "${coll[0]}")
-	else
-	    time5ns=0
-	fi
+	echo "timeinit is $timeinit, timefinal is $timefinal"
+        time5ns=$(awk -v var=$timeinit '$1~"^"var".*" {print NR;exit}' "${coll[0]}")
 
-        echo "time5ns = $time5ns"
+        echo "timeinit line = $time5ns"
 	echo "column chosen: $column"
 
         for index in $(seq 0 8 "$colllen"); do
@@ -46,9 +43,14 @@ prep2dwham() {
         	 && TMPFILE=$(mktemp ./foo-XXXXX) \
         	 && awk '!seen[$1]++' $var2 > $TMPFILE \
         	 && mv $TMPFILE $var2 \
+		 && echo "timefinal line = $timefinal" \
+		 && timefinal=$(awk -v var=$timefinal '$1~"^"var".*" {print NR;exit}' $var2) \
 		 && TMPFILE2=$(mktemp ./foo-XXXXX) \
-        	 && grep -vi '[a-z]' $var2 | grep -vi '\#' > $TMPFILE2 \
+		 && awk -v var=$timefinal '(NR<=var)' $var2 > $TMPFILE2 \
 		 && mv $TMPFILE2 $var2 \
+		 && TMPFILE3=$(mktemp ./foo-XXXXX) \
+        	 && grep -vi '[a-z]' $var2 | grep -vi '\#' > $TMPFILE3 \
+		 && mv $TMPFILE3 $var2 \
 		 && echo "removing [a-z]|\# from $var2") &
                 PID+=( "$!" )
             done
