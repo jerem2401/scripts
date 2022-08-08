@@ -229,29 +229,29 @@ def get_weights_from_log(log, plot = False):
         #plt.show()
         fig.savefig(os.path.join(dir,'weights_progression.svg'), bbox_inches="tight")
 
-        # Plotting the violin plot of the weights
-        df = pd.DataFrame()
-        for j in range(weights_info.shape[1]):
-            #df[temperatures[j]] = weights_info[:,j,1]
-            df[j] = weights_info[:,j,1]
-        # Set up the matplotlib figure
-        sns.set_theme(style="whitegrid")
-        fig, ax = plt.subplots(figsize=(25, 25))
+        ## Plotting the violin plot of the weights
+        #df = pd.DataFrame()
+        #for j in range(weights_info.shape[1]):
+        #    #df[temperatures[j]] = weights_info[:,j,1]
+        #    df[j] = weights_info[:,j,1]
+        ## Set up the matplotlib figure
+        #sns.set_theme(style="whitegrid")
+        #fig, ax = plt.subplots(figsize=(25, 25))
 
-        # Draw a violinplot with a narrower bandwidth than the default
-        sns.violinplot(data=df, palette="Set3", bw=.2, cut=1, linewidth=1)
-        # The plot is not over the actual temperatures, the temperatures ara only labels
-        ax.plot(range(len(weights_info[0,:,1])), weights_info[0,:,1], '-o',  label = 'Initial weights')
-        ax.set(
-            title = 'Weights per state over the entire simulation',
-            xlabel = 'Sate',
-            ylabel = 'Weight',
-        )
-        plt.legend()
-        sns.despine(left=True, bottom=True)
-        plt.show()
-        #fig.savefig(os.path.join(dir,'weights_per_state.svg'), bbox_inches="tight")
-        sns.reset_defaults()
+        ## Draw a violinplot with a narrower bandwidth than the default
+        #sns.violinplot(data=df, palette="Set3", bw=.2, cut=1, linewidth=1)
+        ## The plot is not over the actual temperatures, the temperatures ara only labels
+        #ax.plot(range(len(weights_info[0,:,1])), weights_info[0,:,1], '-o',  label = 'Initial weights')
+        #ax.set(
+        #    title = 'Weights per state over the entire simulation',
+        #    xlabel = 'Sate',
+        #    ylabel = 'Weight',
+        #)
+        #plt.legend()
+        #sns.despine(left=True, bottom=True)
+        #plt.show()
+        ##fig.savefig(os.path.join(dir,'weights_per_state.svg'), bbox_inches="tight")
+        #sns.reset_defaults()
 
     return time, weights_info
 
