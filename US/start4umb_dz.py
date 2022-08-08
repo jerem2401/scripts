@@ -10,8 +10,8 @@ def main(colvf, ksi):
     #read COLVAR.txt
     df = plumed_pandas.read_as_pandas(colvf)
 
-    mindiff = (df['dz']-float(ksi)).abs().idxmin()
-    found = df.iloc[mindiff]['dz']
+    mindiff = (df['d.z']-float(ksi)).abs().idxmin()
+    found = df.iloc[mindiff]['d.z']
     tvalue = df.iloc[mindiff]['time']
 
     return found, tvalue
