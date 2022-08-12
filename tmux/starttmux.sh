@@ -52,6 +52,7 @@ elif [[ $session == gwdg ]]; then
     tmux send-keys -t $session 'cogwdg' C-m
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -v
+    tmux send-keys -t $session 'mount-gwdg' C-m
     tmux send-keys -t $session 'gwdg' C-m
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -h
@@ -61,11 +62,21 @@ elif [[ $session == smaug ]]; then
     tmux send-keys -t $session 'cosmaug' C-m
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -v
+    tmux send-keys -t $session 'mount-smaug' C-m
     tmux send-keys -t $session 'smaug' C-m
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -h
     tmux send-keys -t $session 'clear' C-m
     tmux send-keys -t $session 'xdotool key ctrl+b r' C-m
+elif [[ $session == elw1 ]]; then
+    tmux send-keys -t $session 'coelw1' C-m
+    tmux send-keys -t $session 'clear' C-m
+    tmux split-window -v
+    tmux send-keys -t $session 'elw1' C-m
+    tmux send-keys -t $session 'clear' C-m
+    tmux split-window -h
+    tmux send-keys -t $session 'clear' C-m
+    #tmux send-keys -t $session 'xdotool key ctrl+b r' C-m
 else
     tmux send-keys -t $session 'clear' C-m
     tmux split-window -v

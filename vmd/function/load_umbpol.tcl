@@ -7,6 +7,8 @@
 #mol modstyle 1 $mol NewCartoon
 #mol modcolor 1 $mol ResID
 #}
+#vmdupol "test2_2.xtc test2.pdb ."
+#vmdupol "umb2.xtc 0umb_chains.pdb E_46.840 E_47.680 E_48.520 E_49.360 E_50.200 E_50.550"
 proc load_umbpol {args} {
     set mol 0
     mol new /home/jeremy/mnt/smaug/syncsim/pol/ref/oc/5iyb_clean1_correcteddna.pdb type {pdb}
@@ -39,11 +41,11 @@ proc load_umbpol {args} {
 	mol addrep $mol
 	mol modcolor 3 $mol ColorID 1
 	#align first frame to ref
-	#set reference_sel  [atomselect 0 "((chain A and resid 695 to 760) or (chain A and resid 831 to 870)) and backbone"]
-	#set comparison_sel [atomselect $mol "((chain A and resid 695 to 760) or (chain A and resid 831 to 870)) and backbone" frame last]
-	#set transformation_mat [measure fit $comparison_sel $reference_sel]
-	#set move_sel [atomselect $mol "all" frame last]
-	#$move_sel move $transformation_mat
+	set reference_sel  [atomselect 0 "((chain O and resid 76 to 86) or (chain N and resid 364 to 372) or (chain A and resid 831 to 870) or (chain H and resid 121 to 127) or (chain H and resid 140 to 146)) and backbone"]
+	set comparison_sel [atomselect $mol "((chain O and resid 76 to 86) or (chain N and resid 364 to 372) or (chain A and resid 831 to 870) or (chain H and resid 121 to 127) or (chain H and resid 140 to 146)) and backbone" frame last]
+	set transformation_mat [measure fit $comparison_sel $reference_sel]
+	set move_sel [atomselect $mol "all" frame last]
+	$move_sel move $transformation_mat
 	#align all frames to last frame
 	fitframes $mol "protein"
 	#smoothing

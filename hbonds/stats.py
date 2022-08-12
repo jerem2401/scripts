@@ -68,16 +68,51 @@ def bywin(tdir):
 
     out.close()
 
+def 4pull(tdir):
+    from itertools import dropwhile
+    import re
+
+    out = open(f"{tdir}/hbonds_pull.txt", 'a')
+
+    files = glob.glob(f"{tdir}/_*")
+    #reduce bubble size
+    r = re.compile('_t(5[2-9]|6[0-3])')
+    files = list(filter(r.match, files))
+    
+    tot = []
+    time = []
+    for file in files:
+        with open(file, 'r') as reader:
+            hb = []
+            for line in dropwhile(lambda x: '#' in x or '@' in x, reader):
+                hb.append(int(line.split()[1]))
+                if file == files[0]:
+                    time.append(float(line.split()[0]))
+            tot.append(hb)
+            
+    tot = np.array(tot)
+    tot_sum = np.sum(tot,axis=0)
+    
+    for i in range(len(time)):
+        out.write(f"{time[i]:<10}{tot_sum[i]:>5}")
+    out.close()
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', help='give target directories containing hbond.xvg files',
                         action='store', dest='f', required=True)
+    parser.add_argument('-pull', help='If pulling sim instead of US',
+                        action='store_true', dest='pull')
     args = parser.parse_args()
 
     for i in glob.glob(f"{args.f}/hbond"):
-        bywin(i)
-        print(f"{i} direcotry is done")
+        if args.pull == False:
+            bywin(i)
+            print(f"{i} direcotry is done")
+        else:
+            4pull(i)
+            print(f"{i} direcotry is done")
 
 
 if __name__ == "__main__":
