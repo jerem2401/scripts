@@ -22,6 +22,8 @@ index='../temp/index.ndx'
 lbd=''
 scale=5
 
+equil=''
+
 while [ $# -gt 0 ]; do
     case "$1" in
 	--file|-f)
@@ -114,72 +116,88 @@ while [ $# -gt 0 ]; do
 	    listwin=$1;;
 	-scale) shift
 	    scale=$1;;
+	-equil)
+	    equil='yes';;
     esac
     shift
 done
 
-if [[ ! -z $lbd ]]; then
-	for i in $lbd; do
-		if [[ ! -f ../temp/topol_${i}.top ]]; then
-			echo "../temp/topol_${i}.top not present, exiting"
-			exit
-		fi
+if [[ ! -z $equil ]]; then
+	ksis=$(command ls E* -d | sort -t _ -k 2 -n)
+	ksis=($ksis)
+	l=${#ksis[@]}
+	for k in $(seq 0 10 $l); do
+	    for ksi in "${ksis[@]:$k:10}"; do
+	        echo "ksi is $ksi"
+	        (gmx grompp -nice 0 -f ../../temp/equil.mdp -c "./${ksi}/md.tpr" -p ../../temp/opro.top -o "./${ksi}/md.tpr" -maxwarn 1 -n ../../temp/index.ndx -r "./${ksi}/md.tpr") &
+	    done
+	    wait
+	done
+	rm -f "./E*/\#md.tpr*"
+else
+	if [[ ! -z $lbd ]]; then
+		for i in $lbd; do
+			if [[ ! -f ../temp/topol_${i}.top ]]; then
+				echo "../temp/topol_${i}.top not present, exiting"
+				exit
+			fi
+		done
+	fi
+
+
+	max_min=$(echo "$winmax- $winmin" | bc)
+	dist="${max_min#-}"
+	winStep=$(echo "scale=$scale; $dist/($nbOfWin- 1)" | bc -l)
+
+	sed "s/NSTEPS/${tstep}/" "$temp_mdp" > ./md.mdp
+
+	echo "arg1:${tmd_plum_out} nbOfWin:${nbOfWin} wmax:${winmax} wmin:${winmin} dist:${dist} winStep:${winStep} ttot:${ttot} tstep:${tstep} kappa:${kappa} wkappa:${wkappa} wcnt=${wcnt} wof=${wof} path: ${path} lambda: ${lam}"
+
+
+	if [[ ! -z $listwin ]]; then
+		ksis=$(echo $listwin | sed 's/tmp_//g')
+		echo -e "\nksis are:\n$ksis"
+	else
+		ksis=$(seq -f "%.5f" "$winmin" "$winStep" "$winmax")
+	fi
+
+	ksis=($ksis)
+	l=${#ksis[@]}
+	for k in $(seq 0 10 $l); do
+	    for ksi in "${ksis[@]:$k:10}"; do
+	        echo "ksi is $ksi"
+	        tmp=$(find ./bench* -type d -name "E_${ksi}")
+	        if [[ ! -z ${tmp} ]]; then
+		    echo "E_${ksi} found in bench dir, copying instead of creating new dir"
+	    	    copy=$(echo $tmp | awk '{print $1;}')
+	            cp -r ${copy} ./
+	        elif mkdir "E_${ksi}"; then
+	            values=$(start4umb_dz.py -f $tmd_plum_out -v $ksi)
+	            read -ra ADDR <<< $(echo "${values//[\(\)\,]}")
+	            closestksi=${ADDR[0]}
+	            value=${ADDR[1]}
+	            echo "given: $ksi, found: $closestksi"
+	            b=$(echo "$value - 2" | bc -l)
+	            echo 0 | gmx trjconv -nice 0 -s "$tmd_tpr" -f "$tmd_traj" -b "$b" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" -n "$index"
+	            if [[ ! -z $lbd ]]; then
+	                for i in $lbd; do
+	                    mkdir "E_${ksi}/${i}"
+	                    gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" \
+	                    -p ../temp/topol_${i}.top -o "./E_${ksi}/${i}/md.tpr" \
+	                    -maxwarn 1 -n "$index"
+			    index_in_plumed='../index.ndx'
+	                done
+	            else
+	                (gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/md.tpr" -maxwarn 1 -n "$index" -r "./E_${ksi}/conf_${value}.gro") &
+			index_in_plumed='index.ndx'
+	    	fi
+	            sed "s=_POSI_=${ksi}=g;s=_KAPPA_=${kappa}=g;s=_wKAPPA_=${wkappa}=g;s=index.ndx=${index_in_plumed}=g" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat" && cp "./E_${ksi}/plumed_${ksi}.dat" "./E_${ksi}/plumed.dat"
+	            cp "$index" "./E_${ksi}/"
+	            echo 'done'
+	        else
+	            echo "window already exists"
+	        fi
+	    done
+	    wait
 	done
 fi
-
-
-max_min=$(echo "$winmax- $winmin" | bc)
-dist="${max_min#-}"
-winStep=$(echo "scale=$scale; $dist/($nbOfWin- 1)" | bc -l)
-
-sed "s/NSTEPS/${tstep}/" "$temp_mdp" > ./md.mdp
-
-echo "arg1:${tmd_plum_out} nbOfWin:${nbOfWin} wmax:${winmax} wmin:${winmin} dist:${dist} winStep:${winStep} ttot:${ttot} tstep:${tstep} kappa:${kappa} wkappa:${wkappa} wcnt=${wcnt} wof=${wof} path: ${path} lambda: ${lam}"
-
-
-if [[ ! -z $listwin ]]; then
-	ksis=$(echo $listwin | sed 's/tmp_//g')
-	echo -e "\nksis are:\n$ksis"
-else
-	ksis=$(seq -f "%.5f" "$winmin" "$winStep" "$winmax")
-fi
-
-ksis=($ksis)
-l=${#ksis[@]}
-for k in $(seq 0 10 $l); do
-    for ksi in "${ksis[@]:$k:10}"; do
-        echo "ksi is $ksi"
-        tmp=$(find ./bench* -type d -name "E_${ksi}" > /dev/null)
-        if [[ ! -z ${tmp} ]]; then
-	    echo "E_${ksi} found in bench dir, copying instead of creating new dir"
-    	    copy=$(echo $tmp | awk '{print $1;}')
-            cp -r ${copy} ./
-        elif mkdir "E_${ksi}"; then
-            values=$(start4umb_dz.py -f $tmd_plum_out -v $ksi)
-            read -ra ADDR <<< $(echo "${values//[\(\)\,]}")
-            closestksi=${ADDR[0]}
-            value=${ADDR[1]}
-            echo "given: $ksi, found: $closestksi"
-            b=$(echo "$value - 2" | bc -l)
-            echo 0 | gmx trjconv -nice 0 -s "$tmd_tpr" -f "$tmd_traj" -b "$b" -dump "$value" -o "./E_${ksi}/conf_${value}.gro" -n "$index"
-            if [[ ! -z $lbd ]]; then
-                for i in $lbd; do
-                    mkdir "E_${ksi}/${i}"
-                    gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" \
-                    -p ../temp/topol_${i}.top -o "./E_${ksi}/${i}/md.tpr" \
-                    -maxwarn 1 -n "$index"
-		    index_in_plumed='../index.ndx'
-                done
-            else
-                (gmx grompp -nice 0 -f ./md.mdp -c "./E_${ksi}/conf_${value}.gro" -p "$top" -o "./E_${ksi}/md.tpr" -maxwarn 1 -n "$index") &
-		index_in_plumed='index.ndx'
-    	fi
-            sed "s=_POSI_=${ksi}=g;s=_KAPPA_=${kappa}=g;s=_wKAPPA_=${wkappa}=g;s=index.ndx=${index_in_plumed}=g" "$plumed_tmp" > "./E_${ksi}/plumed_${ksi}.dat" && cp "./E_${ksi}/plumed_${ksi}.dat" "./E_${ksi}/plumed.dat"
-            cp "$index" "./E_${ksi}/"
-            echo 'done'
-        else
-            echo "window already exists"
-        fi
-    done
-    wait
-done

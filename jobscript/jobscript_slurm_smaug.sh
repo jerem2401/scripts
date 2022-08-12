@@ -74,6 +74,7 @@ gmxrcLine=''
 logicalCoresPerPhysical=2
 niceLevel=0
 pbcfix=0
+spack=''
 
 sbatch_tempfile=`mktemp sbatch.tempXXXXX`
 #rm -f $sbatch_tempfile
@@ -83,7 +84,7 @@ trap "rm -rf $sbatch_tempfile" EXIT
 case `hostname` in
     smaug|fang?|fang??)
         ppn=6
-        gmxrc=/data/shared/opt/gromacs/2020.4/bin/GMXRC.bash
+        gmxrc=/data/shared/opt/gromacs/2020.5/bin/GMXRC.bash
         queue=deflt
         machine=smaug
         ;;
@@ -118,6 +119,7 @@ bReqScratch=0
 gpuGeneration='pascal'
 plumed=""
 ngpu='1'
+bNoNtFlag=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -218,6 +220,10 @@ while [ $# -gt 0 ]; do
              ;;
         -mdrun) shift
                 mdrun=$(echo "$1" | sed 's/@/ /g')
+		;;
+	-spack) shift
+		spack=$1
+		mdrun='gmx mdrun'
                 ;;
         -mdrun_line)
 	    shift
@@ -267,6 +273,9 @@ while [ $# -gt 0 ]; do
         -email)
             shift
             email="$1" ;;
+	-batch_line)
+	    shift
+	    batchInitLine=$(echo -e "$1" | sed 's/@/ /g') ;;
         -feature)
             shift
             feature=$1 ;;
@@ -300,14 +309,10 @@ while [ $# -gt 0 ]; do
 		gmxrc="/data/shared/opt/gromacs/$version/bin/GMXRC"
 	    fi
             ;;
-        -batch)
-            shift
-	    exnode=$1
-            batchInitLine=$(echo "#SBATCH $exnode")
-            ;;
         -update_gpu)
 	    update="-update gpu";;
         -ngpu)
+	    shift
             ngpu=$1 ;;
     	-pbcfix)
             pbcfix=1 ;;
@@ -324,8 +329,6 @@ if [ "$np" = "" ]; then
 fi
 
 echo verb="$verb"
-gmxrcLine="source $gmxrc"
-echo "Using GROMACS: $gmxrc"
 # pick tpr file
 if [ "$multidirs" = "" ]; then
     if [[ "$tpr" = "" && "$exe" = "" && $bEmpty = 0 && "$mdrun_line" = "" ]]; then
@@ -350,6 +353,15 @@ if [ "$multidirs" = "" ] && [ "$plumed" = "-plumed on" ]; then
             plumed="-plumed $(ls *.dat)"
         fi
     fi
+fi
+
+if [[ ! -z $spack ]]; then
+    a="source /data/shared/spack/shared.bash"
+    b="module load $spack"
+    gmxrcLine=$(echo -e "${a}\n${b}")
+else
+    gmxrcLine="source $gmxrc"
+    echo "Using GROMACS: $gmxrc"
 fi
 
 nedi=$(ls *edi 2>/dev/null | wc -l)
@@ -392,20 +404,36 @@ fi
 backoff $jobfile
 ############################################################################################################################
 
-if [ "$gpuGeneration" = pascal ]; then
-    excludeLine="#SBATCH --exclude=fang[41-50]"
-    nGPUsPerNode=1
-elif [ "$gpuGeneration" = turing ]; then
-    excludeLine="#SBATCH --exclude=fang[1-41],fang[49-50]"
-    nGPUsPerNode=4
-elif [[ ( "$gpuGeneration" = "" ) || ( "$gpuGeneration" = any ) ]]; then
-    excludeLine=""
-else
-    echo "ERROR, invalid GPU generation: $gpuGeneration"; exit 1
-fi
+excludeLine=""
+case "$gpuGeneration" in
+    pascal)
+        gpu_selection="#SBATCH --gres=gpu:gtx1070ti:$ngpu"
+        nGPUsPerNode=1
+        ;;
+    turing)
+        gpu_selection="#SBATCH --gres=gpu:rtx2080ti:$ngpu"
+        nGPUsPerNode=4
+        ;;
+    ampere)
+	gpu_selection="#SBATCH --gres=gpu:rtxa6000:$ngpu"
+	nGPUsPerNode=4
+	;;
+    ""|any|pascal+turing)
+        gpu_selection="#SBATCH --gpus=$ngpu"
+        excludeLine="#SBATCH --exclude=fang[51-54]"
+        ;;
+    turing+ampere)
+        gpu_selection="#SBATCH --gpus=$ngpu"
+        excludeLine="#SBATCH --exclude=fang[1-40]"
+        ;;
+    any+ampere)
+        gpu_selection="#SBATCH --gpus=$ngpu"
+        ;;
+    *)
+      echo -e "\nERROR, invalid GPU generation: $gpuGeneration\n"; exit 1
+      ;;
+esac
 
-
-############################################################################################################################
 
 if [[ "$Qsystem" = slurm ]]; then
     if [ $bEnsureFullNode = 1 ]; then
@@ -426,11 +454,11 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH --mail-user=$email
 #SBATCH -N $nnodes
 #SBATCH --nice=$niceLevel
-#SBATCH --gpus=$ngpu
-$excludeLine
-
+$gpu_selection
+#SBATCH --exclude=$excludeNodes
 $batchInitLine
 $depline
+$excludeLine
 
 EOF
 
@@ -442,6 +470,10 @@ echo Jobid \$SLURM_JOBID
 echo Host \$SLURM_JOB_NODELIST
 echo Jobname \$SLURM_JOB_NAME
 echo Subcwd \$SLURM_SUBMIT_DIR
+
+ncpu=\$(grep -c ^processor /proc/cpuinfo)
+ngpu=\$(nvidia-smi -L | wc -l)
+cpupergpu=\$[ncpu/ngpu]
 
 cd $dir
 $gmxrcLine
@@ -462,8 +494,8 @@ else
 fi
 
 if [ $bMPI = 0 ]; then
-    if [[ ( "$ntFlag" = "" ) && ( "$Qsystem" = slurm ) ]]; then
-        ntFlag="-nt \$[SLURM_CPUS_PER_TASK]"
+    if [[ ( "$ntFlag" = "" ) && ( "$bNoNtFlag" = 0 ) && ( "$Qsystem" = slurm ) ]]; then
+        ntFlag="-nt \$cpupergpu"
         {
             echo "echo SLURM_CPUS_PER_TASK = \$SLURM_CPUS_PER_TASK"
         } >> $jobfile

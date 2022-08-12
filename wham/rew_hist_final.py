@@ -105,10 +105,11 @@ def main():
             label = str(n)
             xs = i.split('_')[1]
             x = float(xs)
-            k = os.popen(f"grep -oP '(?<=KAPPA=)[0-9]*$' ../E_{xs}/plumed_{xs}.dat").read()
+            #k = os.popen(f"grep -oP '(?<=KAPPA=)[0-9]*$' ../E_{xs}/plumed_{xs}.dat").read()
             z, thishist = np.loadtxt(i, unpack=True)
             y = max(thishist)
-            axs.plot(z, thishist, label=label+":"+str(x)+':'+k)
+            #axs.plot(z, thishist, label=label+":"+str(x)+':'+k)
+            axs.plot(z, thishist, label=label+":"+str(x))
             axs.annotate(s=label, xy=(x, y), fontsize=8)
             n+=1
             allz = np.concatenate((allz, z), axis=None)

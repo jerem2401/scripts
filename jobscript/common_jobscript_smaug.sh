@@ -82,7 +82,7 @@ trap "rm -rf $sbatch_tempfile" EXIT
 case `hostname` in
     smaug|fang?|fang??)
         ppn=6
-        gmxrc=/data/shared/opt/gromacs/2020.4/bin/GMXRC.bash
+        gmxrc=/data/shared/opt/gromacs/2020.5/bin/GMXRC.bash
         queue=deflt
         machine=smaug
         ;;
@@ -245,6 +245,9 @@ while [ $# -gt 0 ]; do
         -line)
             shift
             line=$(echo "$1" | sed 's/@/ /g') ;;
+	-line-protect)
+            shift
+            line="$1" ;;
         -latest)
             bLatest=1 ;;
         -gpu-generation|-gpu-gener|-g)
@@ -311,7 +314,6 @@ if [ "$np" = "" ]; then
     np=$[nnodes*ppn]
 fi
 
-echo verb="$verb"
 gmxrcLine="source $gmxrc"
 echo "Using GROMACS: $gmxrc"
 # pick tpr file
@@ -367,17 +369,40 @@ fi
 backoff $jobfile
 ############################################################################################################################
 
-if [ "$gpuGeneration" = pascal ]; then
-    excludeLine="#SBATCH --exclude=fang[41-50]"
-    nGPUsPerNode=1
-elif [ "$gpuGeneration" = turing ]; then
-    excludeLine="#SBATCH --exclude=fang[1-40]"
-    nGPUsPerNode=4
-elif [[ ( "$gpuGeneration" = "" ) || ( "$gpuGeneration" = any ) ]]; then
-    excludeLine=""
-else
-    echo "ERROR, invalid GPU generation: $gpuGeneration"; exit 1
-fi
+case "$gpuGeneration" in
+    pascal)
+        gpu_selection="#SBATCH --gres=gpu:gtx1070ti:$ngpu"
+        nGPUsPerNode=1
+        ;;
+    turing)
+        gpu_selection="#SBATCH --gres=gpu:rtx2080ti:$ngpu"
+        nGPUsPerNode=4
+        ;;
+    ampere)
+	gpu_selection="#SBATCH --gres=gpu:rtxA6000:$ngpu"
+	nGPUsPerNode=4
+	;;
+    ""|any)
+        gpu_selection="#SBATCH --gpus=$ngpu"
+        ;;
+    *)
+      echo -e "\nERROR, invalid GPU generation: $gpuGeneration\n"; exit 1
+      ;;
+esac
+
+
+# if [ "$gpuGeneration" = pascal ]; then
+#     gres_line="#SBATCH --gres=gpu:gtx1070ti"
+#     nGPUsPerNode=1
+# elif [ "$gpuGeneration" = turing ]; then
+#     gres_line="#SBATCH --gres=gpu:rtx2080ti"
+#     excludeLine="#SBATCH --exclude=fang[1-40]"
+#     nGPUsPerNode=4
+# elif [[ ( "$gpuGeneration" = "" ) || ( "$gpuGeneration" = any ) ]]; then
+#     excludeLine=""
+# else
+#     echo "ERROR, invalid GPU generation: $gpuGeneration"; exit 1
+# fi
 
 
 ############################################################################################################################
@@ -401,9 +426,8 @@ if [[ "$Qsystem" = slurm ]]; then
 #SBATCH --mail-user=$email
 #SBATCH -N $nnodes
 #SBATCH --nice=$niceLevel
-#SBATCH --gpus=$ngpu
-$excludeLine
-
+$gpu_selection
+#SBATCH --exclude=$excludeNodes
 $batchInitLine
 $depline
 
