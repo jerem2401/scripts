@@ -1,6 +1,9 @@
 #!/bin/bash
 
-module load anaconda3/2020.07 && source activate env1
+if [[ "$HOSTNAME" == gwdu* ]]; then
+	module load anaconda3/2020.07 && source activate env1
+fi
+
 dir=$(d=$(pwd); basename $d)
 
 nbOfWin=$(echo "$dir" | grep -oP '(?<=N).*(?=_t.*_k)')

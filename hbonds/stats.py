@@ -68,17 +68,17 @@ def bywin(tdir):
 
     out.close()
 
-def 4pull(tdir):
+
+def pull(tdir):
     from itertools import dropwhile
     import re
 
     out = open(f"{tdir}/hbonds_pull.txt", 'a')
-
     files = glob.glob(f"{tdir}/_*")
-    #reduce bubble size
-    r = re.compile('_t(5[2-9]|6[0-3])')
+#    #reduce bubble size
+    r = re.compile('.*_t(5[2-9]|6[0-3])')
     files = list(filter(r.match, files))
-    
+
     tot = []
     time = []
     for file in files:
@@ -89,12 +89,12 @@ def 4pull(tdir):
                 if file == files[0]:
                     time.append(float(line.split()[0]))
             tot.append(hb)
-            
+
     tot = np.array(tot)
-    tot_sum = np.sum(tot,axis=0)
-    
+    tot_sum = np.sum(tot, axis=0)
+
     for i in range(len(time)):
-        out.write(f"{time[i]:<10}{tot_sum[i]:>5}")
+        out.write(f"{time[i]:<10}{tot_sum[i]:>5}\n")
     out.close()
 
 
@@ -107,11 +107,12 @@ def main():
     args = parser.parse_args()
 
     for i in glob.glob(f"{args.f}/hbond"):
-        if args.pull == False:
-            bywin(i)
+        if args.pull:
+            pull(i)
+            print("doing pull")
             print(f"{i} direcotry is done")
         else:
-            4pull(i)
+            bywin(i)
             print(f"{i} direcotry is done")
 
 

@@ -25,6 +25,7 @@ mknd=0
 traj_hb=1
 ana=''
 index="$base/simulation/syncsim/pol/heavy_h/ref/hbond.ndx"
+pull=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -48,6 +49,8 @@ while [ $# -gt 0 ]; do
 		-ana) shift
 		  ana=$1
 		  traj_hb=0;;
+		-pull)
+		  pull=1;;
 	esac
 	shift
 done
@@ -158,7 +161,11 @@ elif [[ ! -z $ana ]]; then
 	echo $(which conda)
 	echo $(which python)
 	set -o noglob
-	stats.py -f $ana
+	if (($pull==0)); then
+		stats.py -f $ana
+	else
+		stats.py -f $ana -pull
+	fi
 	set +o noglob
 fi
 

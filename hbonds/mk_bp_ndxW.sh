@@ -22,6 +22,7 @@ mknd=1
 ana=''
 index="$base/simulation/syncsim/pol/heavy_h/ref/hbondP.ndx"
 group=''
+pull=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -36,6 +37,8 @@ while [ $# -gt 0 ]; do
 		  mknd=0;;
 		-group) shift
 		  grp=$1;;
+		-pull)
+		  pull=1;;
 	esac
 	shift
 done
@@ -143,6 +146,7 @@ if (($mknd == 1)); then
 			echo "$pgrp;" > "${i}/merge_sel.dat"
 			gmx select -sf "${i}/merge_sel.dat" -f ${dirumb}/${traj} \
 			-s ${dirumb}/${tpr} -n $i/hbindex.ndx -on ${i}/hbindexm.ndx
+			sed -i '1 s/^.*$/\[ my_custom_group_along_traj \]/' ${i}/hbindexm.ndx
 
 			grep -oP '(?<=of \().*(?=\);)' $i/selection.dat > ${i}/selectionnuc.dat
 			gmx select -sf ${i}/selectionnuc.dat -f ${dirumb}/${traj} \
@@ -164,7 +168,11 @@ if (($mknd == 1)); then
 	done
 elif [[ ! -z $ana ]]; then
 	set -o noglob
-	statsW.py -f $ana
+	if (($pull==0)); then
+		statsW.py -f $ana
+	else
+		statsW.py -f $ana -pull
+	fi
 	set +o noglob
 fi
 #for i in E*/hbond/analyzehb.txt; do a=$(dirname $i); E=$(echo ${a:0:-6}); hb=$(tail -n1 $i ); real=$(awk '{ total += $2 } END { print total/NR }' $E/colvar_${E:2}.txt); printf "%-8s %20s %20s \n" $E $real $hb >> hbout.txt; done

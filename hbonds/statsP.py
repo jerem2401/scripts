@@ -70,15 +70,53 @@ def bywin(tdir):
 #    out.write(f"{usumt}\n")
 
 
+def pull(tdir):
+    from itertools import dropwhile
+    import re
+
+    print('doing pull MF')
+    xvgs = glob.glob(f"{tdir}/DNA*/hbond.xvg")
+    xvgs = sorted(xvgs, key=lambda x: x.split('/')[-2].split('_')[-1])
+    out = open(f"{tdir}/hbondsP_pull.txt", 'a')
+#    #reduce bubble size
+    r = re.compile('.*(DNAt_5[2-9]|DNAt_6[0-3]|DNAnt_3[1-9]|DNAnt_4[0-2])')
+    files = list(filter(r.match, xvgs))
+
+    tot = []
+    time = []
+    for file in files:
+        with open(file, 'r') as reader:
+            hb = []
+            for line in dropwhile(lambda x: '#' in x or '@' in x, reader):
+                hb.append(int(line.split()[1]))
+                if file == files[0]:
+                    time.append(float(line.split()[0]))
+            tot.append(hb)
+
+    tot = np.array(tot)
+    tot_sum = np.sum(tot, axis=0)
+
+    for i in range(len(time)):
+        out.write(f"{time[i]:<10}{tot_sum[i]:>5}\n")
+    out.close()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', help='give target directories containing hbond.xvg files',
                         action='store', dest='f', required=True)
+    parser.add_argument('-pull', help='If pulling sim instead of US',
+                        action='store_true', dest='pull')
     args = parser.parse_args()
 
     for i in glob.glob(f"{args.f}/hbondP"):
-        bywin(i)
-        print(f"hbonds between DNA-prot done in {i} directory")
+        if args.pull:
+            pull(i)
+            print("doing pull")
+            print(f"hbonds between DNA-prot done in {i} directory")
+        else:
+            bywin(i)
+            print(f"hbonds between DNA-prot done in {i} directory")
 
 
 if __name__ == "__main__":
