@@ -60,7 +60,8 @@ if (($mknd == 1)); then
 		cat <<- EOF > ${i}/md.mdp
 		integrator              = md        ; leap-frog stochastic integrator
 		;nsteps                  = 10000000
-		nsteps                  = 12500000
+		;nsteps                  = 12500000
+		nsteps                  = 43750000
 		dt                      = 0.004     ; 4 fs
 		; Output control
 		nstxout                 = 0         ; suppress bulky .trr file by specifying 
