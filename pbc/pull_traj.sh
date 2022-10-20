@@ -143,6 +143,7 @@ if [[ $mol == 'opro' ]]; then
 
 	if (("$proto" == 1)); then
 		echo "$group $group2" | gmx trjconv -nice 0 -s $tpr -f $traj -o $dir/nopbc.xtc -pbc mol -center -skip $skip -n $index
+		#gmx trjconv -nice 0 -s md.tpr -f test.gro -o test2.gro -pbc atom -n ../index.ndx
 		echo $group2 | gmx convert-tpr -s $tpr -n $index -o $dir/convert.tpr
 		echo 0 | gmx trjconv -nice 0 -f $dir/nopbc.xtc -s $dir/convert.tpr -o $dir/0.gro -dump 0
 	elif [ "$proto" = rot ]; then

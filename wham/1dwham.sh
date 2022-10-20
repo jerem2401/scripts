@@ -49,7 +49,7 @@ prep2dwham() {
 		 && awk -v var=$timefinal '(NR<=var)' $var2 > $TMPFILE2 \
 		 && mv $TMPFILE2 $var2 \
 		 && TMPFILE3=$(mktemp ./foo-XXXXX) \
-        	 && grep -vi '[a-z]' $var2 | grep -vi '\#' > $TMPFILE3 \
+        	 && grep -vi '[a-z]' $var2 | grep -vi '\#' | grep '.\{13\}' $var2 > $TMPFILE3 \
 		 && mv $TMPFILE3 $var2 \
 		 && echo "removing [a-z]|\# from $var2") &
                 PID+=( "$!" )
