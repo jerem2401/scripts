@@ -1,0 +1,2 @@
+_download source in /home/uni05/cmb/shared/src
+_gmx-autobuild-all.sh -s /home/uni05/cmb/shared/src/gromacs-src -name dirnameofinstallation -mpi

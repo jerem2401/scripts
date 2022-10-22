@@ -14,10 +14,12 @@ def main():
     parser.add_argument('--plot', help='plot histograms together: all1 (all2 for separating plots in the middle of the CV in case of cyclic CV), or separately: sep', action='store', dest='plot')
     parser.add_argument('-k', help='force constant used for each windows', action='store', dest='k', required=True)
     parser.add_argument('-s', help='binning step, deflt=0.01 for ext -1.25 and 1.25', action='store', dest='s', default=0.01, type=float)
-    parser.add_argument('-min', help='min boundary for hist, deflt= %(default)s', action='store', dest='min', default=-1.25, type=float)
-    parser.add_argument('-max', help='max boundary for hist, deflt= %(default)s', action='store', dest='max', default=1.25, type=float)
+    #parser.add_argument('-min', help='min boundary for hist, deflt= %(default)s', action='store', dest='min', default=-1.25, type=float)
+    parser.add_argument('-min', help='min boundary for hist, deflt= min(values)', action='store', dest='min', type=float)
+    parser.add_argument('-max', help='max boundary for hist, deflt= max(values)', action='store', dest='max', type=float)
     parser.add_argument('-rew', help='if present, allows to reweight histo by the value of the guide_restraint.bias', action='store_true', dest='rew')
     parser.add_argument('-col', help='from which column of the colvar file do you want to do an histogram, deflt= %(default)s', default='nCV', action='store', dest='col', type=str)
+    parser.add_argument('-gcol', help='give column names', dest='gcol', nargs='*')
     parser.add_argument('--o', help='name of hist file', action='store', dest='o', type=str)
     parser.add_argument('-pos', help='center of haromic potential', action='store', dest='pos')
     parser.add_argument('-nopld', help='tell taht file are not in plumed format',
@@ -40,11 +42,14 @@ def main():
             if not args.nopld:
                 df=plumed_pandas.read_as_pandas(args.f)
             else:
-                df=pd.read_csv(args.f, sep=' ', header=None)
-                df.rename(columns={ df.columns[1]: "d.z" }, inplace = True)
+                df=pd.read_csv(args.f, names=args.gcol, delimiter=r"\s+", header=None, dtype='float')
 
             if not args.rew:
                 df = df[args.col]
+                if args.min == None:
+                    args.min = min(df)
+                if args.max == None:
+                    args.max = max(df)
                 hist2, bin_edges = np.histogram(df, bins=[i for i in np.around(np.arange(args.min,args.max,args.s), decimals=3)],density=True)
                 hist2 = hist2 / hist2.sum()
             else:
