@@ -80,10 +80,9 @@ if [[ $mol == 'pol' ]]; then
 
 	if (("$proto" == 1)); then
 		echo $group | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc atom -n $index -skip $skip
-		wait
-		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $tpr -o $dir/nopbc2.xtc -ur compact -pbc whole -n $index
-		wait
-		echo $group | gmx trjconv -nice 0 -f $dir/nopbc2.xtc -s $tpr -o $dir/0.pdb -dump 0 -n $index
+		echo $group | gmx convert-tpr $nstep -s $tpr -n $index -o $dir/convert.tpr
+		echo $group | gmx trjconv -nice 0 -f $dir/nopbc1.xtc -s $dir/convert.tpr -o $dir/nopbc2.xtc -ur compact -pbc whole -n $index
+		echo $group | gmx trjconv -nice 0 -f $dir/nopbc2.xtc -s $dir/convert.tpr -o $dir/0.pdb -dump 0 -n $index
 		correct-chainid-and-ter.py $dir/0.pdb > $dir/0_chains.pdb
 	elif [ "$proto" = path ]; then
 		echo $group | gmx trjconv -nice 0 -f $traj -s $tpr -o $dir/nopbc1.xtc -ur compact -pbc mol -n $index -skip $skip

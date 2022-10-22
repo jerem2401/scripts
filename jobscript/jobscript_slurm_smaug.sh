@@ -413,6 +413,7 @@ case "$gpuGeneration" in
     turing)
         gpu_selection="#SBATCH --gres=gpu:rtx2080ti:$ngpu"
         nGPUsPerNode=4
+	excludeLine="#SBATCH --exclude=fang[41,49]"
         ;;
     ampere)
 	gpu_selection="#SBATCH --gres=gpu:rtxa6000:$ngpu"
@@ -420,14 +421,15 @@ case "$gpuGeneration" in
 	;;
     ""|any|pascal+turing)
         gpu_selection="#SBATCH --gpus=$ngpu"
-        excludeLine="#SBATCH --exclude=fang[51-54]"
+        excludeLine="#SBATCH --exclude=fang[51-54],fang[41,49]"
         ;;
     turing+ampere)
         gpu_selection="#SBATCH --gpus=$ngpu"
-        excludeLine="#SBATCH --exclude=fang[1-40]"
+        excludeLine="#SBATCH --exclude=fang[1-40],fang[41,49]"
         ;;
     any+ampere)
         gpu_selection="#SBATCH --gpus=$ngpu"
+	excludeLine="#SBATCH --exclude=fang[41,49]"
         ;;
     *)
       echo -e "\nERROR, invalid GPU generation: $gpuGeneration\n"; exit 1

@@ -82,6 +82,7 @@ for k in $(seq 0 10 $l); do
         echo "ksi is $ksi"
 	if (($wrex==1)); then
 	    (gmx grompp -nice 0 -f $mdp -c "./equil/${ksi}/confout.gro" -p "$top" -o "./${ksi}/md.tpr" -maxwarn 1 -n "$index" &> ./${ksi}/grompp.out) &
+	    (cp ./equil/${ksi}/*.dat ./${ksi} && echo "replacing STRIDE=5000" && sed -i "s/STRIDE=5000/STRIDE=200/g" ./${ksi}/plumed.dat) &
 	else
             mdp="$ksi/md.mdp"
             (gmx grompp -nice 0 -f $mdp -c "./${ksi}/equil.gro" -p "$top" -o "./${ksi}/md.tpr" -maxwarn 1 -n "$index" -r "./${ksi}/equil.gro" &> ./${ksi}/grompp.out) &

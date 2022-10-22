@@ -49,14 +49,15 @@ prep2dwham() {
 		 && awk -v var=$timefinal '(NR<=var)' $var2 > $TMPFILE2 \
 		 && mv $TMPFILE2 $var2 \
 		 && TMPFILE3=$(mktemp ./foo-XXXXX) \
-        	 && grep -vi '[a-z]' $var2 | grep -vi '\#' > $TMPFILE3 \
+        	 && grep -vi '[a-z]' $var2 | grep -vi '\#' | grep '.\{13\}' $var2 > $TMPFILE3 \
 		 && mv $TMPFILE3 $var2 \
-		 && echo "removing [a-z]|\# from $var2") &
-                PID+=( "$!" )
+		 && echo "removing [a-z]&\#&less than 9 character from $var2") &
+                #PID+=( "$!" )
             done
-            for pid in ${PID[*]}; do
-                wait $pid
-            done
+	    wait
+            #for pid in ${PID[*]}; do
+                #wait $pid
+            #done
         done
 
 	if (($st==1)); then
@@ -145,16 +146,21 @@ mk_metd() {
       #   read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' ${rpath}/plumed_files/E_$cnt/plumed_* | head -1)
       #   echo "$(basename $i)   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
       #done
-      read -r -a coll <<< "$rpath"
-      for i in c$c/c_$k; do
-          for i in "${coll[@]}"; do
-              cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=\.[0-9]*.txt)')
-              tmp=$(dirname $i)
-              tmp2=$(basename $i)
-	      plumed="$tmp/plumed.dat"
-	      read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' $plumed | head -1)
-              echo "${tmp2%.txt}_${k}.txt   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
-          done
+      
+      #read -r -a coll <<< "$rpath"
+      #for i in c$c/c_$k; do
+      #    for i in "${coll[@]}"; do
+      #        cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=\.[0-9]*.txt)')
+      #        tmp=$(dirname $i)
+      #        tmp2=$(basename $i)
+      #        plumed="$tmp/plumed.dat"
+      #        read cntkappa cnt2kappa <<< $(grep -oPh '(?<=KAPPA=)[0-9]*' $plumed | head -1)
+      #        echo "${tmp2%.txt}_${k}.txt   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
+      #    done
+      #done
+      for i in c$c/c_$k/colv*; do
+          cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=\.[0-9]*.txt)')
+          echo "$(basename $i)   $cnt   2000" >> "c${c}/c_${k}/metd.txt"
       done
    done
    echo "mk_metd done"
