@@ -17,13 +17,17 @@ proc load_opro {args} {
 	#selections
         mol selection resname FOM
         mol addrep $mol
-	#mol selupdate 1 $mol on
 	mol modstyle 1 $mol VDW
+        mol selection same residue as (protein within 5 of resname FOM)
+	mol addrep $mol
+	mol modstyle 2 $mol Licorice
+	mol selupdate 2 $mol on
 
 	fitframes $mol "protein"
 	#smoothing
 	mol smoothrep $mol 0 2
 	mol smoothrep $mol 1 2
+	mol smoothrep $mol 2 2
 	incr mol
     display resetview
      }
