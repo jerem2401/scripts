@@ -1,0 +1,154 @@
+#
+# ~/.bashrc
+#
+
+# If not running interactively, don't do anything
+[[ $- != *i* ]] && return
+
+#PS1='[\u@\h \W]\$ '
+
+#add bin to path
+#export PATH="$HOME/bin:$PATH"
+
+#source /data/shared/opt/gromacs/2018.6/bin/GMXRC.bash, add scripts to path
+#source /home/usersJH/all-jh/opt/gromacs/2018.1/bin/GMXRC
+export PYTHONPATH="$HOME/gitrepo/scripts:$PYTHONPATH"
+export PYTHONPATH="$HOME/gitrepo/scripts/wham:$PYTHONPATH"
+export PYTHONPATH="$HOME/gitrepo/scripts/hbonds:$PYTHONPATH"
+export PYTHONPATH="$HOME/gitrepo/scripts/pymol:$PYTHONPATH"
+export PYTHONPATH="$HOME/gitrepo/scripts/US:$PYTHONPATH"
+export PYTHONPATH="$HOME/gitrepo/scripts/plot:$PYTHONPATH"
+export PYTHONPATH="$HOME/gitrepo/scripts/ST:$PYTHONPATH"
+export PYTHONPATH="$HOME/gitrepo/scripts/rex:$PYTHONPATH"
+
+export PATH="$HOME/gitrepo/scripts:$PATH"
+export PATH="$HOME/gitrepo/scripts/wham:$PATH"
+export PATH="$HOME/gitrepo/scripts/jobscript:$PATH"
+export PATH="$HOME/gitrepo/scripts/hbonds:$PATH"
+export PATH="$HOME/gitrepo/scripts/US:$PATH"
+export PATH="$HOME/gitrepo/scripts/pbc:$PATH"
+export PATH="$HOME/gitrepo/scripts/tmux:$PATH"
+export PATH="$HOME/gitrepo/scripts/ST:$PATH"
+export PATH="$HOME/gitrepo/scripts/rex:$PATH"
+
+if [ $HOSTNAME = 'smaug' ]; then
+        #source /data/shared/opt/gromacs/2018.8_plumed/gromacs-2018.8/bin/GMXRC;
+	source /data/shared/opt/gromacs/2020.2_plumed/bin/GMXRC;
+	export PATH="/home/users/all-jh/bin:$PATH";
+	#cd /data/users/jeremy
+	#ln -sf ~/gitrepo/scripts/.vimrc ~/.vimrc
+	export PATH="/home/users/all-jh/opt/tmux/bin:$PATH"
+	#alias sos='vim /data/users/jeremy/command.txt'
+elif [ $HOSTNAME = 'dema69' ]; then
+#	#yasara
+	export PATH="/home/users/all-jh/opt/yasara:$PATH";
+	export PATH="/home/users/all-jh/opt/tmux/bin:$PATH";
+	cd /localdisk/jeremy
+#	#ln -sf /localdisk/gitrepo/scripts/.vimrc ~/.vimrc
+fi
+
+
+#LS colors
+
+LS_COLORS='rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*7z=01;31:*.rz=01;31:*.cab=01;31:*.jpg=01;35:*.jpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'
+export LS_COLORS
+
+#alias
+alias ls='ls -ltr --color=auto'
+alias lsn='command ls -l --color=auto'
+alias cp='cp -i'
+alias mv='mv -i'
+alias unmount-gwdg='fusermount -uz /localdisk/jeremy/mnt/gwdg'
+alias mount-gwdg='sshfs jlapier@transfer.gwdg.de:/usr/users/jlapier/ /localdisk/jeremy/mnt/gwdg -o auto_cache,reconnect,ServerAliveInterval=500,ServerAliveCountMax=2'
+#alias mount-gwdg='sshfs jlapier@login.gwdg.de:/usr/users/jlapier/ /localdisk/mnt/gwdg -o auto_cache,reconnect,ServerAliveInterval=500,ServerAliveCountMax=2'
+alias gwdg='cd /localdisk/jeremy/mnt/gwdg/simulation'
+
+alias unmount-smaug='fusermount -uz /localdisk/jeremy/mnt/smaug'
+alias mount-smaug='sshfs smaug:/data/users/jeremy/simulation /localdisk/jeremy/mnt/smaug -o auto_cache,reconnect,ServerAliveInterval=500,ServerAliveCountMax=2'
+alias smaug='cd /localdisk/jeremy/mnt/smaug'
+alias cosmaug='ssh smaug'
+alias cogwdg='ssh -t -A jlapier@login.gwdg.de ssh -t gwdu103'
+alias coelw1="ssh -Y uds_jela004@elwe1.rarp-kl.de"
+alias coelw2="ssh -Y uds_jela004@elwe2.rarp-kl.de"
+alias mount-elw1="sshfs uds_jela004@elwe1.rarp-kl.de:/home/uds_jela004/simulation ~/mnt/elw1/ -o auto_cache,reconnect,ServerAliveInterval=500,ServerAliveCountMax=2"
+alias elw1='cd ~/mnt/elw1'
+export ELWE_USERNAME=uds_jela004
+source /home/users/all-jh/bin/elwe-functions.bash
+
+alias squ='squeue -u jeremy -a --format="%.0i%.22S%.10P%.70j%.8u%.3t%.11M%.6D%.27R%.10Q%.25V" -S j'
+alias squ2='squeue -u jeremy --format="%.0i%.6P%.50j%.8u%.3t%.12M%.5D%.13R%.5Q%.20V" -S j'
+#alias squ='squeue -u jeremy -a --format="%.0i%.10P%.70j%.8u%.3t%.11M%.6D%.20R%.10Q%" -S j'
+#alias squf='squeue --format="%.0i%.10P%.70j%.8u%.3t%.11M%.6D%.20R%.10Q%" -S Q'
+
+alias squf='squeue --format="%.0i%.22S%.10P%.70j%.8u%.3t%.11M%.6D%.17R%.10Q%.25V" -S Q'
+alias squf2='squeue --format="%.0i%.6P%.50j%.8u%.3t%.12M%.5D%.13R%.5Q%.20V" -S Q'
+
+function shj () {
+    scontrol show job "$1"
+}
+export -f shj
+
+alias sos='cat ~/gitrepo/scripts/miscellaneous/command.txt'
+alias pol='cd /data/users/jeremy/simulation/syncsim/pol'
+alias opro='cd /data/users/jeremy/simulation/syncsim/opro'
+
+alias gittree='git log --oneline --decorate --graph --all'
+alias cleangmx='rm -v ./md.lis ./md.log ./ener.edr ./state.cpt ./colvar.txt ./traj_comp.xtc ./grompp.out'
+
+#get older directories that just the previous one with cd-
+source ~/gitrepo/scripts/unix/acd_func.sh
+
+#custprompt
+export PS1="\[\033[01;38;5;91m\]DarkMagician\[\033[0m\]\[\033[01;38;5;91m\]@\[\033[0m\]\[\e[01;38;5;112m\]\h\[\033[0m\]\[\033[01;38;5;91m\]:\[\033[0m\]\[\033[01;38;5;15m\]\w\[\033[0m\]\n\[\033[01;38;5;91m\]\\$\[\033[0m\] "
+
+#plumed
+#export PATH="/data/shared/opt/plumed2/bin/:$PATH"
+#export LD_LIBRARY_PATH='/data/shared/opt/plumed2/lib/':$LD_LIBRARY_PATH
+#export INCLUDE='/data/shared/opt/plumed2/include/':$INCLUDE
+#export LD_LIBRARY_PATH="/data/shared/opt/plumed2/.libs/:$LD_LIBRARY_PATH"
+export PATH="/data/shared/opt/plumed_2.6.1/bin/:$PATH"
+export LD_LIBRARY_PATH='/data/shared/opt/plumed_2.6.1/lib/':$LD_LIBRARY_PATH
+export INCLUDE='/data/shared/opt/plumed_2.6.1/include/':$INCLUDE
+export PKG_CONFIG_PATH="/data/shared/opt/plumed_2.6.1/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+PATH=$PATH:"/data/shared/bin/"
+
+#History
+export HISTSIZE=
+export HISTFILESIZE=
+export HISTFILE=~/.bash_eternal_history
+export HISTIGNORE='&:ls:[bf]g:pwd:clear:history'
+export HISTCONTROL=erasedups:ignoredups
+shopt -s histappend
+PROMPT_COMMAND="history -n; history -w; history -c; history -r; $PROMPT_COMMAND"
+
+#open new tab in working dir, removed because don't sync history btw terminal anymore
+#if [ -e /etc/profile.d/vte.sh ]; then
+#    . /etc/profile.d/vte.sh
+#fi
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/home/users/jeremy/anaconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/home/users/jeremy/anaconda3/etc/profile.d/conda.sh" ]; then
+        . "/home/users/jeremy/anaconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/home/users/jeremy/anaconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+#Completion and cycle though tab choices
+source ~/gitrepo/scripts/miscellaneous/bash_completion
+bind "TAB:menu-complete"
+bind "set show-all-if-ambiguous on"
+
+#For clipboard on x display server
+export PATH="/home/users/all-jh/opt/xclip_tmp/bin:$PATH"
+
+#disabling highlight when pasting in terminal (default is 'on' now from bash 5.1)
+bind 'set enable-bracketed-paste off'
