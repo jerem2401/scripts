@@ -93,7 +93,8 @@ case $machine in
         walltime='2-00:00'
 	intime=48
         maxh=48
-	deplineTempl='#SBATCH --depend=afterok:JOBID'
+	#deplineTempl='#SBATCH --depend=afterok:JOBID'
+	deplineTempl='#SBATCH --depend=afterany:JOBID'
 	Qkey='#SBATCH'
         ;;
     *)
@@ -218,7 +219,8 @@ while [ $# -gt 0 ]; do
 		;;
 	-spack) shift
 		spack=$1
-		mdrun='gmx_mpi mdrun'
+		#mdrun='gmx_mpi mdrun'
+		mdrun='gmx mdrun'
                 ;;
         -mdrun_line) shift
                      mdrun_line=$(echo "$1" | sed 's/@/ /g')

@@ -29,53 +29,67 @@ prep2dwham() {
         echo "timeinit line = $time5ns"
 	echo "column chosen: $column"
 
-        for index in $(seq 0 8 "$colllen"); do
-            for i in "${coll[@]:${index}:8}"; do
-                var2=$(basename "$i")
-                if [ -e "$var2" ]; then
-                    echo "colvar file $var2 exists, skipping this file"
-                    #just to play around with continue, could be replace by a else
-                    continue
-                fi
-        	echo "preparing colvar: $var2"
-        	(time5ns=$(awk -v var=$timeinit '$1~"^"var".*" {print NR;exit}' $i) \
-                 && awk -v var=$time5ns -v col=$column '(NR>=var) {print $1,$col}' $i > ./$var2 \
-        	 && TMPFILE=$(mktemp ./foo-XXXXX) \
-        	 && awk '!seen[$1]++' $var2 > $TMPFILE \
-        	 && mv $TMPFILE $var2 \
-		 && echo "timefinal line = $timefinal" \
-		 && timefinal=$(awk -v var=$timefinal '$1~"^"var".*" {print NR;exit}' $var2) \
-		 && TMPFILE2=$(mktemp ./foo-XXXXX) \
-		 && awk -v var=$timefinal '(NR<=var)' $var2 > $TMPFILE2 \
-		 && mv $TMPFILE2 $var2 \
-		 && TMPFILE3=$(mktemp ./foo-XXXXX) \
-        	 && grep -vi '[a-z]' $var2 | grep -vi '\#' | grep '.\{17\}' > $TMPFILE3 \
-		 && mv $TMPFILE3 $var2 \
-		 && echo "removing [a-z]&\#&less than 9 character from $var2") &
-                #PID+=( "$!" )
-            done
-	    wait
-            #for pid in ${PID[*]}; do
-                #wait $pid
-            #done
-        done
-
-	if (($st==1)); then
-	    for index in $(seq 0 8 "$colllen"); do
-	        for i in "${coll[@]:${index}:8}"; do
-		    var2=$(basename "$i")
-		    echo "preparing colvar for umbST: $var2"
-		    tmp=$(dirname $i)
-		    cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=.txt)')
-		    (awk '($0 !~ /^#.*/) && ($0 !~ /^@.*/)' $tmp/dhdl.xvg > ./dhdl_${cnt}.txt && awk 'NR % 2 == 1' ./dhdl_${cnt}.txt > ./dhdl_${cnt}_every2nd.txt && awk '($4 == '0.0000000') {print NR}' ./dhdl_${cnt}_every2nd.txt > linenumber_${cnt}.txt && awk 'NR==FNR{linesToPrint[$0];next} FNR in linesToPrint' linenumber_${cnt}.txt ./$var2 > out_${cnt}.txt && mv out_${cnt}.txt ./$var2) &
-		    PID+=( "$!" )
-		done
-		for pid in ${PID[*]}; do
-		    wait $pid
-		done
-	    done
-	    mkdir cleaning_st
-	    mv dhdl* linenumber_* cleaning_st
+	if (($st==0)); then
+      	  for index in $(seq 0 8 "$colllen"); do
+      	      for i in "${coll[@]:${index}:8}"; do
+      	          var2=$(basename "$i")
+		  ksi=$(echo $i | rev | cut -f 2 -d / | rev)
+		  ksi=${ksi#E_}
+      	          if [ -e *${ksi}* ]; then
+      	              echo "colvar file $var2 exists, skipping this file"
+      	              #just to play around with continue, could be replace by a else
+      	              continue
+      	          fi
+		  echo "preparing colvar: $var2"
+		  (time5ns=$(awk -v var=$timeinit '$1~"^"var".*" {print NR;exit}' $i) \
+		  && awk -v var=$time5ns -v col=$column '(NR>=var) {print $1,$col}' $i > ./$var2 \
+		  && TMPFILE=$(mktemp ./foo-XXXXX) \
+		  && awk '!seen[$1]++' $var2 > $TMPFILE \
+		  && mv $TMPFILE $var2 \
+		  && echo "timefinal line = $timefinal" \
+		  && timefinal=$(awk -v var=$timefinal '$1~"^"var".*" {print NR;exit}' $var2) \
+		  && TMPFILE2=$(mktemp ./foo-XXXXX) \
+		  && awk -v var=$timefinal '(NR<=var)' $var2 > $TMPFILE2 \
+		  && mv $TMPFILE2 $var2 \
+		  && TMPFILE3=$(mktemp ./foo-XXXXX) \
+		  && grep -vi '[a-z]' $var2 | grep -vi '\#' | grep '.\{17\}' > $TMPFILE3 \
+		  && mv $TMPFILE3 $var2 \
+		  && echo "removing [a-z]&\#&less than 9 character from $var2") &
+      	      #PID+=( "$!" )
+      	      done
+      	      wait
+      	      #for pid in ${PID[*]}; do
+      	          #wait $pid
+      	      #done
+      	  done
+	else
+      	  for index in $(seq 0 8 "$colllen"); do
+      	      for i in "${coll[@]:${index}:8}"; do
+      	          var2=$(basename "$i")
+      	          if [ -e "$var2" ]; then
+      	              echo "colvar file $var2 exists, skipping this file"
+      	              #just to play around with continue, could be replace by a else
+      	              continue
+      	          fi
+      	  	echo "preparing colvar: $var2"
+      	  	(time5ns=$(awk -v var=$timeinit '$1~"^"var".*" {print NR;exit}' $i) \
+      	         && awk -v var=$time5ns -v col=$column '(NR>=var) {print $1,$col}' $i > ./$var2 \
+      	  	 && TMPFILE=$(mktemp ./foo-XXXXX) \
+      	  	 && echo "timefinal line = $timefinal" \
+      	  	 && timefinal=$(awk -v var=$timefinal '$1~"^"var".*" {print NR;exit}' $var2) \
+      	  	 && awk -v var=$timefinal '(NR<=var)' $var2 > $TMPFILE \
+      	  	 && mv $TMPFILE $var2)
+	       wc $var2 >> wc.txt
+	       echo "preparing colvar for umbST: $var2"
+	       tmp=$(dirname $i)
+	       cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=.txt)')
+	       (awk '($0 !~ /^#.*/) && ($0 !~ /^@.*/)' $tmp/dhdl.xvg > ./dhdl_${cnt}.txt && awk 'NR % 2 == 1' ./dhdl_${cnt}.txt > ./dhdl_${cnt}_every2nd.txt && awk '($4 == 0.0000000) {print $1}' ./dhdl_${cnt}_every2nd.txt > ./dhdl_${cnt}_baseT.txt && awk 'FNR == NR { time[$1] = $1; next }; $1 == time[$1] { print }' ./dhdl_${cnt}_baseT.txt ./$var2 > out_${cnt}.txt && mv out_${cnt}.txt ./$var2) &
+	      done
+      	      wait
+      	  done
+	mkdir cleaning_st
+	mv dhdl* cleaning_st
+	wc -l cleaning_st/*every2nd.txt > wc_every2nd.txt
 	fi
 
         echo "prep2dwham done"
@@ -147,6 +161,7 @@ mk_metd() {
       #   echo "$(basename $i)   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
       #done
 
+      #bellow for rex
       read -r -a coll <<< "$rpath"
       for i in c$c/c_$k; do
           for i in "${coll[@]}"; do
@@ -158,7 +173,7 @@ mk_metd() {
               echo "${tmp2%.txt}_${k}.txt   $cnt   $cntkappa" >> "c${c}/c_${k}/metd.txt"
           done
       done
-
+      #bellow for USalone
       #for i in c$c/c_$k/colv*; do
       #    cnt=$(echo "$i" | grep -oP '(?<=colvar_).*(?=_..txt)')
       #    echo "$(basename $i)   $cnt   2000" >> "c${c}/c_${k}/metd.txt"
